@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 final class Setup {
-    private const CMDS = ['avconv', 'convert', 'du', 'ffmpeg', 'gm', 'magick', 'tar', 'timeout', 'zip'];
+    private const CMDS = ['avconv', 'convert', 'du', 'ffmpeg', 'gm', 'gs', 'magick', 'tar', 'timeout', 'zip'];
 
     private array $store = [];
 
@@ -12,6 +12,7 @@ final class Setup {
         $this->add_app_metadata();
         $this->add_server_metadata_and_check();
         $this->add_paths();
+        $this->add_php_fix_check();
         $this->add_sys_cmd_checks();
     }
 
@@ -39,6 +40,23 @@ final class Setup {
         return version_compare($version, '8.6.0', '>=');
     }
 
+    // Distributions backport security fixes without changing PHP_VERSION: Ubuntu 24.04 ships the
+    // fix in its 8.3.6 package. Debian and Ubuntu name the CVE in the package changelog.
+    public static function has_backported_fix(string $version): bool {
+        $branch = implode('.', array_slice(explode('.', $version), 0, 2));
+        $changelog = '/usr/share/doc/php' . $branch . '-common/changelog.Debian.gz';
+        $gz = function_exists('gzopen') && @is_readable($changelog) ? @gzopen($changelog, 'rb') : false;
+        if ($gz === false) {
+            return false;
+        }
+        $found = false;
+        while (!$found && ($line = gzgets($gz, 8192)) !== false) {
+            $found = str_contains($line, 'CVE-2026-109618');
+        }
+        gzclose($gz);
+        return $found;
+    }
+
     private static function server_var(string $key): string {
         $value = $_SERVER[$key] ?? '';
         return is_string($value) ? $value : '';
@@ -48,7 +66,6 @@ final class Setup {
         $this->set('PHP_VERSION', PHP_VERSION);
         $this->set('MIN_PHP_VERSION', MIN_PHP_VERSION);
         $this->set('PHP_ARCH', (PHP_INT_SIZE * 8) . '-bit');
-        $this->set('PHP_CVE_2026_109618_FIXED', Setup::is_php_patched(PHP_VERSION));
 
         $this->set('REQUEST_METHOD', Setup::server_var('REQUEST_METHOD') ?: 'GET');
         $this->set('REQUEST_HREF', (string) parse_url(Setup::server_var('REQUEST_URI') ?: '/', PHP_URL_PATH));
@@ -115,6 +132,24 @@ final class Setup {
         $this->set('HAS_WRITABLE_DATA', @is_writable($this->get('DATA_PATH')));
     }
 
+    private function add_php_fix_check(): void {
+        $fix = Setup::is_php_patched(PHP_VERSION) ? 'version' : '';
+        if ($fix === '') {
+            // the changelog only changes with a package update: cache the answer per version
+            $cache_path = Util::normalize_path($this->get('CACHE_PRV_PATH') . '/php-fix.json', false);
+            $cached = Json::load($cache_path) ?? [];
+            if (($cached['version'] ?? null) === PHP_VERSION && is_bool($cached['backport'] ?? null)) {
+                $backport = $cached['backport'];
+            } else {
+                $backport = Setup::has_backported_fix(PHP_VERSION);
+                Json::save($cache_path, ['version' => PHP_VERSION, 'backport' => $backport]);
+            }
+            $fix = $backport ? 'backport' : '';
+        }
+        $this->set('PHP_CVE_2026_109618_FIXED', $fix !== '');
+        $this->set('PHP_CVE_2026_109618_FIX', $fix);
+    }
+
     private function add_sys_cmd_checks(): void {
         $cmds_cache_path = Util::normalize_path($this->get('CACHE_PRV_PATH') . '/cmds.json', false);
 
@@ -156,6 +191,7 @@ final class Setup {
                 'MIN_PHP_VERSION',
                 'PHP_ARCH',
                 'PHP_CVE_2026_109618_FIXED',
+                'PHP_CVE_2026_109618_FIX',
                 'HAS_PHP_EXIF',
                 'HAS_PHP_JPEG',
                 'HAS_PHP_WEBP',
@@ -176,6 +212,7 @@ final class Setup {
                 'HAS_CMD_DU',
                 'HAS_CMD_FFMPEG',
                 'HAS_CMD_GM',
+                'HAS_CMD_GS',
                 'HAS_CMD_MAGICK',
                 'HAS_CMD_TAR',
                 'HAS_CMD_TIMEOUT',

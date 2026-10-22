@@ -13,7 +13,7 @@ WWW=${H6AI_WEBROOT:-/srv/www}
 OUTSIDE=${H6AI_OUTSIDE:-/srv/outside}
 MARKER=$WWW/.h6ai-seeded
 HERE=$(cd "$(dirname "$0")" && pwd)
-MEDIA="php $HERE/seed-media.php"
+MEDIA="${PHP_BIN:-php} $HERE/seed-media.php"
 
 # --- outside the web root (S1, S11): every start --------------------------------------------
 mkdir -p "$OUTSIDE"
@@ -30,6 +30,7 @@ if [ -f "$MARKER" ] && [ "${H6AI_RESEED:-0}" != "1" ]; then
     echo "[seed] web root already seeded ($MARKER exists), skipping"
     exit 0
 fi
+# shellcheck disable=SC2010 # names other than these two are what matters
 if [ ! -f "$MARKER" ] && [ "${H6AI_RESEED:-0}" != "1" ] \
     && [ -n "$(ls -A "$WWW" | grep -v -x -e _h6ai -e lost+found || true)" ]; then
     echo "[seed] $WWW already has content - not seeding the sample tree (H6AI_RESEED=1 forces it)"
@@ -49,15 +50,19 @@ $MEDIA bomb "$WWW/images/bomb.png"
 
 # --- videos / audio -----------------------------------------------------------
 mkdir -p "$WWW/videos" "$WWW/audio"
-ff() { ffmpeg -nostdin -hide_banner -loglevel error -y "$@"; }
-ff -f lavfi -i testsrc2=duration=5:size=640x360:rate=25 -f lavfi -i sine=frequency=440:duration=5 \
-    -shortest -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac "$WWW/videos/clip-5s.mp4" \
-  || ff -f lavfi -i testsrc2=duration=5:size=640x360:rate=25 -c:v mpeg4 "$WWW/videos/clip-5s.mp4"
-ff -f lavfi -i testsrc=duration=20:size=320x180:rate=15 -f lavfi -i sine=frequency=660:duration=20 \
-    -shortest -c:v libvpx -b:v 200k -deadline realtime -cpu-used 8 -c:a libopus "$WWW/videos/clip-20s.webm" \
-  || ff -f lavfi -i testsrc=duration=20:size=320x180:rate=15 -c:v libvpx -b:v 200k "$WWW/videos/clip-20s.webm"
-ff -f lavfi -i sine=frequency=523:duration=3 -c:a libmp3lame -q:a 6 "$WWW/audio/tone.mp3" || true
-ff -f lavfi -i sine=frequency=392:duration=3 -c:a libopus "$WWW/audio/tone.ogg" || true
+if command -v ffmpeg >/dev/null 2>&1; then
+    ff() { ffmpeg -nostdin -hide_banner -loglevel error -y "$@"; }
+    ff -f lavfi -i testsrc2=duration=5:size=640x360:rate=25 -f lavfi -i sine=frequency=440:duration=5 \
+        -shortest -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac "$WWW/videos/clip-5s.mp4" \
+      || ff -f lavfi -i testsrc2=duration=5:size=640x360:rate=25 -c:v mpeg4 "$WWW/videos/clip-5s.mp4"
+    ff -f lavfi -i testsrc=duration=20:size=320x180:rate=15 -f lavfi -i sine=frequency=660:duration=20 \
+        -shortest -c:v libvpx -b:v 200k -deadline realtime -cpu-used 8 -c:a libopus "$WWW/videos/clip-20s.webm" \
+      || ff -f lavfi -i testsrc=duration=20:size=320x180:rate=15 -c:v libvpx -b:v 200k "$WWW/videos/clip-20s.webm"
+    ff -f lavfi -i sine=frequency=523:duration=3 -c:a libmp3lame -q:a 6 "$WWW/audio/tone.mp3" || true
+    ff -f lavfi -i sine=frequency=392:duration=3 -c:a libopus "$WWW/audio/tone.ogg" || true
+else
+    echo "[seed] ffmpeg not found: no sample videos or audio"
+fi
 
 # --- docs (incl. stored-XSS payloads in markdown, S5) ----------------------------
 mkdir -p "$WWW/docs"

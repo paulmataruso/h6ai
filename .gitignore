@@ -20,3 +20,8 @@
 /src/_h6ai/public/cache/
 /src/_h6ai/private/conf/options.local.json
 /.claude/scheduled_tasks.lock
+
+# local Docker settings (see .env.example) and the default shared folder of compose.yaml
+/.env
+/files/
+/test-native/logs/

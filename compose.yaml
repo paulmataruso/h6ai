@@ -1,44 +1,37 @@
-# h6ai test environment (nginx + php-fpm in one container).
+# h6ai with Docker: nginx + PHP-FPM in one container.
 #
-#   docker compose up --build -d
-#   browse:      http://172.16.1.67:8687/
-#   info/admin:  http://172.16.1.67:8687/_h6ai/public/   (user "admin", password "admin-test")
-#   web root:    ./webroot (on the host) - drop your own files there
-#   bind address/port: H6AI_BIND / H6AI_PORT (e.g. H6AI_BIND=127.0.0.1 H6AI_PORT=8080)
+#   cp .env.example .env        # set H6AI_FILES, H6AI_BIND, H6AI_PORT
+#   docker compose up -d --build
+#   docker compose logs h6ai | grep -A2 "first admin"     # the generated admin password
 #
-# See docker/README.md for details.
+# Upgrade: git pull (or unpack a new release) and run `docker compose up -d --build` again.
+# Users, permissions and settings live in the h6ai-data volume; your files are never modified.
+# Development and tests add compose.dev.yaml (sample tree, bootstrap login). See docs/INSTALL.md.
 
 services:
   h6ai:
     build:
       context: .
       target: runtime
-    image: h6ai:dev
+      args:
+        # "prebuilt" uses the _h6ai folder of a release bundle instead of compiling the sources
+        H6AI_SOURCE: "${H6AI_SOURCE:-build}"
+    image: h6ai:latest
     ports:
-      - "${H6AI_BIND:-172.16.1.67}:${H6AI_PORT:-8687}:80"
+      - "${H6AI_BIND:-0.0.0.0}:${H6AI_PORT:-8080}:80"
     environment:
-      # Bootstrap admin (used while no admin user exists): user "admin",
-      # password_hash('admin-test', PASSWORD_BCRYPT). "$" is escaped as "$$" for compose.
-      H6AI_PASSHASH: "$$2y$$10$$3oSPC0TARrMhHAVbLgW5O.IDVLaWCC4eOwApT63oHr.wQ3BCanofi"
-      # Seed the sample tree into an empty web root on first start (0 to disable,
-      # H6AI_RESEED=1 to re-create the sample files).
-      H6AI_SEED: "1"
-      # Size of the random performance test file big/big-<N>g.bin in GiB (0 to disable).
-      # Generated in the background after start-up, only in the seeded sample web root.
-      H6AI_SEED_BIG_GB: "${H6AI_SEED_BIG_GB:-7}"
-      # Dev: re-check PHP files every 2 s. Production: PHP_OPCACHE_VALIDATE_TIMESTAMPS=0.
-      PHP_OPCACHE_VALIDATE_TIMESTAMPS: "1"
-      PHP_OPCACHE_REVALIDATE_FREQ: "2"
+      # First admin, created on the first start while no admin exists. Without a password, one is
+      # generated and printed to the log once. H6AI_ADMIN_PASSWORD_FILE works with Docker secrets.
+      H6AI_ADMIN_USER: "${H6AI_ADMIN_USER:-admin}"
+      H6AI_ADMIN_PASSWORD: "${H6AI_ADMIN_PASSWORD:-}"
+      # code only changes when the container starts, so PHP never has to re-check files
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: "0"
+      PHP_MEMORY_LIMIT: "${PHP_MEMORY_LIMIT:-256M}"
     volumes:
-      # the web root lives on the host; h6ai installs/updates itself into ./webroot/_h6ai
-      - ./webroot:/srv/www
-      # users / roles / permissions / settings survive rebuilds
+      # the folder to share; h6ai installs itself into <folder>/_h6ai (hidden in listings)
+      - "${H6AI_FILES:-./files}:/srv/www"
+      # users, roles, folder groups, permissions, settings, activity log
       - h6ai-data:/srv/www/_h6ai/private/data
-      # live-editable option overrides, deep-merged over options.json by h6ai
-      - ./docker/options.local.json:/srv/www/_h6ai/private/conf/options.local.json:ro
-    # php-fpm's slowlog (request_slowlog_timeout=10s) needs ptrace to dump stack traces.
-    # Without it fpm still logs "executing too slow" warnings. Opt in only when debugging:
-    # cap_add: [SYS_PTRACE]
     restart: unless-stopped
 
 volumes:

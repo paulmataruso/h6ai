@@ -5,6 +5,8 @@
 #   H6AI_URL=http://host:port test-e2e/run.sh
 set -eu
 cd "$(dirname "$0")"
+# the development overlay (sample tree, bootstrap login) is what the tests expect
+export COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml:compose.dev.yaml}"
 URL=${H6AI_URL:-http://${H6AI_BIND:-172.16.1.67}:${H6AI_PORT:-8687}}
 IMAGE=mcr.microsoft.com/playwright:v1.49.1-noble
 mkdir -p shots && chmod 777 shots

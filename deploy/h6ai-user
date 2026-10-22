@@ -1,0 +1,29 @@
+#!/bin/sh
+# h6ai-user: manage h6ai users from the shell (first admin, lost password, overview).
+#   h6ai-user list | add NAME [--admin|--anon] | passwd NAME | enable NAME | disable NAME
+# Runs _h6ai/private/bin/h6ai-user.php as the owner of the h6ai data folder. Paths come from
+# install.sh (/etc/h6ai/install.conf) or default to the Docker image's layout (inside the
+# container). After `install.sh --docker` it runs the same command in the container.
+set -eu
+
+H6AI_DIR=/srv/www/_h6ai
+PHP_BIN=php
+if [ -r /etc/h6ai/install.conf ]; then
+    # shellcheck disable=SC1091
+    . /etc/h6ai/install.conf
+    if [ "${H6AI_MODE:-native}" = docker ]; then
+        cd "$H6AI_DOCKER_DIR"
+        [ -t 0 ] && exec docker compose exec h6ai h6ai-user "$@"
+        exec docker compose exec -T h6ai h6ai-user "$@"
+    fi
+    H6AI_DIR=$H6AI_ROOT/_h6ai
+fi
+SCRIPT=$H6AI_DIR/private/bin/h6ai-user.php
+[ -f "$SCRIPT" ] || { echo "h6ai-user: $SCRIPT not found" >&2; exit 1; }
+
+if [ "$(id -u)" = 0 ] && command -v runuser >/dev/null 2>&1; then
+    owner=$(stat -c %U "$H6AI_DIR/private/data")
+    [ "$owner" = root ] || exec runuser -u "$owner" -- "$PHP_BIN" "$SCRIPT" "$@"
+fi
+# not root, or no runuser (Alpine): the PHP script drops to the data owner itself
+exec "$PHP_BIN" "$SCRIPT" "$@"

@@ -11,3 +11,10 @@ Dockerfile
 **/*.log
 test-e2e
 webroot
+.env
+.env.*
+compose.*.yaml
+files
+test-native
+.claude
+.impeccable

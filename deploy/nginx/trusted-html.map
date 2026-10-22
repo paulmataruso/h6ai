@@ -1,0 +1,6 @@
+# h6ai: URI prefixes whose HTML/SVG/XML files may run script (no CSP sandbox).
+# Only list sites you trust: their pages run with h6ai's origin. One regex per line, e.g.
+#
+#     ~^/my-trusted-site/   1;
+#
+# Reload nginx after editing. This file is yours: h6ai upgrades never overwrite it.

@@ -193,7 +193,13 @@ final class Thumb {
         $dest = 'jpg:' . $capture_path;
         $args = ['-density', '150', $source, '-background', 'white', '-alpha', 'remove', '-quality', '90', $dest];
 
-        if ($this->setup->get('HAS_CMD_MAGICK')) {
+        if ($this->setup->get('HAS_CMD_GS')) {
+            // Ghostscript directly: ImageMagick would call it anyway, and Debian and Ubuntu disable
+            // PDF in their system-wide ImageMagick policy. First page only, no file access (SAFER).
+            $argv = ['gs', '-q', '-dSAFER', '-dBATCH', '-dNOPAUSE', '-dFirstPage=1', '-dLastPage=1',
+                '-sDEVICE=jpeg', '-dJPEGQ=90', '-r150', '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4',
+                '-sOutputFile=' . str_replace('%', '%%', $capture_path), '-f', $source_path];
+        } elseif ($this->setup->get('HAS_CMD_MAGICK')) {
             $argv = array_merge(['magick'], $args);
         } elseif ($this->setup->get('HAS_CMD_CONVERT')) {
             $argv = array_merge(['convert'], $args);

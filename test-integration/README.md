@@ -1,14 +1,15 @@
 # Integration & security regression tests
 
-Black-box tests that run against a live h6ai instance, normally the Docker container from
-`compose.yaml` (seeded with `docker/seed.sh`). They use only Node's built-in `node:test` and
+Black-box tests that run against a live h6ai instance, normally the Docker development container
+(`compose.yaml` + `compose.dev.yaml`, seeded with `docker/seed.sh`). `test-native/run.sh` runs
+the same suite against native installs. They use only Node's built-in `node:test` and
 `node:http`, so nothing needs installing. Every security test names the finding it covers
 (`S1`…`S18`, see `docs/AUDIT.md`).
 
 ## Run
 
 ```sh
-docker compose up --build -d
+docker compose -f compose.yaml -f compose.dev.yaml up --build -d
 test-integration/run.sh
 ```
 

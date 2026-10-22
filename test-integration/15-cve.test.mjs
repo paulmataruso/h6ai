@@ -59,8 +59,11 @@ test('CVE-2026-109618: PHP runs a fixed release (admin setup reports it)', async
     const branch = setup.PHP_VERSION.split('.').slice(0, 2).join('.');
     const min = FIXED[branch];
     assert.ok(min || versionAtLeast(setup.PHP_VERSION, '8.6.0'), `unexpected PHP branch ${setup.PHP_VERSION}`);
-    if (min) {
-        assert.ok(versionAtLeast(setup.PHP_VERSION, min), `PHP ${setup.PHP_VERSION} < ${min}`);
+    if (min && !versionAtLeast(setup.PHP_VERSION, min)) {
+        // distribution packages (Ubuntu) backport the fix without changing the version
+        assert.equal(setup.PHP_CVE_2026_109618_FIX, 'backport', `PHP ${setup.PHP_VERSION} < ${min} and no backport found`);
+    } else {
+        assert.equal(setup.PHP_CVE_2026_109618_FIX, 'version');
     }
     assert.equal(setup.PHP_CVE_2026_109618_FIXED, true, 'setup.PHP_CVE_2026_109618_FIXED');
 });
@@ -95,7 +98,7 @@ test('CVE-2026-10961: case variants and unmanaged index.html are sandboxed too',
 });
 
 test('CVE-2026-10961: regular files are not affected', async () => {
-    for (const path of ['/docs/readme.md', '/docs/notes.txt', '/images/photo.jpg', '/videos/clip-5s.mp4']) {
+    for (const path of ['/docs/readme.md', '/docs/notes.txt', '/docs/data.json', '/images/photo.jpg', '/big/big.bin']) {
         const res = await request('HEAD', path);
         assert.equal(res.status, 200, path);
         assert.equal(res.headers['content-security-policy'], undefined, `${path} has a CSP`);

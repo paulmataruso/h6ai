@@ -9,6 +9,8 @@
 set -eu
 cd "$(dirname "$0")/.."
 
+# the development overlay (sample tree, bootstrap login) is what the tests expect
+export COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml:compose.dev.yaml}"
 URL=${H6AI_URL:-http://${H6AI_BIND:-172.16.1.67}:${H6AI_PORT:-8687}}
 SERVICE=${H6AI_SERVICE:-h6ai}
 H6AI_DIR=/srv/www/_h6ai

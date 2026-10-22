@@ -4,7 +4,7 @@
 //   node build.mjs              production build into ./build/_h6ai
 //   node build.mjs --dev        unminified, with sourcemaps
 //   node build.mjs --watch      rebuild on change (implies nothing else)
-//   node build.mjs --release    production build + build/h6ai-<version>.{zip,tar.gz}
+//   node build.mjs --release    production build + build/h6ai-<version>.{zip,tar.gz} (installer bundle)
 
 import {execFileSync} from 'node:child_process';
 import {cp, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
@@ -128,14 +128,30 @@ const buildOnce = async () => {
     return pkg;
 };
 
-const release = pkg => {
+// Release bundle h6ai-<version>/: the built _h6ai folder (copy it into a web root by hand), plus
+// the installer (native or Docker) and the nginx/PHP configuration both share.
+const RELEASE_FILES = ['install.sh', 'deploy', 'README.md', 'CHANGELOG.md', 'SECURITY.md', 'LICENSE',
+    'docs/INSTALL.md', 'docs/DEPLOYMENT.md',
+    // install.sh --docker builds the image from the bundle (Dockerfile stage "prebuilt")
+    'Dockerfile', 'compose.yaml', '.dockerignore', '.env.example', 'docker'];
+
+const release = async pkg => {
     const base = `${pkg.name}-${pkg.version}`;
-    execFileSync('tar', ['-czf', `${base}.tar.gz`, '_h6ai'], {cwd: BUILD, stdio: 'inherit'});
+    const stage = join(BUILD, base);
+    await rm(stage, {recursive: true, force: true});
+    await cp(DEST, join(stage, '_h6ai'), {recursive: true});
+    for (const file of RELEASE_FILES) {
+        await cp(join(ROOT, file), join(stage, file), {recursive: true});
+    }
+    await rm(join(BUILD, `${base}.tar.gz`), {force: true});
+    await rm(join(BUILD, `${base}.zip`), {force: true});
+    execFileSync('tar', ['-czf', `${base}.tar.gz`, '--owner=0', '--group=0', base], {cwd: BUILD, stdio: 'inherit'});
     try {
-        execFileSync('zip', ['-qr9', `${base}.zip`, '_h6ai'], {cwd: BUILD, stdio: 'inherit'});
+        execFileSync('zip', ['-qr9', `${base}.zip`, base], {cwd: BUILD, stdio: 'inherit'});
     } catch {
         console.warn('zip not available, only the .tar.gz was created');
     }
+    await rm(stage, {recursive: true, force: true});
     console.log(`release packages written to ${relative(ROOT, BUILD)}/${base}.*`);
 };
 
@@ -143,7 +159,7 @@ const main = async () => {
     const pkg = await buildOnce();
 
     if (RELEASE) {
-        release(pkg);
+        await release(pkg);
     }
 
     if (WATCH) {

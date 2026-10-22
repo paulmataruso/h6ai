@@ -116,6 +116,9 @@ test('partial Range reads and HEAD requests are not logged; Range from 0 is', as
         return;
     }
     const mark = Date.now();
+    // entries from earlier tests (e.g. full big.bin downloads seconds ago) are not ours
+    const key = e => JSON.stringify(e);
+    const seen = new Set((await list()).entries.map(key));
     assert.equal((await get('/big/big.bin', {headers: {Range: 'bytes=1048576-1049599'}})).status, 206);
     assert.equal((await request('HEAD', '/docs/data.json')).status, 200);
     assert.equal((await get('/docs/code.js', {headers: {Range: 'bytes=0-9'}})).status, 206);
@@ -123,7 +126,7 @@ test('partial Range reads and HEAD requests are not logged; Range from 0 is', as
     const {hit} = await findEntry(e => timeOf(e) >= mark - 5000 && e.path === '/docs/code.js');
     assert.ok(hit, 'Range starting at 0 is a (start of a) download');
     const {entries} = await list();
-    const newer = entries.filter(e => timeOf(e) >= mark - 5000);
+    const newer = entries.filter(e => !seen.has(key(e)));
     assert.ok(!newer.some(e => e.path === '/big/big.bin'), 'mid-file Range read was logged');
     assert.ok(!newer.some(e => e.path === '/docs/data.json'), 'HEAD request was logged');
 });

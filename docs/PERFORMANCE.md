@@ -1,10 +1,11 @@
 # Performance
 
-Measured with `test-integration/bench.sh` against the Docker setup (`compose.yaml`), on
+Measured with `test-integration/bench.sh` against the Docker development setup
+(`compose.yaml` + `compose.dev.yaml`), on
 2026-10-22. Re-run it after changes:
 
 ```sh
-docker compose up -d --build        # wait until big/big-7g.bin exists: docker compose logs h6ai | grep big
+docker compose -f compose.yaml -f compose.dev.yaml up -d --build   # wait until big/big-7g.bin exists: docker compose logs h6ai | grep big
 test-integration/bench.sh
 ```
 
@@ -53,7 +54,7 @@ the "inside the container" numbers. All figures are single runs on a shared VM, 
 
 **Fixed:** archives send `X-Accel-Buffering: no`, so nginx relays them through a single
 `fastcgi_buffer_size` buffer. The default of one page (4 KiB) capped archives at ~19 MiB/s, and
-`docker/nginx/h6ai.conf` now sets 256 KiB (6× faster).
+`deploy/nginx/server.conf` now sets 256 KiB (6× faster).
 
 Remaining bottlenecks, for follow-up in `src/_h6ai/private/php/ext/class-archive.php`:
 

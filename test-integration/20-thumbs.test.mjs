@@ -1,7 +1,7 @@
 // Thumbnail endpoint: path traversal / hidden files (S1, S2, S14), resource limits (S3).
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {api, get, thumb, jpegSize} from './lib.mjs';
+import {api, get, thumb, jpegSize, adminSession} from './lib.mjs';
 
 const MAX_DIM = 2048;
 
@@ -23,7 +23,15 @@ const fetchThumb = async url => {
 };
 
 test('valid image thumbnails work for jpg/png/gif/webp/avif and are served as JPEG', async () => {
-    for (const name of ['photo.jpg', 'photo.png', 'photo.gif', 'photo.webp', 'photo.avif']) {
+    // AVIF needs a GD built with libavif (the Docker image; not e.g. Ubuntu 24.04's PHP)
+    const {setup} = await adminSession();
+    const names = ['photo.jpg', 'photo.png', 'photo.gif', 'photo.webp'];
+    if (setup.HAS_PHP_AVIF) {
+        names.push('photo.avif');
+    } else {
+        await expectNoThumb({type: 'img', href: '/images/photo.avif', width: 240, height: 180}, 'avif without GD support');
+    }
+    for (const name of names) {
         const r = await thumb({type: 'img', href: `/images/${name}`, width: 240, height: 180});
         assert.ok(r.url, `${name}: no thumbnail (${JSON.stringify(r.error || r.res.text.slice(0, 120))})`);
         const {size} = await fetchThumb(r.url);
@@ -106,7 +114,14 @@ test('S3: thumbnail requests are bounded in count', async () => {
     }
 });
 
-test('video thumbnails work for clips shorter than the seek offset', async () => {
+// Video and document thumbnails need external tools; native installs may lack them (e.g. no
+// ffmpeg on RHEL without RPM Fusion). The Docker image has all of them.
+test('video thumbnails work for clips shorter than the seek offset', async t => {
+    const {setup} = await adminSession();
+    if (!setup.HAS_CMD_FFMPEG && !setup.HAS_CMD_AVCONV) {
+        t.skip('no ffmpeg on this server');
+        return;
+    }
     for (const name of ['clip-5s.mp4', 'clip-20s.webm']) {
         const r = await thumb({type: 'mov', href: `/videos/${name}`, width: 240, height: 180});
         assert.ok(r.url, `${name}: no thumbnail`);
@@ -114,7 +129,12 @@ test('video thumbnails work for clips shorter than the seek offset', async () =>
     }
 });
 
-test('PDF thumbnails work', async () => {
+test('PDF thumbnails work', async t => {
+    const {setup} = await adminSession();
+    if (!setup.HAS_CMD_GS && !setup.HAS_CMD_MAGICK && !setup.HAS_CMD_CONVERT && !setup.HAS_CMD_GM) {
+        t.skip('no Ghostscript or ImageMagick on this server');
+        return;
+    }
     const r = await thumb({type: 'doc', href: '/docs/sample.pdf', width: 240, height: 180});
     assert.ok(r.url, 'sample.pdf: no thumbnail');
     await fetchThumb(r.url);

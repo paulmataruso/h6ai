@@ -7,10 +7,10 @@ Thanks for helping! A few ground rules keep h6ai small, fast and safe.
 ```sh
 npm ci
 npm run build:dev          # or: npm run watch
-docker compose up -d --build   # nginx + PHP-FPM test environment with sample data
+docker compose -f compose.yaml -f compose.dev.yaml up -d --build   # test environment with sample data
 ```
 
-The test site runs at `http://$H6AI_BIND:$H6AI_PORT/` (see `compose.yaml`). Files you put into
+The test site runs at `http://$H6AI_BIND:$H6AI_PORT/` (see `compose.dev.yaml`). Files you put into
 `./webroot/` show up there.
 
 ## Checks before a pull request
@@ -20,7 +20,11 @@ npm run check              # ESLint + unit tests
 npm run lint:php           # php -l in Docker
 npm run test:integration   # API, security and permission regression tests against the container
 npm run test:e2e           # browser tests (Playwright in Docker)
+npm run lint:sh            # shellcheck for the installer and container scripts
 ```
+
+Changes to `install.sh`, `deploy/` or the PHP requirements: also run `npm run test:native`
+(about 5 minutes per distribution, `test-native/run.sh debian12` for one).
 
 ## Guidelines
 
@@ -44,6 +48,8 @@ npm run test:e2e           # browser tests (Playwright in Docker)
 | `src/_h6ai/private/conf` | default options, types, translations |
 | `src/_h6ai/public/js` | frontend modules (bundled to `public/js/scripts.js`) |
 | `src/_h6ai/public/css` | styles (bundled to `public/css/styles.css`) |
-| `docker/` | nginx, PHP-FPM, seed data for the test environment |
-| `test/` | unit tests · `test-integration/` API/security tests · `test-e2e/` browser tests |
+| `install.sh` | native installer |
+| `deploy/` | nginx and PHP configuration shared by Docker and the native install |
+| `docker/` | container entrypoint, seed data for the test environment |
+| `test/` | unit tests · `test-integration/` API/security tests · `test-e2e/` browser tests · `test-native/` installer tests |
 | `docs/` | audit, plan, deployment, performance, project website |
