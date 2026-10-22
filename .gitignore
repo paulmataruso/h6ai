@@ -4,3 +4,18 @@
 /local/
 /node_modules/
 /npm-debug.log
+/test-e2e/node_modules/
+/test-e2e/shots/
+/test-e2e/package*.json
+/webroot/
+
+# impeccable design skill: the launcher downloads its binary on first run; live-mode sessions are local
+/.claude/skills/impeccable/scripts/bin/
+/.impeccable/live/
+
+# runtime state when running straight from src/: users, settings, activity log, caches, local overrides
+/src/_h6ai/private/data/*
+!/src/_h6ai/private/data/README.md
+/src/_h6ai/private/cache/
+/src/_h6ai/public/cache/
+/src/_h6ai/private/conf/options.local.json
