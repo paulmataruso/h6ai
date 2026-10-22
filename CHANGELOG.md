@@ -1,6 +1,79 @@
 # Changelog
 
 
+## v1.0.0 (h6ai) - *unreleased*
+
+First release as **h6ai**, a maintained and modernised fork of h5ai 0.30.0.
+
+Security (see `docs/AUDIT.md` for details and `test-integration/` for regression tests)
+
+* fix: thumbnail API accepted any path (traversal outside the root, hidden folders) and ran
+  ffmpeg/ImageMagick on it (S1, S2)
+* fix: unbounded thumbnail dimensions and decompression bombs (S3)
+* fix: stored XSS through file names in fallback mode (S4)
+* fix: stored XSS through markdown previews and custom header/footer files (S5)
+* fix: admin login used unsalted SHA-512, an empty default password, non constant-time comparison,
+  no rate limit and no session regeneration (S6); hardened session cookies (S7)
+* fix: CSRF and parameter smuggling via `$_REQUEST` and text/plain JSON (S8)
+* fix: ReDoS, regex delimiter injection and endless symlink loops in search (S9)
+* fix: archive downloads accepted entries outside the base folder, injectable filenames, broken
+  names > 100 bytes and files > 8 GiB (S10)
+* fix: custom header lookup outside managed folders (S11)
+* add: Content-Security-Policy and security headers (S12)
+* fix: folder size recursion on symlink cycles (S13)
+
+Features
+
+* users, roles and per-folder permissions with an admin UI; file access enforced via nginx
+  `auth_request`
+* completely redesigned UI: dark only, five themes (Midnight default, Graphite, Deep Sea, Ember,
+  OLED Black; admin sets the site default, visitors can pick their own), responsive layout,
+  keyboard navigation, accessible controls (WCAG AA, axe-checked), new icon set, new preview
+  lightbox (swipe, download)
+* the download is the hero: every file row carries a size-labelled download chip; clicking a file
+  that has no preview unfolds the row into a download band (Download button with the size, direct
+  link, resumable `curl`/`wget` commands, QR code); a stamped confirmation follows every download.
+  The admin chooses what a click on a file name does (download band, single-click download for
+  non-previewable files, or always download)
+* packaged downloads name their contents ("Download 3 items · 1.2 GB · .tar"), show "Preparing…"
+  until the stream starts, and selections can be cleared in one click
+* folder groups and "anon" download-only accounts: an anon user sees and downloads only the folder
+  groups shared with them, at the level chosen per group; everything else stays invisible
+* admin: access checker ("who can see this folder, and which rule decides it"), activity log with
+  download / archive / login statistics, Google & SEO settings, theme gallery
+* Google integration: Search Console verification and GA4 / Tag Manager from a pasted snippet,
+  server-side GA4 `file_download` events (Measurement Protocol) that also count direct links and
+  `curl`/`wget`, generated `robots.txt` and `sitemap.xml` for public content, CSP updated to match
+* CVE-2026-109618 (PHP multipart RCE): patched PHP 8.3.36 base image with a build-time version
+  gate, plus nginx rejecting multipart bodies; CVE-2026-10961 (stored XSS via served user files):
+  HTML/SVG/XML in the share are served with a sandboxing CSP
+* login/account menu on the listing, change own password
+* `options.local.json` overrides, deep-merged over `options.json`
+* WebP/AVIF thumbnails, more audio/image types, EXIF orientation for all thumbnails, video
+  thumbnails for clips shorter than 10 s
+* persistent folder size cache, bounded thumbnail cache, cache-busted immutable thumbnails
+* Matomo replaces Piwik (old key still read); Google Universal Analytics removed (shut down 2023)
+* Docker image (nginx + PHP-FPM, OPcache/JIT, tuned for large files)
+
+Breaking
+
+* requires PHP 8.2+, nginx is the supported server
+* the empty default admin password is gone; set `passhash`/`H5AI_PASSHASH` or create users
+* the server only accepts the configured `download.type`
+* Google Fonts are no longer loaded by default (system fonts are used)
+* `filter` is enabled by default
+* the folder tree is hidden by default (`tree.show: false`); visitors switch it on in the settings drawer
+* `view.colorScheme` and the light/auto themes are gone: h6ai is dark only, with five themes
+
+Development
+
+* replace ghu/webpack/babel/uglify/less/pug with esbuild and plain CSS/PHP templates
+* ESLint 9, node:test unit tests, integration test suite
+* update `marked` to 18, add `dompurify` 3, update `kjua`, `lolight`
+
+
+## v0.30.0 (h5ai) - *never released upstream*
+
 * now require PHP 7.0.0+
 * fix archive-single-item problem
 * add header/footer search stop condition
