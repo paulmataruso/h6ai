@@ -19,3 +19,4 @@
 /src/_h6ai/private/cache/
 /src/_h6ai/public/cache/
 /src/_h6ai/private/conf/options.local.json
+/.claude/scheduled_tasks.lock

@@ -1,0 +1,1095 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T18:17:32+00:00",
+  "title": "Design System: h6ai",
+  "extensions": {
+    "colorMeta": {
+      "indigo-black": {
+        "role": "neutral",
+        "displayName": "Indigo Black",
+        "canonical": "#0b0d14",
+        "oklch": "oklch(16.0% 0.015 272.2)",
+        "purpose": "Page ground, input ground, sticky column header.",
+        "tonalRamp": [
+          "oklch(15.0% 0.015 272.2)",
+          "oklch(26.4% 0.015 272.2)",
+          "oklch(37.9% 0.015 272.2)",
+          "oklch(49.3% 0.015 272.2)",
+          "oklch(60.7% 0.015 272.2)",
+          "oklch(72.1% 0.015 272.2)",
+          "oklch(83.6% 0.015 272.2)",
+          "oklch(95.0% 0.015 272.2)"
+        ]
+      },
+      "indigo-night": {
+        "role": "neutral",
+        "displayName": "Indigo Night",
+        "canonical": "#11141e",
+        "oklch": "oklch(19.3% 0.021 271.4)",
+        "purpose": "First raised plane: top bar, band, dialogs, menus, admin cards, grid tiles.",
+        "tonalRamp": [
+          "oklch(15.0% 0.021 271.4)",
+          "oklch(26.4% 0.021 271.4)",
+          "oklch(37.9% 0.021 271.4)",
+          "oklch(49.3% 0.021 271.4)",
+          "oklch(60.7% 0.021 271.4)",
+          "oklch(72.1% 0.021 271.4)",
+          "oklch(83.6% 0.021 271.4)",
+          "oklch(95.0% 0.021 271.4)"
+        ]
+      },
+      "indigo-dusk": {
+        "role": "neutral",
+        "displayName": "Indigo Dusk",
+        "canonical": "#181c29",
+        "oklch": "oklch(22.9% 0.026 271.0)",
+        "purpose": "Second raised plane: secondary buttons, chips, stamped ticket, thumbnails.",
+        "tonalRamp": [
+          "oklch(15.0% 0.026 271.0)",
+          "oklch(26.4% 0.026 271.0)",
+          "oklch(37.9% 0.026 271.0)",
+          "oklch(49.3% 0.026 271.0)",
+          "oklch(60.7% 0.026 271.0)",
+          "oklch(72.1% 0.026 271.0)",
+          "oklch(83.6% 0.026 271.0)",
+          "oklch(95.0% 0.026 271.0)"
+        ]
+      },
+      "slate-hairline": {
+        "role": "neutral",
+        "displayName": "Slate Hairline",
+        "canonical": "#232838",
+        "oklch": "oklch(27.9% 0.030 270.9)",
+        "purpose": "Every 1px divider and container edge.",
+        "tonalRamp": [
+          "oklch(15.0% 0.030 270.9)",
+          "oklch(26.4% 0.030 270.9)",
+          "oklch(37.9% 0.030 270.9)",
+          "oklch(49.3% 0.030 270.9)",
+          "oklch(60.7% 0.030 270.9)",
+          "oklch(72.1% 0.030 270.9)",
+          "oklch(83.6% 0.030 270.9)",
+          "oklch(95.0% 0.030 270.9)"
+        ]
+      },
+      "slate-rule": {
+        "role": "neutral",
+        "displayName": "Slate Rule",
+        "canonical": "#353d54",
+        "oklch": "oklch(36.3% 0.041 269.5)",
+        "purpose": "Stronger edges, hovered tiles, keycaps.",
+        "tonalRamp": [
+          "oklch(15.0% 0.041 269.5)",
+          "oklch(26.4% 0.041 269.5)",
+          "oklch(37.9% 0.041 269.5)",
+          "oklch(49.3% 0.041 269.5)",
+          "oklch(60.7% 0.041 269.5)",
+          "oklch(72.1% 0.041 269.5)",
+          "oklch(83.6% 0.041 269.5)",
+          "oklch(95.0% 0.030 269.5)"
+        ]
+      },
+      "slate-input-edge": {
+        "role": "neutral",
+        "displayName": "Slate Input Edge",
+        "canonical": "#5c6584",
+        "oklch": "oklch(51.1% 0.051 272.0)",
+        "purpose": "Field and button borders, off switch track (>= 3:1).",
+        "tonalRamp": [
+          "oklch(15.0% 0.051 272.0)",
+          "oklch(26.4% 0.051 272.0)",
+          "oklch(37.9% 0.051 272.0)",
+          "oklch(49.3% 0.051 272.0)",
+          "oklch(60.7% 0.051 272.0)",
+          "oklch(72.1% 0.051 272.0)",
+          "oklch(83.6% 0.051 272.0)",
+          "oklch(95.0% 0.030 272.0)"
+        ]
+      },
+      "frost-white": {
+        "role": "neutral",
+        "displayName": "Frost White",
+        "canonical": "#e8eaf2",
+        "oklch": "oklch(93.8% 0.011 274.9)",
+        "purpose": "Primary text.",
+        "tonalRamp": [
+          "oklch(15.0% 0.011 274.9)",
+          "oklch(26.4% 0.011 274.9)",
+          "oklch(37.9% 0.011 274.9)",
+          "oklch(49.3% 0.011 274.9)",
+          "oklch(60.7% 0.011 274.9)",
+          "oklch(72.1% 0.011 274.9)",
+          "oklch(83.6% 0.011 274.9)",
+          "oklch(95.0% 0.011 274.9)"
+        ]
+      },
+      "fog-grey": {
+        "role": "neutral",
+        "displayName": "Fog Grey",
+        "canonical": "#a3aabd",
+        "oklch": "oklch(73.9% 0.028 269.6)",
+        "purpose": "Secondary text, column headers, resting download chip, field labels.",
+        "tonalRamp": [
+          "oklch(15.0% 0.028 269.6)",
+          "oklch(26.4% 0.028 269.6)",
+          "oklch(37.9% 0.028 269.6)",
+          "oklch(49.3% 0.028 269.6)",
+          "oklch(60.7% 0.028 269.6)",
+          "oklch(72.1% 0.028 269.6)",
+          "oklch(83.6% 0.028 269.6)",
+          "oklch(95.0% 0.028 269.6)"
+        ]
+      },
+      "pewter-grey": {
+        "role": "neutral",
+        "displayName": "Pewter Grey",
+        "canonical": "#8d94a9",
+        "oklch": "oklch(66.8% 0.032 270.9)",
+        "purpose": "Faint text and placeholders (>= 4.5:1).",
+        "tonalRamp": [
+          "oklch(15.0% 0.032 270.9)",
+          "oklch(26.4% 0.032 270.9)",
+          "oklch(37.9% 0.032 270.9)",
+          "oklch(49.3% 0.032 270.9)",
+          "oklch(60.7% 0.032 270.9)",
+          "oklch(72.1% 0.032 270.9)",
+          "oklch(83.6% 0.032 270.9)",
+          "oklch(95.0% 0.030 270.9)"
+        ]
+      },
+      "hover-veil": {
+        "role": "neutral",
+        "displayName": "Hover Veil",
+        "canonical": "rgba(232,234,242, 0.06)",
+        "oklch": "oklch(93.8% 0.011 274.9 / 0.06)",
+        "purpose": "Row and tool hover.",
+        "tonalRamp": [
+          "oklch(15.0% 0.011 274.9)",
+          "oklch(26.4% 0.011 274.9)",
+          "oklch(37.9% 0.011 274.9)",
+          "oklch(49.3% 0.011 274.9)",
+          "oklch(60.7% 0.011 274.9)",
+          "oklch(72.1% 0.011 274.9)",
+          "oklch(83.6% 0.011 274.9)",
+          "oklch(95.0% 0.011 274.9)"
+        ]
+      },
+      "pressed-veil": {
+        "role": "neutral",
+        "displayName": "Pressed Veil",
+        "canonical": "rgba(232,234,242, 0.10)",
+        "oklch": "oklch(93.8% 0.011 274.9 / 0.1)",
+        "purpose": "Pressed and active tools.",
+        "tonalRamp": [
+          "oklch(15.0% 0.011 274.9)",
+          "oklch(26.4% 0.011 274.9)",
+          "oklch(37.9% 0.011 274.9)",
+          "oklch(49.3% 0.011 274.9)",
+          "oklch(60.7% 0.011 274.9)",
+          "oklch(72.1% 0.011 274.9)",
+          "oklch(83.6% 0.011 274.9)",
+          "oklch(95.0% 0.011 274.9)"
+        ]
+      },
+      "cornflower-link": {
+        "role": "secondary",
+        "displayName": "Cornflower Link",
+        "canonical": "#82a8ff",
+        "oklch": "oklch(74.0% 0.133 265.4)",
+        "purpose": "Links, focus rings, caret, text selection, \"on\" state of settings controls.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 265.4)",
+          "oklch(26.4% 0.133 265.4)",
+          "oklch(37.9% 0.133 265.4)",
+          "oklch(49.3% 0.133 265.4)",
+          "oklch(60.7% 0.133 265.4)",
+          "oklch(72.1% 0.133 265.4)",
+          "oklch(83.6% 0.097 265.4)",
+          "oklch(95.0% 0.030 265.4)"
+        ]
+      },
+      "cornflower-soft": {
+        "role": "secondary",
+        "displayName": "Cornflower Soft",
+        "canonical": "rgba(130,168,255, 0.14)",
+        "oklch": "oklch(74.0% 0.133 265.4 / 0.14)",
+        "purpose": "Focus halo, text selection, informational chips, checked radio cards.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 265.4)",
+          "oklch(26.4% 0.133 265.4)",
+          "oklch(37.9% 0.133 265.4)",
+          "oklch(49.3% 0.133 265.4)",
+          "oklch(60.7% 0.133 265.4)",
+          "oklch(72.1% 0.133 265.4)",
+          "oklch(83.6% 0.097 265.4)",
+          "oklch(95.0% 0.030 265.4)"
+        ]
+      },
+      "cornflower-action": {
+        "role": "secondary",
+        "displayName": "Cornflower Action",
+        "canonical": "#82a8ff",
+        "oklch": "oklch(74.0% 0.133 265.4)",
+        "purpose": "Fill of primary buttons outside the download path.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 265.4)",
+          "oklch(26.4% 0.133 265.4)",
+          "oklch(37.9% 0.133 265.4)",
+          "oklch(49.3% 0.133 265.4)",
+          "oklch(60.7% 0.133 265.4)",
+          "oklch(72.1% 0.133 265.4)",
+          "oklch(83.6% 0.097 265.4)",
+          "oklch(95.0% 0.030 265.4)"
+        ]
+      },
+      "cornflower-action-hover": {
+        "role": "secondary",
+        "displayName": "Cornflower Action Hover",
+        "canonical": "#91b2ff",
+        "oklch": "oklch(76.9% 0.117 266.0)",
+        "purpose": "Hover fill of primary non-download buttons.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 266.0)",
+          "oklch(26.4% 0.117 266.0)",
+          "oklch(37.9% 0.117 266.0)",
+          "oklch(49.3% 0.117 266.0)",
+          "oklch(60.7% 0.117 266.0)",
+          "oklch(72.1% 0.117 266.0)",
+          "oklch(83.6% 0.097 266.0)",
+          "oklch(95.0% 0.030 266.0)"
+        ]
+      },
+      "lavender-violet": {
+        "role": "primary",
+        "displayName": "Lavender Violet",
+        "canonical": "#a98dfb",
+        "oklch": "oklch(71.5% 0.158 293.7)",
+        "purpose": "Reserved download/selection accent: chip, archive action, stamped ticket, selected rows, admin download chips and theme miniatures.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 293.7)",
+          "oklch(26.4% 0.156 293.7)",
+          "oklch(37.9% 0.158 293.7)",
+          "oklch(49.3% 0.158 293.7)",
+          "oklch(60.7% 0.158 293.7)",
+          "oklch(72.1% 0.158 293.7)",
+          "oklch(83.6% 0.097 293.7)",
+          "oklch(95.0% 0.030 293.7)"
+        ]
+      },
+      "lavender-violet-hover": {
+        "role": "primary",
+        "displayName": "Lavender Violet Hover",
+        "canonical": "#b39bfb",
+        "oklch": "oklch(74.8% 0.137 294.3)",
+        "purpose": "Hover step of the reserved accent.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 294.3)",
+          "oklch(26.4% 0.137 294.3)",
+          "oklch(37.9% 0.137 294.3)",
+          "oklch(49.3% 0.137 294.3)",
+          "oklch(60.7% 0.137 294.3)",
+          "oklch(72.1% 0.137 294.3)",
+          "oklch(83.6% 0.097 294.3)",
+          "oklch(95.0% 0.030 294.3)"
+        ]
+      },
+      "lavender-violet-soft": {
+        "role": "primary",
+        "displayName": "Lavender Violet Soft",
+        "canonical": "rgba(169,141,251, 0.16)",
+        "oklch": "oklch(71.5% 0.158 293.7 / 0.16)",
+        "purpose": "Wash behind the download chip, archive action and the ticket stub.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 293.7)",
+          "oklch(26.4% 0.156 293.7)",
+          "oklch(37.9% 0.158 293.7)",
+          "oklch(49.3% 0.158 293.7)",
+          "oklch(60.7% 0.158 293.7)",
+          "oklch(72.1% 0.158 293.7)",
+          "oklch(83.6% 0.097 293.7)",
+          "oklch(95.0% 0.030 293.7)"
+        ]
+      },
+      "ink-violet": {
+        "role": "primary",
+        "displayName": "Ink Violet",
+        "canonical": "#140a33",
+        "oklch": "oklch(19.0% 0.076 288.1)",
+        "purpose": "Text on a solid accent fill.",
+        "tonalRamp": [
+          "oklch(15.0% 0.076 288.1)",
+          "oklch(26.4% 0.076 288.1)",
+          "oklch(37.9% 0.076 288.1)",
+          "oklch(49.3% 0.076 288.1)",
+          "oklch(60.7% 0.076 288.1)",
+          "oklch(72.1% 0.076 288.1)",
+          "oklch(83.6% 0.076 288.1)",
+          "oklch(95.0% 0.030 288.1)"
+        ]
+      },
+      "selection-wash": {
+        "role": "primary",
+        "displayName": "Selection Wash",
+        "canonical": "rgba(169,141,251, 0.18)",
+        "oklch": "oklch(71.5% 0.158 293.7 / 0.18)",
+        "purpose": "Fill of selected rows.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 293.7)",
+          "oklch(26.4% 0.156 293.7)",
+          "oklch(37.9% 0.158 293.7)",
+          "oklch(49.3% 0.158 293.7)",
+          "oklch(60.7% 0.158 293.7)",
+          "oklch(72.1% 0.158 293.7)",
+          "oklch(83.6% 0.097 293.7)",
+          "oklch(95.0% 0.030 293.7)"
+        ]
+      },
+      "selection-edge": {
+        "role": "primary",
+        "displayName": "Selection Edge",
+        "canonical": "rgba(169,141,251, 0.55)",
+        "oklch": "oklch(71.5% 0.158 293.7 / 0.55)",
+        "purpose": "1px inset ring of selected rows.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 293.7)",
+          "oklch(26.4% 0.156 293.7)",
+          "oklch(37.9% 0.158 293.7)",
+          "oklch(49.3% 0.158 293.7)",
+          "oklch(60.7% 0.158 293.7)",
+          "oklch(72.1% 0.158 293.7)",
+          "oklch(83.6% 0.097 293.7)",
+          "oklch(95.0% 0.030 293.7)"
+        ]
+      },
+      "gradient-cobalt": {
+        "role": "primary",
+        "displayName": "Gradient Cobalt",
+        "canonical": "#3c60e4",
+        "oklch": "oklch(54.3% 0.204 267.4)",
+        "purpose": "Start stop of the Midnight Download button gradient (135deg); each skin has its own --accent-grad.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 267.4)",
+          "oklch(26.4% 0.156 267.4)",
+          "oklch(37.9% 0.204 267.4)",
+          "oklch(49.3% 0.204 267.4)",
+          "oklch(60.7% 0.204 267.4)",
+          "oklch(72.1% 0.165 267.4)",
+          "oklch(83.6% 0.097 267.4)",
+          "oklch(95.0% 0.030 267.4)"
+        ]
+      },
+      "gradient-violet": {
+        "role": "primary",
+        "displayName": "Gradient Violet",
+        "canonical": "#7a4fe0",
+        "oklch": "oklch(55.5% 0.209 291.8)",
+        "purpose": "End stop of the Download button gradient (135deg).",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 291.8)",
+          "oklch(26.4% 0.156 291.8)",
+          "oklch(37.9% 0.209 291.8)",
+          "oklch(49.3% 0.209 291.8)",
+          "oklch(60.7% 0.209 291.8)",
+          "oklch(72.1% 0.165 291.8)",
+          "oklch(83.6% 0.097 291.8)",
+          "oklch(95.0% 0.030 291.8)"
+        ]
+      },
+      "logo-azure": {
+        "role": "primary",
+        "displayName": "Logo Azure",
+        "canonical": "#4c8dff",
+        "oklch": "oklch(65.8% 0.182 260.7)",
+        "purpose": "Logo gradient start; fixed across skins, logo artwork only.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 260.7)",
+          "oklch(26.4% 0.156 260.7)",
+          "oklch(37.9% 0.182 260.7)",
+          "oklch(49.3% 0.182 260.7)",
+          "oklch(60.7% 0.182 260.7)",
+          "oklch(72.1% 0.165 260.7)",
+          "oklch(83.6% 0.097 260.7)",
+          "oklch(95.0% 0.030 260.7)"
+        ]
+      },
+      "logo-violet": {
+        "role": "primary",
+        "displayName": "Logo Violet",
+        "canonical": "#8b5cf6",
+        "oklch": "oklch(60.6% 0.219 292.7)",
+        "purpose": "Logo gradient end; fixed across skins, logo artwork only.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 292.7)",
+          "oklch(26.4% 0.156 292.7)",
+          "oklch(37.9% 0.219 292.7)",
+          "oklch(49.3% 0.219 292.7)",
+          "oklch(60.7% 0.219 292.7)",
+          "oklch(72.1% 0.165 292.7)",
+          "oklch(83.6% 0.097 292.7)",
+          "oklch(95.0% 0.030 292.7)"
+        ]
+      },
+      "pure-white": {
+        "role": "neutral",
+        "displayName": "Pure White",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "purpose": "Text on the Download button gradient.",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0.0)",
+          "oklch(26.4% 0.000 0.0)",
+          "oklch(37.9% 0.000 0.0)",
+          "oklch(49.3% 0.000 0.0)",
+          "oklch(60.7% 0.000 0.0)",
+          "oklch(72.1% 0.000 0.0)",
+          "oklch(83.6% 0.000 0.0)",
+          "oklch(95.0% 0.000 0.0)"
+        ]
+      },
+      "coral-red": {
+        "role": "status",
+        "displayName": "Coral Red",
+        "canonical": "#ff6b63",
+        "oklch": "oklch(71.0% 0.182 25.9)",
+        "purpose": "Danger, errors, \"none\" access level.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 25.9)",
+          "oklch(26.4% 0.156 25.9)",
+          "oklch(37.9% 0.182 25.9)",
+          "oklch(49.3% 0.182 25.9)",
+          "oklch(60.7% 0.182 25.9)",
+          "oklch(72.1% 0.165 25.9)",
+          "oklch(83.6% 0.097 25.9)",
+          "oklch(95.0% 0.030 25.9)"
+        ]
+      },
+      "leaf-green": {
+        "role": "status",
+        "displayName": "Leaf Green",
+        "canonical": "#4cc96a",
+        "oklch": "oklch(74.4% 0.174 148.4)",
+        "purpose": "Success.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 148.4)",
+          "oklch(26.4% 0.156 148.4)",
+          "oklch(37.9% 0.174 148.4)",
+          "oklch(49.3% 0.174 148.4)",
+          "oklch(60.7% 0.174 148.4)",
+          "oklch(72.1% 0.165 148.4)",
+          "oklch(83.6% 0.097 148.4)",
+          "oklch(95.0% 0.030 148.4)"
+        ]
+      },
+      "ochre-amber": {
+        "role": "status",
+        "displayName": "Ochre Amber",
+        "canonical": "#e3ad3c",
+        "oklch": "oklch(77.8% 0.140 82.0)",
+        "purpose": "Warnings, \"list\" access level, setup banner.",
+        "tonalRamp": [
+          "oklch(15.0% 0.089 82.0)",
+          "oklch(26.4% 0.140 82.0)",
+          "oklch(37.9% 0.140 82.0)",
+          "oklch(49.3% 0.140 82.0)",
+          "oklch(60.7% 0.140 82.0)",
+          "oklch(72.1% 0.140 82.0)",
+          "oklch(83.6% 0.097 82.0)",
+          "oklch(95.0% 0.030 82.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Admin page title only (24px)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialog headings (20px)."
+      },
+      "title-card": {
+        "displayName": "Title Card",
+        "purpose": "Admin card and section headings (18px)."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The h6ai wordmark in the top bar; 16px also for empty-state and preview headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Everything by default: file names, rows, menus. Tabular numerals; prose capped at 72ch."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Primary and Download button labels (600); secondary buttons use 500."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Band line labels, notice metadata, help text, small buttons."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase column headers and group headings on the shared --track-caps (.05em). Never a kicker above a heading."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Direct link and curl/wget commands, inline code, keycaps."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-md",
+        "value": "0 4px 16px rgba(0, 0, 0, 0.3)",
+        "purpose": "Raised in-flow surfaces: the expansion band and the Download button only."
+      },
+      {
+        "name": "shadow",
+        "value": "0 12px 32px rgba(0, 0, 0, 0.55)",
+        "purpose": "Floating overlays: dialogs, account menu, notifications, stamped notice, preview chrome, narrow settings drawer."
+      },
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.45)",
+        "purpose": "Active segment of the segmented control and the switch thumb."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px var(--link-soft)",
+        "purpose": "Focused text fields and the open filter input, with a --focus border."
+      },
+      {
+        "name": "focus-outline",
+        "value": "outline: 2px solid var(--focus); outline-offset: 2px",
+        "purpose": "Default :focus-visible ring for everything else."
+      },
+      {
+        "name": "selection-ring",
+        "value": "inset 0 0 0 1px var(--selection-border)",
+        "purpose": "Selected rows, over --selection."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.2, .7, .2, 1)",
+        "purpose": "State changes: hover, colour, opacity, switch track (120-150ms)."
+      },
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Arrivals: dialogs and notifications 160ms, band 180ms, stamped notice 220ms, filter input width 200ms, switch thumb 150ms."
+      },
+      {
+        "name": "duration-state",
+        "value": "120ms-150ms",
+        "purpose": "Hover and state transitions on rows, chips, buttons and tools."
+      },
+      {
+        "name": "band-in",
+        "value": "180ms, opacity 0 and translateY(-4px) to rest",
+        "purpose": "Expansion band arrival."
+      },
+      {
+        "name": "stamp-in",
+        "value": "320ms ease-out; 0% opacity 0, scale(1.12) rotate(-2deg); 55% opacity 1, scale(.98) rotate(.4deg); 100% none",
+        "purpose": "The one authored motion moment: the ticket landing in the band (stamp-again replays it on a second click) and the check icon in the bottom notice."
+      },
+      {
+        "name": "notice-in",
+        "value": "220ms, opacity 0 and translateY(8px) to rest",
+        "purpose": "Stamped download notice arrival."
+      },
+      {
+        "name": "dialog-in",
+        "value": "160ms, opacity 0, translateY(8px) scale(.98) to rest",
+        "purpose": "Dialogs and notifications."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce): transitions 0.01ms; band, ticket stamp, notice icon, dialogs, notices, preview fade-in 120ms; busy pulses stop at opacity .6; preview spinner slows to 2.4s",
+        "purpose": "Nothing travels or scales; feedback stays visible."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "560px",
+        "query": "(max-width: 560px)",
+        "purpose": "Band stacks (ticket and close, then Download again), commands wrap, stamped notice spans the width."
+      },
+      {
+        "name": "compact",
+        "value": "720px",
+        "query": "(max-width: 720px)",
+        "purpose": "Tree hidden, operator site name hidden (wordmark stays), archive action icon-only, settings drawer overlays, admin tabs scroll under a fade mask."
+      },
+      {
+        "name": "tiny",
+        "value": "360px",
+        "query": "(max-width: 360px)",
+        "purpose": "Brand only: the wordmark hides, the mark alone carries the brand."
+      },
+      {
+        "name": "medium",
+        "value": "1080px",
+        "query": "(max-width: 1080px)",
+        "purpose": "Info panel removed."
+      },
+      {
+        "name": "coarse",
+        "value": "pointer: coarse",
+        "query": "(pointer: coarse)",
+        "purpose": "Targets 44px, rows 48px, Download button 48px, checkbox 22px."
+      },
+      {
+        "name": "no-hover",
+        "value": "hover: none",
+        "query": "(hover: none)",
+        "purpose": "Checkboxes and download chips always visible."
+      }
+    ],
+    "skins": {
+      "midnight": {
+        "label": "Midnight",
+        "note": "indigo-tinted blue-black; brand violet marks downloads and selection",
+        "default": true,
+        "tokens": {
+          "--bg": "#0b0d14",
+          "--bg-elev": "#11141e",
+          "--bg-elev-2": "#181c29",
+          "--bg-input": "#0b0d14",
+          "--bg-hover": "rgba(232,234,242, 0.06)",
+          "--bg-pressed": "rgba(232,234,242, 0.10)",
+          "--border": "#232838",
+          "--border-strong": "#353d54",
+          "--border-input": "#5c6584",
+          "--text": "#e8eaf2",
+          "--text-muted": "#a3aabd",
+          "--text-faint": "#8d94a9",
+          "--link": "#82a8ff",
+          "--link-soft": "rgba(130,168,255, 0.14)",
+          "--focus": "#82a8ff",
+          "--action": "#82a8ff",
+          "--action-hover": "#91b2ff",
+          "--on-action": "#0b0d14",
+          "--accent": "#a98dfb",
+          "--accent-hover": "#b39bfb",
+          "--accent-soft": "rgba(169,141,251, 0.16)",
+          "--on-accent": "#140a33",
+          "--accent-grad": "linear-gradient(135deg, #3c60e4, #7a4fe0)",
+          "--on-grad": "#ffffff",
+          "--selection": "rgba(169,141,251, 0.18)",
+          "--selection-border": "rgba(169,141,251, 0.55)",
+          "--danger": "#ff6b63",
+          "--danger-soft": "rgba(255,107,99, 0.14)",
+          "--success": "#4cc96a",
+          "--success-soft": "rgba(76,201,106, 0.14)",
+          "--warn": "#e3ad3c",
+          "--warn-soft": "rgba(227,173,60, 0.15)",
+          "--overlay": "rgba(11,13,20, 0.95)",
+          "--backdrop": "rgba(0, 0, 0, 0.62)",
+          "--shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.45)",
+          "--shadow": "0 12px 32px rgba(0, 0, 0, 0.55)",
+          "--thumb-bg": "#181c29",
+          "--scrollbar": "rgba(232,234,242, 0.20)",
+          "--code-key": "#82a8ff",
+          "--code-str": "#4cc96a",
+          "--code-num": "#e3ad3c",
+          "--code-rex": "#ff6b63"
+        }
+      },
+      "graphite": {
+        "label": "Graphite",
+        "note": "neutral charcoal with zero tint, photos and thumbnails keep their colours",
+        "default": false,
+        "tokens": {
+          "--bg": "#121212",
+          "--bg-elev": "#19191a",
+          "--bg-elev-2": "#222224",
+          "--bg-input": "#121212",
+          "--bg-hover": "rgba(236,236,236, 0.06)",
+          "--bg-pressed": "rgba(236,236,236, 0.10)",
+          "--border": "#2b2b2e",
+          "--border-strong": "#3d3d42",
+          "--border-input": "#66666d",
+          "--text": "#ececec",
+          "--text-muted": "#adadb2",
+          "--text-faint": "#96969c",
+          "--link": "#8fb7ff",
+          "--link-soft": "rgba(143,183,255, 0.14)",
+          "--focus": "#8fb7ff",
+          "--action": "#8fb7ff",
+          "--action-hover": "#9cc0ff",
+          "--on-action": "#121212",
+          "--accent": "#b6a3ff",
+          "--accent-hover": "#bfaeff",
+          "--accent-soft": "rgba(182,163,255, 0.16)",
+          "--on-accent": "#16102e",
+          "--accent-grad": "linear-gradient(135deg, #4060d6, #7a58d8)",
+          "--on-grad": "#ffffff",
+          "--selection": "rgba(182,163,255, 0.18)",
+          "--selection-border": "rgba(182,163,255, 0.55)",
+          "--danger": "#ff6b63",
+          "--danger-soft": "rgba(255,107,99, 0.14)",
+          "--success": "#52c873",
+          "--success-soft": "rgba(82,200,115, 0.14)",
+          "--warn": "#e2ae47",
+          "--warn-soft": "rgba(226,174,71, 0.15)",
+          "--overlay": "rgba(18,18,18, 0.95)",
+          "--backdrop": "rgba(0, 0, 0, 0.62)",
+          "--shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.45)",
+          "--shadow": "0 12px 32px rgba(0, 0, 0, 0.55)",
+          "--thumb-bg": "#222224",
+          "--scrollbar": "rgba(236,236,236, 0.20)",
+          "--code-key": "#8fb7ff",
+          "--code-str": "#52c873",
+          "--code-num": "#e2ae47",
+          "--code-rex": "#ff6b63"
+        }
+      },
+      "deepsea": {
+        "label": "Deep Sea",
+        "note": "dark teal-navy; sea teal marks downloads and selection",
+        "default": false,
+        "tokens": {
+          "--bg": "#061317",
+          "--bg-elev": "#0a1b21",
+          "--bg-elev-2": "#0f252c",
+          "--bg-input": "#061317",
+          "--bg-hover": "rgba(225,240,242, 0.06)",
+          "--bg-pressed": "rgba(225,240,242, 0.10)",
+          "--border": "#173540",
+          "--border-strong": "#244a56",
+          "--border-input": "#3f6d79",
+          "--text": "#e1f0f2",
+          "--text-muted": "#98b8be",
+          "--text-faint": "#84a5ab",
+          "--link": "#74c6ff",
+          "--link-soft": "rgba(116,198,255, 0.14)",
+          "--focus": "#74c6ff",
+          "--action": "#74c6ff",
+          "--action-hover": "#85cdff",
+          "--on-action": "#061317",
+          "--accent": "#34d6c2",
+          "--accent-hover": "#4cdbc9",
+          "--accent-soft": "rgba(52,214,194, 0.16)",
+          "--on-accent": "#03201c",
+          "--accent-grad": "linear-gradient(135deg, #0e7f73, #156c87)",
+          "--on-grad": "#ffffff",
+          "--selection": "rgba(52,214,194, 0.18)",
+          "--selection-border": "rgba(52,214,194, 0.55)",
+          "--danger": "#ff7369",
+          "--danger-soft": "rgba(255,115,105, 0.14)",
+          "--success": "#58d38a",
+          "--success-soft": "rgba(88,211,138, 0.14)",
+          "--warn": "#e8b44a",
+          "--warn-soft": "rgba(232,180,74, 0.15)",
+          "--overlay": "rgba(6,19,23, 0.95)",
+          "--backdrop": "rgba(0, 0, 0, 0.62)",
+          "--shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.45)",
+          "--shadow": "0 12px 32px rgba(0, 0, 0, 0.55)",
+          "--thumb-bg": "#0f252c",
+          "--scrollbar": "rgba(225,240,242, 0.20)",
+          "--code-key": "#74c6ff",
+          "--code-str": "#58d38a",
+          "--code-num": "#e8b44a",
+          "--code-rex": "#ff7369"
+        }
+      },
+      "ember": {
+        "label": "Ember",
+        "note": "warm umber-black; amber marks downloads and selection, steel-blue links",
+        "default": false,
+        "tokens": {
+          "--bg": "#14100d",
+          "--bg-elev": "#1b1511",
+          "--bg-elev-2": "#241c17",
+          "--bg-input": "#14100d",
+          "--bg-hover": "rgba(243,235,228, 0.06)",
+          "--bg-pressed": "rgba(243,235,228, 0.10)",
+          "--border": "#33281f",
+          "--border-strong": "#4a3b2e",
+          "--border-input": "#7d6652",
+          "--text": "#f3ebe4",
+          "--text-muted": "#bcab9c",
+          "--text-faint": "#a59485",
+          "--link": "#8fb4d9",
+          "--link-soft": "rgba(143,180,217, 0.14)",
+          "--focus": "#8fb4d9",
+          "--action": "#8fb4d9",
+          "--action-hover": "#a6c4e3",
+          "--on-action": "#14100d",
+          "--accent": "#f6b445",
+          "--accent-hover": "#f7bd5b",
+          "--accent-soft": "rgba(246,180,69, 0.16)",
+          "--on-accent": "#2a1902",
+          "--accent-grad": "linear-gradient(135deg, #a85a12, #9c3d1a)",
+          "--on-grad": "#ffffff",
+          "--selection": "rgba(246,180,69, 0.18)",
+          "--selection-border": "rgba(246,180,69, 0.55)",
+          "--danger": "#ff6f61",
+          "--danger-soft": "rgba(255,111,97, 0.14)",
+          "--success": "#7cc96b",
+          "--success-soft": "rgba(124,201,107, 0.14)",
+          "--warn": "#f6b445",
+          "--warn-soft": "rgba(246,180,69, 0.15)",
+          "--overlay": "rgba(20,16,13, 0.95)",
+          "--backdrop": "rgba(0, 0, 0, 0.62)",
+          "--shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.45)",
+          "--shadow": "0 12px 32px rgba(0, 0, 0, 0.55)",
+          "--thumb-bg": "#241c17",
+          "--scrollbar": "rgba(243,235,228, 0.20)",
+          "--code-key": "#f2a07a",
+          "--code-str": "#7cc96b",
+          "--code-num": "#f6b445",
+          "--code-rex": "#ff6f61"
+        }
+      },
+      "oled": {
+        "label": "OLED Black",
+        "note": "true black for OLED screens, highest contrast",
+        "default": false,
+        "tokens": {
+          "--bg": "#000000",
+          "--bg-elev": "#0a0a0a",
+          "--bg-elev-2": "#141414",
+          "--bg-input": "#000000",
+          "--bg-hover": "rgba(245,245,245, 0.06)",
+          "--bg-pressed": "rgba(245,245,245, 0.10)",
+          "--border": "#1f1f1f",
+          "--border-strong": "#343434",
+          "--border-input": "#5e5e5e",
+          "--text": "#f5f5f5",
+          "--text-muted": "#a8a8a8",
+          "--text-faint": "#929292",
+          "--link": "#8fb7ff",
+          "--link-soft": "rgba(143,183,255, 0.14)",
+          "--focus": "#8fb7ff",
+          "--action": "#8fb7ff",
+          "--action-hover": "#9cc0ff",
+          "--on-action": "#000000",
+          "--accent": "#b39dff",
+          "--accent-hover": "#bca9ff",
+          "--accent-soft": "rgba(179,157,255, 0.16)",
+          "--on-accent": "#140a33",
+          "--accent-grad": "linear-gradient(135deg, #3c60e4, #7a4fe0)",
+          "--on-grad": "#ffffff",
+          "--selection": "rgba(179,157,255, 0.18)",
+          "--selection-border": "rgba(179,157,255, 0.55)",
+          "--danger": "#ff6b63",
+          "--danger-soft": "rgba(255,107,99, 0.14)",
+          "--success": "#4cc96a",
+          "--success-soft": "rgba(76,201,106, 0.14)",
+          "--warn": "#e3ad3c",
+          "--warn-soft": "rgba(227,173,60, 0.15)",
+          "--overlay": "rgba(0,0,0, 0.95)",
+          "--backdrop": "rgba(0, 0, 0, 0.62)",
+          "--shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.45)",
+          "--shadow": "0 12px 32px rgba(0, 0, 0, 0.55)",
+          "--thumb-bg": "#141414",
+          "--scrollbar": "rgba(245,245,245, 0.20)",
+          "--code-key": "#8fb7ff",
+          "--code-str": "#4cc96a",
+          "--code-num": "#e3ad3c",
+          "--code-rex": "#ff6b63"
+        }
+      }
+    },
+    "structureTokens": {
+      "source": "src/_h6ai/public/css/base.css",
+      "fontSans": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif",
+      "fontMono": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, \"Liberation Mono\", monospace",
+      "measure": "72ch",
+      "topbarHeight": "56px",
+      "panelWidth": "288px",
+      "treeWidth": "260px (tree off by default: options.json tree.show false)",
+      "target": "36px",
+      "targetCoarse": "44px",
+      "trackCaps": ".05em (--track-caps, every uppercase label)",
+      "global": "color-scheme: dark; font-variant-numeric: tabular-nums; caret-color: var(--link); ::selection uses --link-soft; thin scrollbars in --scrollbar."
+    },
+    "icons": "Inline SVG from js/lib/core/icons.js: 24x24 grid, 2px round strokes, currentColor, rendered 18px (15px in the download chip)."
+  },
+  "components": [
+    {
+      "name": "Download Button",
+      "kind": "button",
+      "refersTo": "button-download",
+      "description": "The one gradient button: starts a single-file download from the band, labelled with the size.",
+      "html": "<a class=\"ds-btn-download\" href=\"#\" download><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>Download 7.5 GB</span></a>",
+      "css": ".ds-ico { width: 18px; height: 18px; flex: none; display: block; } .ds-btn-download { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--s-5) 0 var(--s-4); border: 0; border-radius: var(--radius-sm); background: var(--accent-grad); color: var(--on-grad); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.2; text-decoration: none; white-space: nowrap; box-shadow: var(--shadow-md); transition: filter .12s var(--ease); } .ds-btn-download:hover { filter: brightness(1.08); } .ds-btn-download:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } @media (pointer: coarse) { .ds-btn-download { min-height: 48px; } }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary actions outside the download path (Log in, Save, Add user, Check) on the action colour.",
+      "html": "<button class=\"ds-btn ds-btn-primary\" type=\"button\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6L9 17l-5-5\"/></svg>Save</button>",
+      "css": ".ds-ico { width: 18px; height: 18px; flex: none; display: block; } .ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--target); padding: 0 var(--s-4); border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-elev-2); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: background-color .12s var(--ease), border-color .12s var(--ease); } .ds-btn-primary { border-color: var(--action); background: var(--action); color: var(--on-action); font-weight: 600; } .ds-btn-primary:hover { background: var(--action-hover); border-color: var(--action-hover); } .ds-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default neutral button on the second raised plane; small variant for Copy and Show QR code.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-btn2\" type=\"button\">Preview</button><button class=\"ds-btn2 ds-btn2-small\" type=\"button\">Copy</button></div>",
+      "css": ".ds-row { display: flex; gap: var(--s-2); align-items: center; } .ds-btn2 { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--target); padding: 0 var(--s-4); border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-elev-2); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color .12s var(--ease), border-color .12s var(--ease); } .ds-btn2:hover { border-color: var(--text-faint); } .ds-btn2:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-btn2-small { min-height: 30px; padding: 0 var(--s-3); font-size: var(--fs-sm); }"
+    },
+    {
+      "name": "File Row with Download Chip",
+      "kind": "custom",
+      "refersTo": "download-chip",
+      "description": "Details-view rows: the size lives in the download chip, its icon in the accent at rest, the full accent wash on intent; a selected row shows the selection wash and ring.",
+      "html": "<ul class=\"ds-list\"><li><a class=\"ds-rowlink\" href=\"#\"><span class=\"ds-check\"></span><span class=\"ds-ricon\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/></svg></span><span class=\"ds-name\">big-7g.bin</span><span class=\"ds-date\">2026-10-22 08:13</span><span class=\"ds-dl\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>7.5 GB</span></span></a></li><li><a class=\"ds-rowlink ds-selected\" href=\"#\"><span class=\"ds-check\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6L9 17l-5-5\"/></svg></span><span class=\"ds-ricon\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/></svg></span><span class=\"ds-name\">big.bin</span><span class=\"ds-date\">2026-10-22 08:10</span><span class=\"ds-dl\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>67.1 MB</span></span></a></li></ul>",
+      "css": ".ds-list { margin: 0; padding: 0; list-style: none; font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; color: var(--text); } .ds-rowlink { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) 168px 128px; align-items: center; column-gap: var(--s-3); min-height: var(--target); padding: 2px var(--s-3) 2px 34px; border-radius: var(--radius-sm); color: var(--text); text-decoration: none; } .ds-rowlink:hover { background: var(--bg-hover); } .ds-rowlink:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; } .ds-ricon { color: var(--text-muted); } .ds-ricon .ds-ico { width: 18px; height: 18px; display: block; } .ds-date { color: var(--text-muted); } .ds-dl { justify-self: end; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 var(--s-2); border-radius: var(--radius-sm); color: var(--text-muted); transition: background-color .12s var(--ease), color .12s var(--ease); } .ds-dl .ds-ico { width: 15px; height: 15px; color: var(--accent); opacity: .75; transition: opacity .12s var(--ease); } .ds-dl:hover .ds-ico { color: inherit; } .ds-rowlink:hover .ds-dl, .ds-rowlink:focus-visible .ds-dl { background: var(--accent-soft); color: var(--accent); } .ds-rowlink:hover .ds-dl .ds-ico, .ds-rowlink:focus-visible .ds-dl .ds-ico { opacity: 1; } .ds-dl:hover { background: var(--accent) !important; color: var(--on-accent) !important; } .ds-check { position: absolute; left: 6px; top: 50%; width: 18px; height: 18px; margin-top: -9px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--border-input); border-radius: 5px; background: var(--bg); color: transparent; opacity: 0; transition: opacity .12s var(--ease); } .ds-check svg { width: 12px; height: 12px; } .ds-rowlink:hover .ds-check { opacity: 1; } .ds-selected { background: var(--selection); box-shadow: inset 0 0 0 1px var(--selection-border); } .ds-selected:hover { background: var(--selection); } .ds-selected .ds-check { opacity: 1; border-color: var(--accent); background: var(--accent); color: var(--on-accent); } .ds-selected:hover .ds-dl { background: var(--bg); }"
+    },
+    {
+      "name": "Expansion Band",
+      "kind": "card",
+      "refersTo": "download-band",
+      "description": "The row unfolded in place: Download button, note, close, then direct link and curl/wget commands with Copy.",
+      "html": "<div class=\"ds-band\" role=\"region\"><div class=\"ds-band-head\"><a class=\"ds-band-dl\" href=\"#\" download><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>Download 7.5 GB</span></a><span class=\"ds-band-note\">Resumable · modified 2026-10-22 08:13</span><button class=\"ds-band-close\" type=\"button\" aria-label=\"Close\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6L6 18M6 6l12 12\"/></svg></button></div><dl class=\"ds-band-links\"><div class=\"ds-band-line\"><dt>Direct link</dt><dd><code>https://files.example.org/big/big-7g.bin</code><button class=\"ds-band-copy\" type=\"button\">Copy</button></dd></div><div class=\"ds-band-line\"><dt>curl</dt><dd><code>curl -L -C - -O 'https://files.example.org/big/big-7g.bin'</code><button class=\"ds-band-copy\" type=\"button\">Copy</button></dd></div></dl></div>",
+      "css": ".ds-ico { width: 18px; height: 18px; flex: none; display: block; } .ds-band { padding: var(--s-4); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev); box-shadow: var(--shadow-md); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; animation: ds-band-in .18s var(--ease-out); } @keyframes ds-band-in { from { opacity: 0; transform: translateY(-4px); } } @media (prefers-reduced-motion: reduce) { .ds-band { animation: ds-fade .12s; } @keyframes ds-fade { from { opacity: 0; } } } .ds-band-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-4); } .ds-band-dl { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--s-5) 0 var(--s-4); border-radius: var(--radius-sm); background: var(--accent-grad); color: var(--on-grad); font-weight: 600; text-decoration: none; box-shadow: var(--shadow-md); } .ds-band-dl:hover { filter: brightness(1.08); } .ds-band-dl:focus-visible, .ds-band-close:focus-visible, .ds-band-copy:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-band-note { flex: 1 1 200px; color: var(--text-muted); } .ds-band-close { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: var(--target); height: var(--target); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); cursor: pointer; } .ds-band-close:hover { background: var(--bg-hover); color: var(--text); } .ds-band-links { display: grid; gap: var(--s-2); margin: var(--s-4) 0 0; } .ds-band-line { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: var(--s-3); } .ds-band-line dt { color: var(--text-muted); font-size: var(--fs-sm); } .ds-band-line dd { display: flex; align-items: center; gap: var(--s-2); min-width: 0; margin: 0; } .ds-band-line code { flex: 1 1 auto; min-width: 0; padding: 6px var(--s-3); overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: var(--fs-sm); white-space: nowrap; } .ds-band-copy { min-height: 30px; padding: 0 var(--s-3); border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-elev-2); color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: 500; cursor: pointer; } .ds-band-copy:hover { border-color: var(--text-faint); }"
+    },
+    {
+      "name": "Stamped Ticket",
+      "kind": "custom",
+      "refersTo": "download-stamp",
+      "description": "The receipt for a started download: in the band it replaces the gradient button, which becomes \"Download again\"; the same ticket form is the bottom notice for downloads started elsewhere.",
+      "html": "<div class=\"ds-tk-wrap\"><div class=\"ds-tk-head\"><div class=\"ds-tk\" role=\"status\"><span class=\"ds-tk-stub\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6L9 17l-5-5\"/></svg></span><span class=\"ds-tk-body\"><strong>Download started</strong><span>14:02 · 7.5 GB · resumable</span></span></div><a class=\"ds-tk-again\" href=\"#\" download><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>Download again</span></a></div><div class=\"ds-tk ds-tk-notice\" role=\"status\"><span class=\"ds-tk-stub\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6L9 17l-5-5\"/></svg></span><span class=\"ds-tk-body\"><strong>Downloading photos.tar</strong><span>12 items · 1.4 GB · .tar · streaming, not resumable</span></span><button class=\"ds-tk-close\" type=\"button\" aria-label=\"Dismiss\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6L6 18M6 6l12 12\"/></svg></button></div></div>",
+      "css": ".ds-ico { width: 18px; height: 18px; flex: none; display: block; } .ds-tk-wrap { display: grid; gap: var(--s-4); justify-items: start; font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; color: var(--text); } .ds-tk-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-4); } .ds-tk { display: inline-flex; align-items: stretch; min-height: 44px; overflow: hidden; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: var(--bg-elev-2); color: var(--text); animation: ds-stamp-in .32s var(--ease-out); } @keyframes ds-stamp-in { 0% { opacity: 0; transform: scale(1.12) rotate(-2deg); } 55% { opacity: 1; transform: scale(.98) rotate(.4deg); } 100% { transform: none; } } .ds-tk-stub { display: flex; align-items: center; padding: 0 var(--s-3); border-right: 1px dashed var(--accent); background: var(--accent-soft); color: var(--accent); } .ds-tk-body { display: flex; flex-direction: column; justify-content: center; padding: 4px var(--s-4) 4px var(--s-3); line-height: 1.3; } .ds-tk-body strong { font-weight: 600; } .ds-tk-body span { color: var(--text-muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; } .ds-tk-notice { gap: var(--s-3); padding-right: var(--s-2); border-radius: var(--radius); box-shadow: var(--shadow); animation: ds-notice-in .22s var(--ease-out); } .ds-tk-notice .ds-tk-body { padding: var(--s-2) 0; } @keyframes ds-notice-in { from { opacity: 0; transform: translateY(8px); } } @media (prefers-reduced-motion: reduce) { .ds-tk, .ds-tk-notice { animation: ds-fade2 .12s; } @keyframes ds-fade2 { from { opacity: 0; } } } .ds-tk-again { display: inline-flex; align-items: center; gap: 6px; min-height: var(--target); padding: 0 var(--s-4); border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-elev-2); color: var(--text); font-weight: 500; line-height: 1.2; text-decoration: none; transition: border-color .12s var(--ease); } .ds-tk-again:hover { border-color: var(--text-faint); } .ds-tk-close { align-self: center; display: inline-flex; align-items: center; justify-content: center; width: var(--target); height: var(--target); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); cursor: pointer; } .ds-tk-close:hover { background: var(--bg-hover); color: var(--text); } .ds-tk-again:focus-visible, .ds-tk-close:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Top Bar",
+      "kind": "nav",
+      "refersTo": "topbar",
+      "description": "Brand mark and wordmark, site name, breadcrumb, and grouped tools with hairline separators; the labelled archive action appears when rows are selected.",
+      "html": "<header class=\"ds-topbar\"><a class=\"ds-brand\" href=\"#\"><svg class=\"ds-mark\" viewBox=\"0 0 28 28\" aria-hidden=\"true\"><defs><linearGradient id=\"ds-lg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#4c8dff\"/><stop offset=\"1\" stop-color=\"#8b5cf6\"/></linearGradient></defs><path d=\"M14 1.5l11 6.25v12.5L14 26.5 3 20.25V7.75z\" fill=\"url(#ds-lg)\"/><path d=\"M10 10h9M10 14h9M10 18h9\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><span class=\"ds-word\">h6ai</span><span class=\"ds-site\">files</span></a><nav class=\"ds-crumbs\" aria-label=\"Breadcrumb\"><a href=\"#\">Home</a><span aria-hidden=\"true\">/</span><span>big</span></nav><div class=\"ds-tools\"><div class=\"ds-group\"><button class=\"ds-tool\" type=\"button\" aria-label=\"Filter\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 3H2l8 9.46V19l4 2v-8.54L22 3z\"/></svg></button><button class=\"ds-tool\" type=\"button\" aria-label=\"Search\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"M21 21l-4.35-4.35\"/></svg></button></div><div class=\"ds-group\"><button class=\"ds-tool ds-archive\" type=\"button\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"M7 10l5 5 5-5M12 15V3\"/></svg><span>Download 2 items · 194 B · .tar</span></button></div><div class=\"ds-group\"><button class=\"ds-tool ds-tool-active\" type=\"button\" aria-label=\"Settings\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6\"/></svg></button></div></div></header>",
+      "css": ".ds-ico { width: 18px; height: 18px; flex: none; display: block; } .ds-topbar { display: flex; align-items: center; gap: var(--s-3); height: 56px; padding: 0 var(--s-3) 0 var(--s-4); background: var(--bg-elev); border-bottom: 1px solid var(--border); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; } .ds-brand { display: flex; align-items: center; gap: var(--s-2); min-height: var(--target); padding-right: var(--s-3); border-right: 1px solid var(--border); color: var(--text); text-decoration: none; } .ds-mark { width: 28px; height: 28px; } .ds-word { font-size: var(--fs-lg); font-weight: 700; letter-spacing: -0.02em; } .ds-site { color: var(--text-muted); font-weight: 500; } .ds-site::before { content: \"/\"; margin-right: var(--s-2); color: var(--border-strong); } .ds-crumbs { flex: 1 1 auto; display: flex; gap: var(--s-2); align-items: center; min-width: 0; color: var(--text-muted); } .ds-crumbs a { color: var(--text-muted); text-decoration: none; } .ds-crumbs a:hover { color: var(--text); } .ds-crumbs span:last-child { color: var(--text); } .ds-tools { display: flex; align-items: center; gap: var(--s-1); } .ds-group { display: flex; align-items: center; gap: 2px; } .ds-group + .ds-group::before { content: \"\"; align-self: center; width: 1px; height: 20px; margin: 0 var(--s-2) 0 var(--s-1); background: var(--border); } .ds-tool { display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); min-width: var(--target); height: var(--target); padding: 0; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); font: inherit; cursor: pointer; transition: background-color .15s var(--ease), color .15s var(--ease); } .ds-tool:hover { background: var(--bg-hover); color: var(--text); } .ds-tool-active { background: var(--bg-pressed); color: var(--text); } .ds-tool:focus-visible, .ds-brand:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-archive { padding: 0 var(--s-3); border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; white-space: nowrap; } .ds-archive:hover { background: var(--accent); color: var(--on-accent); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "text-field",
+      "description": "Labelled field with help text; focus turns the border to the link colour with a soft halo.",
+      "html": "<label class=\"ds-field\"><span>Site name</span><input type=\"text\" value=\"h6ai\"><small>Shown next to the h6ai logo and in page titles.</small></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; color: var(--text); } .ds-field > span { color: var(--text-muted); font-size: var(--fs-xs); font-weight: 600; } .ds-field input { width: 100%; min-height: var(--target); padding: 0 var(--s-3); border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-input); color: var(--text); font: inherit; caret-color: var(--link); transition: border-color .12s var(--ease); } .ds-field input:hover { border-color: var(--text-faint); } .ds-field input:focus, .ds-field input:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px var(--link-soft); } .ds-field small { max-width: var(--measure); color: var(--text-muted); font-size: var(--fs-sm); }"
+    },
+    {
+      "name": "Status Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Pill chips by meaning; only the \"download\" level takes the reserved accent.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\">admin</span><span class=\"ds-chip ds-chip-none\">none</span><span class=\"ds-chip ds-chip-list\">list</span><span class=\"ds-chip ds-chip-read\">read</span><span class=\"ds-chip ds-chip-download\">download</span></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: var(--s-1); font-family: var(--font-sans); } .ds-chip { display: inline-flex; align-items: center; padding: 1px var(--s-2); border-radius: 999px; background: var(--bg-elev-2); color: var(--text-muted); font-size: var(--fs-xs); font-weight: 500; line-height: 1.5; white-space: nowrap; } .ds-chip-none { background: var(--danger-soft); color: var(--danger); } .ds-chip-list { background: var(--warn-soft); color: var(--warn); } .ds-chip-read { background: var(--link-soft); color: var(--link); } .ds-chip-download { background: var(--accent-soft); color: var(--accent); }"
+    },
+    {
+      "name": "Admin Card with Radio List",
+      "kind": "card",
+      "refersTo": "admin-card",
+      "description": "Flat admin card on the first raised plane; radio cards mark the checked option with the link colour.",
+      "html": "<section class=\"ds-card\"><h2>Click on a file name</h2><label class=\"ds-radio\"><input type=\"radio\" name=\"ds-click\" checked><span><b>Preview, otherwise show the download panel</b><small>Other files unfold their row with Download, link and curl/wget.</small></span></label><label class=\"ds-radio\"><input type=\"radio\" name=\"ds-click\"><span><b>Always download</b><small>Every file downloads on a single click.</small></span></label></section>",
+      "css": ".ds-card { padding: var(--s-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elev); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; display: grid; gap: var(--s-2); } .ds-card h2 { margin: 0 0 var(--s-1); font-size: var(--fs-card); font-weight: 600; line-height: 1.25; } .ds-radio { display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s var(--ease); } .ds-radio:hover { border-color: var(--border-strong); } .ds-radio:has(input:checked) { border-color: var(--link); background: var(--link-soft); } .ds-radio input { width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--link); } .ds-radio input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-radio span { display: flex; flex-direction: column; gap: 2px; } .ds-radio b { font-weight: 500; } .ds-radio small { color: var(--text-muted); font-size: var(--fs-sm); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Download Counter",
+    "overview": "A well-lit counter in a dark archive. The room is quiet and familiar: a top bar, a breadcrumb, a full-width details table with name, modified date and size, the shape every visitor already knows from a file manager. The light falls on one place only, the counter where a file is handed over. Every file states its size plainly in a chip at the end of its row; clicking a name unfolds the row in place into a band that says \"Download 7.5 GB\" on the one gradient button in the interface, with the direct link, curl and wget beneath it; once a download starts, a ticket is stamped right where the button was, saying when it started, how big it is, and that it is resumable, and the button steps back to a quiet \"Download again\". Downloads started anywhere else get the same ticket as a receipt at the bottom of the screen.\n\nThis is an Operate surface. Density is product-UI density: a 14px body, 36px rows and controls (44px on touch), a 4px spacing grid, hairline borders between tinted near-black planes. The brand lives in precise details rather than spectacle: the h6ai hexagon and wordmark in the top bar, one reserved accent colour per skin that marks only the download and selection path, and the blue-to-violet gradient that belongs to the logo and the Download button. Everything else is neutral and recedes.\n\nThe system is dark only, shipped as five generated, AA-checked skins (Midnight by default, Graphite, Deep Sea, Ember, OLED Black). It uses the platform's system font stack and loads no web fonts. Icons are inline stroke SVG that follow the text colour. Nothing is decorative: no gradient text, no eyebrow labels, no coloured side stripes, no glyph icons.",
+    "keyCharacteristics": [
+      "Familiar file-manager structure; the brand shows up in the download path, not in ornament.",
+      "Tinted near-black planes separated by 1px hairlines; depth by tone first, shadow second.",
+      "One reserved accent per skin, spent only on download and selection.",
+      "One gradient, on the primary Download button and in the logo.",
+      "System fonts, tabular numerals, 14px body, 36px minimum targets (44px on coarse pointers).",
+      "Five dark skins with identical structure; colours are swapped wholesale via the skin attribute.",
+      "Every started download is stamped with a ticket: accent stub, dashed perforation, what and how big."
+    ],
+    "rules": [
+      {
+        "name": "The Reserved Accent Rule",
+        "body": "The accent and its soft wash mark only the download and selection path: the size-labelled download chip, the band's Download button, the archive \"Download N items\" action, the stamped ticket in the band and in the notice, selected rows with their checkboxes, and the admin's representations of downloads (the \"download\" level chip, file and archive download events, the theme-preview miniatures). If a new element is not a download, an archive download, or a selection, it does not get the accent; no skin may reuse its accent hue for links.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Gradient Rule",
+        "body": "The brand gradient appears in exactly two places: the primary Download button, which wears the skin's accent gradient, and the logo, which keeps the fixed azure to violet in every skin. The admin theme previews may draw both in miniature. No gradient backgrounds, borders, dividers or text anywhere else; once a download has started, the button gives up the gradient.",
+        "section": "colors"
+      },
+      {
+        "name": "The Link-and-Focus Rule",
+        "body": "Cornflower Link is the colour of links, focus rings and the caret, and of \"this setting is on\". It never marks a download.",
+        "section": "colors"
+      },
+      {
+        "name": "The Second Voice Rule",
+        "body": "Primary buttons outside the download path (log in, save, add, check) fill with Cornflower Action. A violet or gradient Save button is a bug.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Only Rule",
+        "body": "Every surface is dark. New skins are new dark palettes on the same tokens, generated and checked for 4.5:1 text and accent contrast on every plane and 3:1 for input borders. There is no light mode.",
+        "section": "colors"
+      },
+      {
+        "name": "The System Stack Rule",
+        "body": "No web fonts. Type comes from the system UI and monospace stacks; the strict CSP and the \"fast on any device\" promise both depend on it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Numerals are tabular everywhere, so sizes, dates, counts and ticket times line up down a column.",
+        "section": "typography"
+      },
+      {
+        "name": "The Four Thresholds Rule",
+        "body": "Responsive changes happen at 560px, 720px, 1080px and on pointer: coarse (plus hover: none for always-visible affordances). The single exception is 360px, reserved for the brand: below it the wordmark gives way to the mark. Do not add new breakpoints for a single component.",
+        "section": "layout"
+      },
+      {
+        "name": "The Target Rule",
+        "body": "Nothing interactive is smaller than 36px, or 44px on a coarse pointer.",
+        "section": "layout"
+      },
+      {
+        "name": "The Raised Path Rule",
+        "body": "Only the download path is lifted inside the page flow. Cards, tiles and rows stay flat.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Still Motion Rule",
+        "body": "Under reduced motion nothing travels or scales: the band, the ticket stamp, dialogs, notices and preview simply fade in 120ms, busy pulses stop at 60% opacity, and only the preview spinner keeps turning, slowly.",
+        "section": "components"
+      },
+      {
+        "name": "The No Decoration Rule",
+        "body": "No gradient text, no eyebrow or kicker labels above headings, no coloured side-stripe borders, no glyph or emoji icons. Every UI icon is an inline 24-unit stroke SVG with 2px round strokes in currentColor from the shared icon set.",
+        "section": "components"
+      },
+      {
+        "name": "The Receipt Rule",
+        "body": "Every download that starts gets exactly one stamped ticket, in the band when it started there and as the bottom notice otherwise: what started, how big, and whether it resumes.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** give every file row a size-labelled download chip, and label the Download button with the size (\"Download 7.5 GB\").",
+      "**Do** stamp a started download with the ticket form (accent stub, dashed accent perforation, tabular metadata) and demote the button to \"Download again\".",
+      "**Do** spend the accent only on the download and selection path, and Cornflower only on links, focus, primary non-download actions and \"on\" states.",
+      "**Do** keep new screens on the three tonal planes with 1px hairlines; lift only the band and the Download button, float only overlays.",
+      "**Do** use the 4px spacing scale and the 6/10/14px radii, and keep every target at 36px (44px on coarse pointers).",
+      "**Do** take colours from the skin tokens so a new component works in all five dark skins unchanged.",
+      "**Do** use the system font stacks with tabular numerals, and cap prose and help text at 72ch.",
+      "**Do** honour reduced motion: fade, don't travel."
+    ],
+    "donts": [
+      "**Don't** put the accent or its wash on anything that is not a download, an archive download or a selection.",
+      "**Don't** use the brand gradient anywhere except the primary Download button and the logo; never on text, borders or backgrounds.",
+      "**Don't** add a light theme or light surfaces.",
+      "**Don't** load web fonts.",
+      "**Don't** add eyebrow or kicker labels above headings, coloured side-stripe borders, gradient text, or glyph and emoji icons.",
+      "**Don't** introduce breakpoints beyond 560px, 720px, 1080px and pointer: coarse.",
+      "**Don't** give cards, tiles or rows a resting shadow.",
+      "**Don't** add another rotating, overshooting or stamping animation; the ticket stamp is the only one."
+    ]
+  }
+}
