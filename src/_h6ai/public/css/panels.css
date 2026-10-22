@@ -1,0 +1,352 @@
+/* ---- settings drawer ------------------------------------------------------------------------ */
+
+.sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-3) var(--s-2) var(--s-2) var(--s-4);
+}
+
+.sidebar-head h2 {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 600;
+}
+
+#sidebar-blocks {
+    flex: 1 0 auto;
+    padding: 0 var(--s-4) var(--s-4);
+}
+
+#sidebar .block {
+    padding: var(--s-4) 0;
+    border-top: 1px solid var(--border);
+}
+
+#sidebar h3 {
+    margin: 0 0 var(--s-3);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+}
+
+.segmented {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev-2);
+}
+
+.segmented .button {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-height: var(--target);
+    padding: 6px var(--s-1) 5px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    text-transform: capitalize;
+}
+
+.segmented .button:hover {
+    color: var(--text);
+}
+
+.segmented .button.active {
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+.range {
+    display: block;
+    margin-top: var(--s-4);
+}
+
+.range-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--s-1);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--link);
+}
+
+@media (pointer: coarse) {
+    input[type="range"] {
+        min-height: var(--target);
+    }
+}
+
+/* theme swatches */
+.swatches {
+    display: grid;
+    gap: var(--s-1);
+}
+
+.swatch {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    width: 100%;
+    min-height: var(--target);
+    padding: var(--s-1) var(--s-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+}
+
+.swatch:hover {
+    background: var(--bg-hover);
+}
+
+.swatch.active {
+    border-color: var(--border-strong);
+    background: var(--bg-elev-2);
+}
+
+.swatch-chips {
+    display: flex;
+    flex: none;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+}
+
+.swatch-chips i {
+    display: block;
+    width: 10px;
+    height: 22px;
+}
+
+.swatch-name {
+    flex: 1 1 auto;
+    font-size: var(--fs-sm);
+}
+
+.swatch.active .swatch-name {
+    font-weight: 600;
+}
+
+/* switches */
+.switches {
+    display: grid;
+    gap: var(--s-1);
+}
+
+.switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: var(--target);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-weight: 500;
+    text-align: left;
+}
+
+.switch-track {
+    position: relative;
+    flex: none;
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--border-input);
+    transition: background-color .15s var(--ease);
+}
+
+.switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s var(--ease-out);
+}
+
+.switch.active .switch-track {
+    background: var(--link);
+}
+
+.switch.active .switch-thumb {
+    background: var(--on-action);
+    transform: translateX(16px);
+}
+
+.select select {
+    width: 100%;
+    min-height: var(--target);
+    padding: 0 var(--s-3);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+}
+
+/* ---- folder tree ----------------------------------------------------------------------------- */
+
+#tree .item {
+    position: relative;
+}
+
+#tree .item > a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 3px var(--s-2) 3px 26px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+#tree .item > a:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+#tree .item.active > a {
+    background: var(--bg-pressed);
+    color: var(--text);
+    font-weight: 600;
+}
+
+#tree .item .icon img {
+    width: 18px;
+    height: 18px;
+}
+
+#tree .item .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#tree .indicator {
+    position: absolute;
+    top: 5px;
+    left: 2px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-faint);
+    visibility: hidden;
+}
+
+#tree .indicator:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+#tree .indicator .ui-icon {
+    width: 14px;
+    height: 14px;
+    transition: transform .15s var(--ease);
+}
+
+#tree .item.unknown > .indicator,
+#tree .item.open > .indicator,
+#tree .item.closed > .indicator {
+    visibility: visible;
+}
+
+#tree .item.open > .indicator .ui-icon {
+    transform: rotate(90deg);
+}
+
+#tree .item > .content {
+    margin-left: var(--s-3);
+    padding-left: var(--s-1);
+    border-left: 1px solid var(--border);
+}
+
+#tree .item.closed > .content,
+#tree .item.unknown > .content {
+    display: none;
+}
+
+#tree .summary {
+    padding: var(--s-1) var(--s-2) var(--s-1) 26px;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+}
+
+/* ---- info panel ------------------------------------------------------------------------------ */
+
+#info {
+    padding: var(--s-4);
+}
+
+#info .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    background: var(--bg-elev-2);
+    overflow: hidden;
+}
+
+#info .icon img {
+    width: 72px;
+    height: 72px;
+}
+
+#info .icon img.thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#info .block {
+    padding: var(--s-4) 2px;
+    color: var(--text-muted);
+}
+
+#info .label {
+    margin-bottom: 6px;
+    color: var(--text);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* the QR code needs a light quiet zone to scan; keep it small and framed */
+#info .qrcode {
+    width: 148px;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    background: #fff;
+}
+
+#info .qrcode img {
+    width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+}

@@ -1,0 +1,88 @@
+/* ---- fallback mode (no JavaScript, text browsers) ---------------------------------------------- */
+
+html.js #fallback-hints .noJsMsg {
+    display: none;
+}
+
+#fallback-hints {
+    padding: 12px 20px;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+}
+
+#fallback-hints span {
+    margin-right: 12px;
+}
+
+#fallback {
+    padding: 0 12px 24px;
+    overflow: auto;
+}
+
+#fallback table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#fallback th {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: left;
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+}
+
+#fallback td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+#fallback tr:hover td {
+    background: var(--bg-hover);
+}
+
+#fallback .fb-i {
+    width: 28px;
+}
+
+#fallback .fb-i img {
+    width: 20px;
+    height: 20px;
+}
+
+#fallback .fb-d, #fallback .fb-s {
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+#fallback .fb-s {
+    text-align: right;
+}
+
+#fallback-hints .fallback-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 16px;
+    color: var(--text);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+#fallback-hints .fallback-brand img {
+    width: 22px;
+    height: 22px;
+}
+
+body.info #header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: var(--s-5) 0;
+    font-size: var(--fs-xl);
+}

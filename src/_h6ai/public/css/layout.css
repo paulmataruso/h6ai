@@ -1,0 +1,444 @@
+/* ---- page frame -------------------------------------------------------------------------- */
+
+body#root.index {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+html.drag-select, html.drag-select * {
+    user-select: none;
+    cursor: crosshair !important;
+}
+
+/* ---- top bar ----------------------------------------------------------------------------- */
+
+#topbar {
+    position: relative;
+    z-index: 20;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    height: var(--topbar-h);
+    padding: 0 var(--s-3) 0 var(--s-4);
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+}
+
+#brand {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    flex: none;
+    min-height: var(--target);
+    padding-right: var(--s-3);
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+}
+
+#brand:hover {
+    text-decoration: none;
+}
+
+#brand .brand-mark {
+    width: 28px;
+    height: 28px;
+}
+
+#brand .brand-word {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+#brand .brand-site {
+    max-width: 220px;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#brand .brand-site::before {
+    content: "/";
+    margin-right: var(--s-2);
+    color: var(--border-strong);
+}
+
+#flowbar {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--s-1);
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* a group whose tools are all hidden (e.g. nothing selected yet) takes no room */
+.tool-group:empty,
+.tool-group:not(:has(> :not(.hidden))) {
+    display: none;
+}
+
+/* a hairline between visible groups: find | output | preferences | account */
+.tool-group:has(> :not(.hidden)) ~ .tool-group:has(> :not(.hidden))::before {
+    content: "";
+    align-self: center;
+    width: 1px;
+    height: 20px;
+    margin: 0 var(--s-2) 0 var(--s-1);
+    background: var(--border);
+}
+
+.tool {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    min-width: var(--target);
+    height: var(--target);
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    transition: background-color .15s var(--ease), color .15s var(--ease);
+}
+
+.tool:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.tool.active {
+    background: var(--bg-pressed);
+    color: var(--text);
+}
+
+/* the packaged download: labelled, on the reserved download accent */
+.tool.download-action {
+    padding: 0 var(--s-3);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tool.download-action:hover {
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+/* filter / search: icon button that expands into an input */
+.tool-input {
+    min-width: 0;
+    padding: 0;
+}
+
+.tool-input .tool-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--target);
+    height: var(--target);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.tool-input input {
+    width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    transition: width .2s var(--ease-out), padding .2s var(--ease-out);
+}
+
+.tool-input input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.tool-input.active {
+    background: var(--bg-input);
+    border-color: var(--border-input);
+    color: var(--text);
+}
+
+.tool-input.active input {
+    width: 220px;
+    padding-right: var(--s-3);
+}
+
+.tool-input.active:focus-within {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--link-soft);
+}
+
+.tool-input.pending .tool-button {
+    color: var(--link);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.tool-input.invalid {
+    border-color: var(--danger) !important;
+}
+
+@keyframes pulse {
+    50% { opacity: .4; }
+}
+
+/* account avatar */
+#account.avatar {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: var(--link-soft);
+    color: var(--link);
+    font-weight: 700;
+}
+
+#account.avatar:hover {
+    background: var(--link);
+    color: var(--on-action);
+}
+
+/* ---- breadcrumb ------------------------------------------------------------------------ */
+
+#crumbbar {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+}
+
+#crumbbar::-webkit-scrollbar {
+    display: none;
+}
+
+.crumb-item {
+    display: flex;
+    align-items: center;
+    flex: none;
+}
+
+.crumb-item .sep {
+    color: var(--text-faint);
+    padding: 0 2px;
+}
+
+.crumb-item .sep .ui-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.crumb-item:first-child .sep {
+    display: none;
+}
+
+.crumb {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    max-width: 280px;
+    min-height: var(--target);
+    padding: 0 var(--s-2);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.crumb:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.crumb .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.crumb-item.active .crumb {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.crumb .hint {
+    width: 14px;
+    height: 14px;
+    opacity: .7;
+}
+
+/* the brand already names the site: the first crumb is just "home" */
+#crumbbar .crumb-item:first-child .label {
+    display: none;
+}
+
+/* ---- main row ----------------------------------------------------------------------------- */
+
+#mainrow {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+}
+
+#content {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+    outline: none;
+}
+
+#tree, #info, #sidebar {
+    flex: none;
+    overflow: auto;
+    background: var(--bg-elev);
+}
+
+#tree {
+    order: -1;
+    width: var(--tree-w);
+    padding: var(--s-3) var(--s-2);
+    border-right: 1px solid var(--border);
+}
+
+#info {
+    width: var(--panel-w);
+    border-left: 1px solid var(--border);
+}
+
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    width: var(--panel-w);
+    border-left: 1px solid var(--border);
+}
+
+/* settings drawer sits at the far right; info panel left of it */
+#sidebar {
+    order: 3;
+}
+
+#info {
+    order: 2;
+}
+
+#sidebar-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 14;
+    background: var(--backdrop);
+}
+
+#backlink {
+    margin: 0;
+    padding: var(--s-3) var(--s-4);
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+    border-top: 1px solid var(--border);
+}
+
+/* ---- small screens: panels become drawers ------------------------------------------------ */
+
+@media (max-width: 1080px) {
+    #info {
+        display: none !important;
+    }
+}
+
+@media (max-width: 720px) {
+    :root {
+        --topbar-h: 56px;
+    }
+
+    #topbar {
+        padding: 0 var(--s-1) 0 var(--s-2);
+        gap: var(--s-1);
+    }
+
+    #brand {
+        padding-right: var(--s-2);
+    }
+
+    /* the h6ai wordmark stays on phones; the operator's site name gives way to the breadcrumb */
+    #brand .brand-site {
+        display: none;
+    }
+
+    .tool-group:has(> :not(.hidden)) ~ .tool-group:has(> :not(.hidden))::before {
+        margin: 0 2px;
+    }
+
+    .tool-input.active input {
+        width: 120px;
+    }
+
+    /* while typing, keep only the current folder in the breadcrumb */
+    #topbar:has(.tool-input.active) .crumb-item:not(:last-child) {
+        display: none;
+    }
+
+    #topbar:has(.tool-input.active) .crumb-item .sep {
+        display: none;
+    }
+
+    #topbar:has(.tool-input.active) .crumb {
+        max-width: 96px;
+    }
+
+    .tool.download-action .download-label {
+        display: none;
+    }
+
+    .tool.download-action {
+        padding: 0;
+    }
+
+    /* the breadcrumb is enough navigation on phones */
+    #tree {
+        display: none !important;
+    }
+
+    #sidebar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 15;
+        width: min(88vw, 340px);
+        box-shadow: var(--shadow);
+    }
+}
+
+/* very narrow phones: the mark alone carries the brand */
+@media (max-width: 360px) {
+    #brand .brand-word {
+        display: none;
+    }
+}

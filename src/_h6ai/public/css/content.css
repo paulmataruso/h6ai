@@ -1,0 +1,100 @@
+/* ---- custom header/footer and markdown ----------------------------------------------------------- */
+
+.custom-content {
+    margin: 16px 24px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+}
+
+#content-header { margin-bottom: 4px; }
+#content-footer { margin-top: 4px; }
+
+.custom-content, .markdown {
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+/* prose keeps a reading measure inside wide frames */
+.markdown > :not(pre):not(table),
+.custom-content > :not(pre):not(table) {
+    max-width: var(--measure);
+}
+
+#pv-content-txt.markdown {
+    font-size: var(--fs-lg);
+}
+
+.custom-content > :first-child, .markdown > :first-child { margin-top: 0; }
+.custom-content > :last-child, .markdown > :last-child { margin-bottom: 0; }
+
+.markdown h1, .custom-content h1 { font-size: 1.8em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+.markdown h2, .custom-content h2 { font-size: 1.4em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+.markdown h3, .custom-content h3 { font-size: 1.2em; }
+
+.markdown code, .custom-content code {
+    padding: .15em .4em;
+    border-radius: 5px;
+    background: var(--bg-elev-2);
+    font-size: .88em;
+}
+
+.markdown pre, .custom-content pre {
+    padding: 14px 16px;
+    overflow: auto;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev-2);
+}
+
+.markdown pre code, .custom-content pre code {
+    padding: 0;
+    background: transparent;
+}
+
+.markdown blockquote, .custom-content blockquote {
+    margin: 0 0 1em;
+    padding: 0 1em;
+    border-left: 1px solid var(--border-strong);
+    padding-left: var(--s-3);
+    color: var(--text-muted);
+}
+
+.markdown table, .custom-content table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.markdown th, .markdown td, .custom-content th, .custom-content td {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+}
+
+.markdown img, .custom-content img {
+    display: inline;
+    max-width: 100%;
+}
+
+.markdown hr, .custom-content hr {
+    height: 1px;
+    border: 0;
+    background: var(--border);
+}
+
+/* ---- syntax highlighting (lolight), coloured per theme ------------------------------------ */
+
+.ll-com { color: var(--text-faint); font-style: italic; }
+.ll-key { color: var(--code-key); font-weight: 600; }
+.ll-num { color: var(--code-num); }
+.ll-str { color: var(--code-str); }
+.ll-rex { color: var(--code-rex); }
+.ll-pct { color: var(--text-muted); }
+.ll-nam { color: var(--text); }
+
+/* links the sanitizer neutralised (javascript: etc.) lose their href: don't style them as links */
+.markdown a:not([href]),
+.custom-content a:not([href]) {
+    color: inherit;
+    text-decoration: none;
+    cursor: text;
+}

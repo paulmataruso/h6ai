@@ -1,0 +1,52 @@
+{
+ "midnight": {
+  "label": "Midnight",
+  "note": "indigo-tinted blue-black; brand violet marks downloads and selection",
+  "swatch": [
+   "#0b0d14",
+   "#181c29",
+   "#82a8ff",
+   "#a98dfb"
+  ]
+ },
+ "graphite": {
+  "label": "Graphite",
+  "note": "neutral charcoal with zero tint, photos and thumbnails keep their colours",
+  "swatch": [
+   "#121212",
+   "#222224",
+   "#8fb7ff",
+   "#b6a3ff"
+  ]
+ },
+ "deepsea": {
+  "label": "Deep Sea",
+  "note": "dark teal-navy; sea teal marks downloads and selection",
+  "swatch": [
+   "#061317",
+   "#0f252c",
+   "#74c6ff",
+   "#34d6c2"
+  ]
+ },
+ "ember": {
+  "label": "Ember",
+  "note": "warm umber-black; amber marks downloads and selection, steel-blue links",
+  "swatch": [
+   "#14100d",
+   "#241c17",
+   "#8fb4d9",
+   "#f6b445"
+  ]
+ },
+ "oled": {
+  "label": "OLED Black",
+  "note": "true black for OLED screens, highest contrast",
+  "swatch": [
+   "#000000",
+   "#141414",
+   "#8fb7ff",
+   "#b39dff"
+  ]
+ }
+}

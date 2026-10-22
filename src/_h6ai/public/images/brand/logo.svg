@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="232" height="64" viewBox="0 0 232 64" role="img" aria-label="h6ai">
+  <defs>
+    <linearGradient id="h6ai-l" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4c8dff"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="h6ai-t" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4c8dff"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <style>.w{fill:#1f2328}@media (prefers-color-scheme:dark){.w{fill:#e6edf3}}</style>
+  <path fill="url(#h6ai-l)" stroke="url(#h6ai-l)" stroke-width="6" stroke-linejoin="round" d="M32 7 53.65 19.5v25L32 57 10.35 44.5v-25z"/>
+  <g fill="#fff">
+    <circle cx="21.5" cy="24" r="2.6"/><rect x="27" y="21.6" width="17" height="4.8" rx="2.4"/>
+    <circle cx="21.5" cy="32" r="2.6"/><rect x="27" y="29.6" width="17" height="4.8" rx="2.4"/>
+    <circle cx="21.5" cy="40" r="2.6"/><rect x="27" y="37.6" width="11" height="4.8" rx="2.4"/>
+  </g>
+  <text x="72" y="45" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-size="40" font-weight="800" letter-spacing="-1" class="w">h<tspan fill="url(#h6ai-t)">6</tspan>ai</text>
+</svg>

@@ -1,0 +1,471 @@
+/* ---- buttons ------------------------------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: var(--target);
+    padding: 0 var(--s-4);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev-2);
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color .12s var(--ease), border-color .12s var(--ease);
+}
+
+.btn:hover {
+    border-color: var(--text-faint);
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+.btn.small {
+    min-height: 30px;
+    padding: 0 var(--s-3);
+    font-size: var(--fs-sm);
+}
+
+@media (pointer: coarse) {
+    .btn.small {
+        min-height: 40px;
+    }
+}
+
+/* primary actions outside the download path: the link colour */
+.btn.primary {
+    border-color: var(--action);
+    background: var(--action);
+    color: var(--on-action);
+    font-weight: 600;
+}
+
+.btn.primary:hover {
+    background: var(--action-hover);
+    border-color: var(--action-hover);
+}
+
+/* the download path owns the brand gradient, and only it */
+.btn.download-btn {
+    min-height: 40px;
+    padding: 0 var(--s-5) 0 var(--s-4);
+    border: 0;
+    background: var(--accent-grad);
+    color: var(--on-grad);
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+}
+
+.btn.download-btn:hover {
+    filter: brightness(1.08);
+}
+
+@media (pointer: coarse) {
+    .btn.download-btn {
+        min-height: 48px;
+    }
+}
+
+.btn.icon {
+    width: var(--target);
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.btn.icon:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.btn.danger:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.btn.link {
+    min-height: 32px;
+    padding: var(--s-1) 6px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-weight: 400;
+}
+
+.btn.link:hover {
+    background: var(--bg-hover);
+}
+
+/* small square icon buttons in bars (close, dismiss) */
+.bar-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--target);
+    height: var(--target);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.bar-button:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.icon-wrap {
+    display: inline-flex;
+}
+
+/* ---- form fields --------------------------------------------------------------------------- */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 var(--s-4);
+    padding: 0;
+    border: 0;
+}
+
+.field > span, .field legend, .field-label {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.field legend {
+    margin-bottom: 6px;
+    padding: 0;
+}
+
+/* text-like controls only: checkboxes and radios keep their native size */
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,
+.grant-row select,
+.checker input,
+.checker select,
+.filters select,
+.filters input {
+    width: 100%;
+    min-height: var(--target);
+    padding: 0 var(--s-3);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text);
+}
+
+.field input:not([type="checkbox"]):not([type="radio"]):focus,
+.field select:focus,
+.grant-row select:focus,
+.checker input:focus,
+.checker select:focus,
+.filters select:focus,
+.filters input:focus {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--link-soft);
+}
+
+.field input[readonly] {
+    color: var(--text-muted);
+    background: var(--bg-elev-2);
+}
+
+.check {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px var(--s-2);
+    padding: 6px 0;
+}
+
+.check input, .radio input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--link);
+    flex: none;
+    transform: translateY(2px);
+}
+
+.check small {
+    display: block;
+    flex-basis: 100%;
+    max-width: var(--measure);
+    margin-left: 24px;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+.help {
+    max-width: var(--measure);
+    margin: 0 0 var(--s-3);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+/* ---- dialogs ------------------------------------------------------------------------------- */
+
+dialog.dialog {
+    width: min(460px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elev);
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+
+dialog.dialog.wide {
+    width: min(720px, calc(100vw - 32px));
+}
+
+dialog.dialog::backdrop {
+    background: var(--backdrop);
+}
+
+dialog.dialog[open] {
+    animation: dialog-in .16s var(--ease-out);
+}
+
+@keyframes dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+}
+
+dialog.dialog form {
+    padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+dialog.dialog h2 {
+    margin: 0 0 var(--s-2);
+    font-size: var(--fs-xl);
+    font-weight: 600;
+}
+
+.dialog-lead {
+    margin: 0 0 var(--s-4);
+    color: var(--text-muted);
+}
+
+dialog.dialog h2 + .fields,
+dialog.dialog h2 + .field {
+    margin-top: var(--s-4);
+}
+
+.dialog-error {
+    margin: var(--s-1) 0 var(--s-3);
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--s-2);
+    margin-top: var(--s-5);
+}
+
+/* ---- account menu ---------------------------------------------------------------------------- */
+
+.menu {
+    position: absolute;
+    top: calc(var(--topbar-h) - 6px);
+    right: 10px;
+    z-index: 30;
+    min-width: 240px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+    box-shadow: var(--shadow);
+}
+
+.menu-header {
+    display: flex;
+    flex-direction: column;
+    padding: var(--s-2) 10px 10px;
+    margin-bottom: var(--s-1);
+    border-bottom: 1px solid var(--border);
+}
+
+.menu-user {
+    font-weight: 600;
+}
+
+.menu-roles {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: var(--target);
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+}
+
+.menu-item:hover, .menu-item:focus-visible {
+    background: var(--bg-hover);
+    text-decoration: none;
+}
+
+.menu-item .ui-icon {
+    color: var(--text-muted);
+}
+
+/* ---- notifications --------------------------------------------------------------------------- */
+
+#notification {
+    position: fixed;
+    right: var(--s-4);
+    bottom: var(--s-4);
+    z-index: 200;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 10px var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    animation: dialog-in .16s var(--ease-out);
+}
+
+#notification.error {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* the stamped download confirmation */
+#dl-notice {
+    position: fixed;
+    left: 50%;
+    bottom: var(--s-5);
+    z-index: 190;
+    display: flex;
+    align-items: stretch;
+    gap: var(--s-3);
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    padding: 0 var(--s-2) 0 0;
+    overflow: hidden;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--bg-elev-2);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    transform: translateX(-50%);
+    animation: notice-in .22s var(--ease-out);
+}
+
+@keyframes notice-in {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+}
+
+/* same ticket as the band stamp: stub, perforation, body */
+.dl-notice-icon {
+    display: flex;
+    align-items: center;
+    flex: none;
+    padding: 0 var(--s-3);
+    border-right: 1px dashed var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+#dl-notice.stamped:not(.busy) .dl-notice-icon .ui-icon {
+    animation: stamp-in .32s var(--ease-out);
+}
+
+#dl-notice > .btn,
+#dl-notice > .bar-button {
+    align-self: center;
+}
+
+#dl-notice.busy .dl-notice-icon .ui-icon {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.dl-notice-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: var(--s-2) 0;
+}
+
+.dl-notice-title {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dl-notice-meta {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+    #dl-notice {
+        left: var(--s-2);
+        right: var(--s-2);
+        bottom: var(--s-2);
+        width: auto;
+        transform: none;
+    }
+
+    @keyframes notice-in {
+        from { opacity: 0; transform: translateY(8px); }
+    }
+
+    .dl-notice-copy {
+        display: none;
+    }
+}
+
+/* ---- chips ------------------------------------------------------------------------------------ */
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    margin: 2px var(--s-1) 2px 0;
+    padding: 1px var(--s-2);
+    border-radius: 999px;
+    background: var(--bg-elev-2);
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.chip.accent { background: var(--link-soft); color: var(--link); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.level-none { background: var(--danger-soft); color: var(--danger); }
+.chip.level-list { background: var(--warn-soft); color: var(--warn); }
+.chip.level-read { background: var(--link-soft); color: var(--link); }
+.chip.level-download { background: var(--accent-soft); color: var(--accent); }
