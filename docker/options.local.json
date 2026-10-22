@@ -1,0 +1,10 @@
+{
+    "search": {"enabled": true},
+    "filter": {"enabled": true},
+    "download": {"enabled": true, "type": "php-tar"},
+    "thumbnails": {"enabled": true},
+    "foldersize": {"enabled": true, "type": "php"},
+    "custom": {"enabled": true},
+    "info": {"enabled": true},
+    "tree": {"enabled": true}
+}

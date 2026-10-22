@@ -1,0 +1,13 @@
+.git
+node_modules
+build
+local
+coverage
+docs
+test-integration
+compose.yaml
+Dockerfile
+.dockerignore
+**/*.log
+test-e2e
+webroot
