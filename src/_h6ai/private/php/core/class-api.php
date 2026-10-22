@@ -89,6 +89,8 @@ final class Api {
             $response['setup']['CSRF'] = $this->context->get_csrf();
             $response['setup']['AUTH'] = [
                 'loginAvailable' => $this->context->has_password(),
+                // no sign-in in the listing; the admin page still offers it to admins
+                'anonymous' => $this->context->is_anonymous_mode(),
                 'restricted' => $this->context->get_acl()->is_enabled()
             ];
             if ($is_admin) {
@@ -107,7 +109,8 @@ final class Api {
             $response['items'] = $this->context->get_items($href, $what);
             $path = $this->context->to_path($href);
             if ($path !== null && is_dir($path) && !$this->context->can($path, Acl::LIST)) {
-                $response['denied'] = $this->context->get_user() === null ? 'login' : 'forbidden';
+                $response['denied'] = $this->context->get_user() !== null ? 'forbidden'
+                    : ($this->context->is_anonymous_mode() ? 'unavailable' : 'login');
             }
         }
 

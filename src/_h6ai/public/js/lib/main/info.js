@@ -160,6 +160,7 @@ const confirmDialog = (title, text, onConfirm) => dialog(title, el('p', {text}),
 
 let state = {users: [], roles: [], groups: [], rules: [], levels: LEVELS, writable: true, bootstrap: false};
 let settings = null;
+let requestInfo = null; // how the server sees this admin's request (reverse proxy setup)
 let activity = null;
 let activityFilter = {user: '', kind: '', path: ''};
 const loading = {settings: false, activity: false};
@@ -177,6 +178,7 @@ const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'a
         }
         if (resp.settings) {
             settings = resp.settings;
+            requestInfo = resp.request || null;
         } else if (resp.access) {
             accessResult = resp.access;
         } else if (resp.entries) {
@@ -220,6 +222,7 @@ const loginCard = () => {
     return el('section', {cls: 'card narrow login-card'}, [
         el('img', {cls: 'login-logo', attrs: {src: setup.PUBLIC_HREF + 'images/brand/logo-mark.svg', alt: '', width: 56, height: 56}}),
         el('h2', {text: `Log in to ${site.name || 'h6ai'}`}),
+        auth.anonymous ? el('p', {cls: 'help', text: 'Anonymous mode is on: only admins sign in.'}) : null,
         form
     ]);
 };
@@ -825,7 +828,8 @@ const checks = () => [
     ['Server software', 'nginx (other servers may work)', setup.HAS_SERVER, `${setup.SERVER_NAME} ${setup.SERVER_VERSION}`],
     ['PHP version', `PHP ≥ ${setup.MIN_PHP_VERSION}`, true, setup.PHP_VERSION],
     ['CVE-2026-109618', 'PHP has the fix for RCE via out-of-memory corruption (8.2.35 / 8.3.36 / 8.4.27 / 8.5.12)',
-        setup.PHP_CVE_2026_109618_FIXED, setup.PHP_CVE_2026_109618_FIXED ? 'patched' : 'UPDATE PHP'],
+        setup.PHP_CVE_2026_109618_FIXED, setup.PHP_CVE_2026_109618_FIX === 'backport' ? 'patched (distribution backport)'
+            : setup.PHP_CVE_2026_109618_FIXED ? 'patched' : 'UPDATE PHP'],
     ['PHP arch', '64-bit required for files > 2 GB', setup.PHP_ARCH === '64-bit', setup.PHP_ARCH],
     ['Public cache', 'Writable, needed for thumbnails', setup.HAS_WRITABLE_CACHE_PUB],
     ['Private cache', 'Writable, needed for caching and login rate limits', setup.HAS_WRITABLE_CACHE_PRV],
@@ -835,14 +839,56 @@ const checks = () => [
         `${setup.HAS_PHP_WEBP ? 'webp' : '-'} / ${setup.HAS_PHP_AVIF ? 'avif' : '-'}`],
     ['EXIF', 'PHP EXIF extension (thumbnail orientation)', setup.HAS_PHP_EXIF],
     ['Movie thumbs', 'ffmpeg available', setup.HAS_CMD_FFMPEG || setup.HAS_CMD_AVCONV],
-    ['PDF thumbs', 'ImageMagick (magick/convert) or GraphicsMagick available', setup.HAS_CMD_MAGICK || setup.HAS_CMD_CONVERT || setup.HAS_CMD_GM],
+    ['PDF thumbs', 'Ghostscript, ImageMagick or GraphicsMagick available', setup.HAS_CMD_GS || setup.HAS_CMD_MAGICK || setup.HAS_CMD_CONVERT || setup.HAS_CMD_GM],
     ['Shell tar', 'tar available', setup.HAS_CMD_TAR],
     ['Shell zip', 'zip available', setup.HAS_CMD_ZIP],
     ['Shell du', 'du available', setup.HAS_CMD_DU],
     ['timeout', 'Bounds thumbnail subprocess run time', setup.HAS_CMD_TIMEOUT]
 ];
 
-const systemPanel = () => el('section', {cls: 'card'}, [
+const yesNo = value => value ? 'yes' : 'no';
+
+const proxyPanel = () => {
+    if (!settings) {
+        return settingsLoading();
+    }
+    const proxy = settings.proxy || {publicUrl: '', trusted: []};
+    const trustedInput = el('textarea', {attrs: {name: 'trusted', rows: 3, spellcheck: 'false', autocomplete: 'off',
+        placeholder: '10.0.0.5\n172.16.0.0/12'}, text: (proxy.trusted || []).join('\n')});
+    const r = requestInfo;
+    const rows = r ? [
+        ['Came from', r.remoteAddr + (r.fromTrustedProxy ? ' (trusted proxy)' : '')],
+        ['Visitor address', r.clientIp],
+        ['X-Forwarded-For', r.forwardedFor || '—'],
+        ['X-Forwarded-Proto / Host', `${r.forwardedProto || '—'} / ${r.forwardedHost || '—'}`],
+        ['HTTPS', yesNo(r.https)],
+        ['Links use', r.publicOrigin]
+    ] : [];
+    // a proxy forwarded this request, but isn't trusted yet: offer its address
+    const suggest = r && r.forwardedFor && !r.fromTrustedProxy
+        ? button(`Trust ${r.remoteAddr}`, {cls: 'btn small', onClick: () => {
+            trustedInput.value = (trustedInput.value.trim() + '\n' + r.remoteAddr).trim();
+        }})
+        : null;
+
+    return settingsForm('Public address and reverse proxy', [
+        field('Public address', textInput('publicUrl', proxy.publicUrl, {placeholder: 'https://files.example.com', inputmode: 'url'}),
+            'The address visitors use. Download links, curl and wget lines, QR codes, the sitemap and server-side Analytics use it, ' +
+            'and logins arriving through the proxy are accepted for it. Empty: the address of each request.'),
+        field('Trusted proxies', trustedInput,
+            'One IP address or CIDR range per line. Only requests from these addresses may set X-Forwarded-For, -Proto and -Host: ' +
+            'h6ai then logs, rate-limits and reports the visitor\'s real address. Never list addresses visitors can reach h6ai from directly.'),
+        r ? el('div', {cls: 'field'}, [
+            el('span', {cls: 'field-label', text: 'This request, as h6ai sees it'}),
+            el('dl', {cls: 'request-info'}, rows.flatMap(([key, value]) => [el('dt', {text: key}), el('dd', {}, el('code', {text: value}))])),
+            suggest
+        ]) : null
+    ], data => ({proxy: {publicUrl: data.get('publicUrl'), trusted: data.get('trusted')}}), {
+        help: 'Only needed behind a reverse proxy or load balancer (nginx, Caddy, Traefik, a CDN).'
+    });
+};
+
+const checksPanel = () => el('section', {cls: 'card'}, [
     el('div', {cls: 'card-head'}, [el('h2', {text: 'System'}),
         button('Re-check', {cls: 'btn', title: 'Re-detect installed tools', onClick: reload})]),
     el('ul', {cls: 'checks'}, checks().map(([label, info, passed, result]) => el('li', {cls: passed ? 'passed' : 'failed'}, [
@@ -852,6 +898,8 @@ const systemPanel = () => el('section', {cls: 'card'}, [
         el('span', {cls: 'check-result', text: result !== undefined && result !== null ? String(result) : passed ? 'yes' : 'no'})
     ])))
 ]);
+
+const systemPanel = () => el('div', {cls: 'stack'}, [proxyPanel(), checksPanel()]);
 
 // --- access ---------------------------------------------------------------------------------
 
@@ -907,13 +955,120 @@ const accessChecker = () => {
     ]);
 };
 
+// --- visitors: anonymous mode and excluded folders ------------------------------------------
+
+// sub-view of the Access tab (see ACCESS_VIEWS)
+let accessView = store.get('admin/access') || 'visitors';
+
+const VISITOR_MODES = [
+    ['0', 'Public, with sign-in',
+        'Visitors browse everything that isn\'t restricted. People with an account sign in from the listing to see the folders shared with them.'],
+    ['1', 'Anonymous, no sign-in',
+        'Everyone browses and downloads everything except the excluded folders. The listing has no sign-in: only admins sign in, on this page. Other accounts can\'t sign in while this is on.']
+];
+
+const toFolderPath = path => {
+    const segments = String(path).split('/').filter(seg => seg && seg !== '.');
+    return segments.length ? '/' + segments.join('/') + '/' : '/';
+};
+
+// An excluded folder is a folder rule that grants "everyone" nothing.
+const excludedRules = () => state.rules.filter(rule => rule.grants['*'] === 'none');
+
+const excludeDialog = () => {
+    const pathInput = el('input', {attrs: {name: 'path', required: true, placeholder: 'pick a folder below'}});
+    const picker = folderPicker('/', current => {
+        if (current !== '/' || pathInput.dataset.touched) {
+            pathInput.value = current;
+        }
+        pathInput.dataset.touched = '1';
+    });
+    const body = el('div', {cls: 'fields'}, [
+        field('Folder', pathInput, 'The folder and everything in it disappear for visitors.'),
+        picker.node
+    ]);
+    dialog('Exclude a folder', body, {
+        submitLabel: 'Exclude',
+        wide: true,
+        onSubmit: (data, form) => {
+            const path = toFolderPath(data.get('path'));
+            if (path === '/' && !form.dataset.confirmed) {
+                form.dataset.confirmed = '1';
+                return {error: 'This hides the whole archive from visitors. Click Exclude again to confirm.'};
+            }
+            // keep the folder's other grants (users, roles) and add "everyone: none"
+            const existing = state.rules.find(rule => rule.path === path);
+            const grants = Object.assign({}, existing ? existing.grants : {}, {'*': 'none'});
+            return adminRequest('rule.save', {rule: {path, grants}});
+        }
+    });
+};
+
+const includeAgain = rule => {
+    const grants = Object.assign({}, rule.grants);
+    delete grants['*'];
+    // a rule left without grants is removed
+    return adminRequest('rule.save', {rule: {path: rule.path, grants}});
+};
+
+const visitorsPanel = () => {
+    if (!settings) {
+        return settingsLoading();
+    }
+    const anonymous = settings.visitors && settings.visitors.anonymous === true;
+    const excluded = excludedRules();
+    const limiting = state.rules.filter(rule => rule.grants['*'] && rule.grants['*'] !== 'none' && rule.grants['*'] !== 'download');
+    const showRules = () => {
+        accessView = 'rules';
+        store.put('admin/access', 'rules');
+        render(); // eslint-disable-line no-use-before-define
+    };
+
+    return el('div', {cls: 'stack'}, [
+        settingsForm('Visitors', [
+            el('fieldset', {cls: 'radio-list'}, [
+                el('legend', {cls: 'visually-hidden', text: 'How visitors use the site'}),
+                ...VISITOR_MODES.map(([value, label, help]) => el('label', {cls: 'radio'}, [
+                    el('input', {attrs: {type: 'radio', name: 'anonymous', value, checked: (value === '1') === anonymous}}),
+                    el('span', {cls: 'radio-text'}, [el('strong', {text: label}), el('small', {text: help})])
+                ]))
+            ])
+        ], data => ({visitors: {anonymous: data.get('anonymous') === '1'}})),
+        el('section', {cls: 'card'}, [
+            el('div', {cls: 'card-head'}, [
+                el('h2', {text: 'Excluded folders'}),
+                button('Exclude a folder', {cls: 'btn primary', iconId: 'plus', onClick: excludeDialog})
+            ]),
+            el('p', {cls: 'help', text: 'Hidden from visitors who aren\'t signed in, with everything inside: not listed, not searchable, ' +
+                'not downloadable, not in the sitemap. Direct links answer 403. Admins still see them.'}),
+            excluded.length
+                ? el('div', {cls: 'table-wrap'}, el('table', {cls: 'data'}, [
+                    headRow(['Folder', '']),
+                    el('tbody', {}, excluded.map(rule => el('tr', {}, [
+                        el('td', {}, [el('span', {cls: 'path-cell'}, [icon('lock'), el('code', {text: rule.path})]),
+                            rule.exists ? null : el('span', {cls: 'chip warn', text: 'missing'})]),
+                        el('td', {cls: 'actions'}, button('Show again', {cls: 'btn small', title: `Show ${rule.path} to visitors again`,
+                            onClick: () => includeAgain(rule)}))
+                    ])))
+                ]))
+                : el('p', {cls: 'empty', text: 'Nothing is excluded: visitors see every folder.'}),
+            limiting.length
+                ? el('p', {cls: 'help'}, [
+                    `${limiting.length} other folder ${limiting.length === 1 ? 'rule limits' : 'rules limit'} what visitors can do (list or read only). `,
+                    button('Show folder rules', {cls: 'btn link', onClick: showRules})
+                ])
+                : null
+        ])
+    ]);
+};
+
 const ACCESS_VIEWS = [
+    ['visitors', 'Visitors', visitorsPanel],
     ['users', 'Users', usersPanel],
     ['groups', 'Folder groups', groupsPanel],
     ['roles', 'Roles', rolesPanel],
     ['rules', 'Folder rules', permissionsPanel]
 ];
-let accessView = store.get('admin/access') || 'users';
 
 const accessPanel = () => {
     const nav = el('div', {cls: 'segmented subnav', attrs: {role: 'tablist', 'aria-label': 'Access'}}, ACCESS_VIEWS.map(([id, label]) => el('button', {

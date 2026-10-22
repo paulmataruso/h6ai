@@ -12,12 +12,7 @@ final class Seo {
     public function __construct(private readonly Context $context) {}
 
     public function base_url(): string {
-        $request = $this->context->get_request();
-        $host = (string) ($request->header('Host') ?? 'localhost');
-        if (!preg_match('/^[A-Za-z0-9.\-:\[\]]{1,255}$/', $host)) {
-            $host = 'localhost';
-        }
-        return ($request->is_https() ? 'https' : 'http') . '://' . $host;
+        return $this->context->get_request()->public_origin();
     }
 
     public function robots(): never {

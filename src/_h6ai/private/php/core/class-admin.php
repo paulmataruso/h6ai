@@ -38,7 +38,7 @@ final class Admin {
                 'group.delete' => $this->delete_group($request->query_string('name')),
                 'rule.save' => $this->save_rule($request->query_array('rule')),
                 'rule.delete' => $this->delete_rule($request->query_string('path')),
-                'settings.get' => ['settings' => $this->context->get_settings()->to_admin()],
+                'settings.get' => $this->settings_response(),
                 'settings.save' => $this->save_settings($request->query_array('settings')),
                 'activity.list' => $this->activity($request),
                 'access.check' => $this->check_access($request->query_string('principal'), $request->query_string('path')),
@@ -394,8 +394,30 @@ final class Admin {
 
     private function save_settings(array $input): array {
         Admin::check($this->context->get_settings()->is_writable(), 'data directory not writable');
-        $this->context->get_settings()->save($input);
-        return ['settings' => $this->context->get_settings()->to_admin()];
+        $settings = $this->context->get_settings();
+        $settings->save($input);
+        // show the effect of new proxy settings on this very request
+        $this->context->get_request()->configure_proxy((array) $settings->get('proxy.trusted', []), (string) $settings->get('proxy.publicUrl', ''));
+        return $this->settings_response();
+    }
+
+    // Settings plus how h6ai sees the admin's own request, to set up a reverse proxy.
+    private function settings_response(): array {
+        $request = $this->context->get_request();
+        return [
+            'settings' => $this->context->get_settings()->to_admin(),
+            'request' => [
+                'remoteAddr' => $request->remote_addr(),
+                'clientIp' => $request->client_ip(),
+                'fromTrustedProxy' => $request->from_trusted_proxy(),
+                'forwardedFor' => $request->header('X-Forwarded-For'),
+                'forwardedProto' => $request->header('X-Forwarded-Proto'),
+                'forwardedHost' => $request->header('X-Forwarded-Host'),
+                'host' => $request->header('Host'),
+                'https' => $request->is_https(),
+                'publicOrigin' => $request->public_origin()
+            ]
+        ];
     }
 
     // Effective access of a user (or everyone, "*") on a folder, with the rule that decided it.

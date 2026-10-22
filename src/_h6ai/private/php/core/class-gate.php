@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 // Authorisation endpoint for nginx `auth_request`. nginx asks before serving any file below the
 // web root and serves the bytes itself (sendfile, Range, ETag) if we answer 204.
-//   204 allowed, 401 denied for anonymous visitors, 403 denied for logged in users.
+//   204 allowed, 401 denied for visitors who aren't logged in, 403 denied for logged in users and,
+//   in anonymous mode (no login at all), for everyone.
 // The X-H6ai-Cache-Control header lets nginx mark files that aren't public as private.
 //
 // Allowed file requests are recorded in the activity log and, if configured, reported to Google
@@ -90,6 +91,7 @@ final class Gate {
             $this->allow($public ? 'public, no-cache' : 'private, no-cache', $file);
         }
 
-        $this->respond($this->context->get_user() === null ? 401 : 403);
+        // 401 invites a login; in anonymous mode there is none to offer
+        $this->respond($this->context->get_user() === null && !$this->context->is_anonymous_mode() ? 401 : 403);
     }
 }

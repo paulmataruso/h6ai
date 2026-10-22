@@ -119,6 +119,15 @@ final class Context {
         return $this->get_auth_store()->has_users() || $this->is_bootstrap_possible();
     }
 
+    // Anonymous mode (admin setting): no sign-in for visitors, only admins log in.
+    public function is_anonymous_mode(): bool {
+        return $this->get_settings()->get('visitors.anonymous') === true;
+    }
+
+    private static function is_admin_record(?array $user): bool {
+        return $user !== null && ($user['type'] ?? 'standard') !== 'anon' && in_array('admin', (array) ($user['roles'] ?? []), true);
+    }
+
     // Accepts password_hash() hashes (bcrypt/argon2) and, for backwards compatibility, the
     // legacy unsalted hex SHA-512 format. Comparisons are constant-time.
     public static function verify_password(string $pass, string $hash): bool {
@@ -151,6 +160,10 @@ final class Context {
             return true;
         }
 
+        // in anonymous mode other accounts fail like a wrong password (no hint which names exist)
+        if ($this->is_anonymous_mode() && !Context::is_admin_record($user)) {
+            $user = null;
+        }
         $hash = is_string($user['hash'] ?? null) ? $user['hash'] : Context::DUMMY_HASH;
         $ok = password_verify($pass, $hash) && $user !== null && empty($user['disabled']);
         if (!$ok) {
@@ -211,6 +224,10 @@ final class Context {
 
         $record = $this->get_auth_store()->get_user($name);
         if ($record === null || !empty($record['disabled']) || (int) ($record['version'] ?? 0) !== (int) $this->session->get('USER_VER', -1)) {
+            return null;
+        }
+        // sessions of other accounts count as visitors while anonymous mode is on
+        if ($this->is_anonymous_mode() && !Context::is_admin_record($record)) {
             return null;
         }
         $type = ($record['type'] ?? 'standard') === 'anon' ? 'anon' : 'standard';

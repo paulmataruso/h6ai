@@ -1,14 +1,26 @@
 <?php
 declare(strict_types=1);
 
-// Site settings managed in the admin UI (private/data/settings.json): site name, Google
-// integration (Search Console, Tag Manager, Analytics), search engine indexing, activity log.
+// Site settings managed in the admin UI (private/data/settings.json): site name, anonymous mode,
+// reverse proxy, Google integration (Search Console, Tag Manager, Analytics), search engine
+// indexing, activity log.
 final class Settings {
     public const THEMES = ['midnight', 'graphite', 'deepsea', 'ember', 'oled'];
     public const CLICK_ACTIONS = ['expand', 'download-other', 'download'];
 
     public const DEFAULTS = [
         'siteName' => 'h6ai',
+        'visitors' => [
+            // anonymous mode: no sign-in in the listing, everyone browses and downloads everything
+            // except excluded folders ("everyone: none" rules); only admins sign in, on the admin page
+            'anonymous' => false
+        ],
+        'proxy' => [
+            // the address visitors use, e.g. "https://files.example.com" ('' = each request's own)
+            'publicUrl' => '',
+            // IPs / CIDR ranges of reverse proxies whose X-Forwarded-* headers are believed
+            'trusted' => []
+        ],
         'appearance' => [
             // site default theme, visitors may pick another one for themselves
             'theme' => 'midnight',
@@ -39,6 +51,7 @@ final class Settings {
     private const GTM_RE = '/^GTM-[A-Z0-9]{4,12}$/';
     private const GA4_RE = '/^G-[A-Z0-9]{4,16}$/';
     private const SECRET_RE = '/^[A-Za-z0-9_-]{8,64}$/';
+    private const MAX_PROXIES = 32;
 
     private JsonStore $store;
     private ?array $settings = null;
@@ -89,6 +102,8 @@ final class Settings {
             'theme' => $this->get('appearance.theme'),
             'themes' => Settings::THEMES,
             'clickAction' => $this->get('appearance.clickAction'),
+            // for absolute links (direct link, curl/wget lines, QR code); '' = the page's own address
+            'publicUrl' => $this->get('proxy.publicUrl'),
             'google' => [
                 'measurementId' => $this->get('google.measurementId'),
                 'tagManagerId' => $this->get('google.tagManagerId'),
@@ -118,6 +133,31 @@ final class Settings {
         return $found;
     }
 
+    // "files.example.com", "https://files.example.com/" -> "https://files.example.com"; scheme,
+    // host and port only (h6ai lives at the root of the site).
+    public static function clean_public_url(mixed $value): string {
+        Settings::check(is_string($value), 'invalid public address');
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (!preg_match('#^[a-z][a-z0-9+.-]*://#i', $value)) {
+            $value = 'https://' . $value;
+        }
+        $parts = parse_url($value);
+        $msg = 'public address must look like https://files.example.com';
+        Settings::check(is_array($parts) && isset($parts['host']), $msg);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        Settings::check(in_array($scheme, ['http', 'https'], true), 'the public address must start with http:// or https://');
+        Settings::check(!isset($parts['user']) && !isset($parts['pass']) && !isset($parts['query']) && !isset($parts['fragment']), $msg);
+        Settings::check(($parts['path'] ?? '/') === '/' || ($parts['path'] ?? '') === '', 'the public address can\'t have a path: h6ai runs at the root of the site');
+        $host = strtolower($parts['host']);
+        Settings::check(preg_match('/^(\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?)*)$/', $host) === 1, $msg);
+        $port = isset($parts['port']) ? (int) $parts['port'] : null;
+        $default = $scheme === 'https' ? 443 : 80;
+        return $scheme . '://' . $host . ($port !== null && $port !== $default ? ':' . $port : '');
+    }
+
     private static function check(bool $cond, string $msg): void {
         if (!$cond) {
             throw new InvalidArgumentException($msg);
@@ -139,6 +179,29 @@ final class Settings {
             Settings::check($name !== '' && mb_strlen($name) <= 60, 'site name must have 1 to 60 characters');
             $next['siteName'] = $name;
         }
+
+        $proxy = is_array($input['proxy'] ?? null) ? $input['proxy'] : [];
+        if (array_key_exists('publicUrl', $proxy)) {
+            $next['proxy']['publicUrl'] = Settings::clean_public_url($proxy['publicUrl']);
+        }
+        if (array_key_exists('trusted', $proxy)) {
+            $list = is_string($proxy['trusted']) ? preg_split('/[\s,]+/', $proxy['trusted']) : $proxy['trusted'];
+            Settings::check(is_array($list), 'trusted proxies must be a list');
+            $clean = [];
+            foreach ($list as $entry) {
+                Settings::check(is_string($entry), 'invalid trusted proxy');
+                $entry = trim($entry);
+                if ($entry !== '') {
+                    Settings::check(Request::is_valid_cidr($entry), 'not an IP address or CIDR range: ' . mb_substr($entry, 0, 64));
+                    $clean[$entry] = true;
+                }
+            }
+            Settings::check(count($clean) <= Settings::MAX_PROXIES, 'at most ' . Settings::MAX_PROXIES . ' trusted proxies');
+            $next['proxy']['trusted'] = array_keys($clean);
+        }
+
+        $visitors = is_array($input['visitors'] ?? null) ? $input['visitors'] : [];
+        Settings::bool_field($visitors, 'anonymous', $next['visitors']);
 
         $appearance = is_array($input['appearance'] ?? null) ? $input['appearance'] : [];
         if (array_key_exists('theme', $appearance)) {

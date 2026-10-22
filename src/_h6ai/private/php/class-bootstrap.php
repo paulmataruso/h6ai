@@ -12,9 +12,12 @@ final class Bootstrap {
         set_exception_handler([Bootstrap::class, 'on_exception']);
 
         $request = Request::from_globals();
+        $setup = new Setup(false);
+        // reverse proxy settings first: they decide the client address and whether cookies are Secure
+        $settings = new Settings($setup->get('DATA_PATH'), $setup->get('CACHE_PRV_PATH'));
+        $request->configure_proxy((array) $settings->get('proxy.trusted', []), (string) $settings->get('proxy.publicUrl', ''));
         $session = new Session($request->is_https());
         $is_admin_refresh = $request->query('refresh', false) !== false && $request->query_boolean('refresh', false);
-        $setup = new Setup(false);
         $context = new Context($session, $request, $setup);
         if ($is_admin_refresh && $context->is_admin()) {
             // re-detect available shell commands, only on request of a logged in admin

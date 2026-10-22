@@ -199,7 +199,10 @@ const onHint = (key, $hint) => {
     $hint.clr().rmCls('l10n-denied');
     dom('<div class="denied-icon"></div>').html(resource.ui('lock')).appTo($hint);
     const $text = dom('<p></p>');
-    if (needsLogin) {
+    if (item && item.denied === 'unavailable') {
+        // anonymous mode: an excluded folder, there's no login to offer
+        $text.text('This folder isn\'t available.');
+    } else if (needsLogin) {
         $text.addCls('l10n-deniedLogin').text('This folder requires a login.');
     } else if (user && user.type === 'anon') {
         // no l10n class: the translated generic line would replace this account-specific one
@@ -224,7 +227,7 @@ const init = () => {
 
     if (user) {
         initUserMenu();
-    } else if (auth.loginAvailable) {
+    } else if (auth.loginAvailable && !auth.anonymous) {
         initLogin();
     }
 };

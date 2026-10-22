@@ -204,7 +204,7 @@ export const getSetup = async jar => {
 };
 
 // Admin operation; csrf is sent as a JSON field.
-export const adminOp = (jar, csrf, op, payload = {}) => apiAs(jar, {action: 'admin', op, csrf, ...payload});
+export const adminOp = (jar, csrf, op, payload = {}, opts = {}) => apiAs(jar, {action: 'admin', op, csrf, ...payload}, opts);
 
 // --- thumbnails ------------------------------------------------------------------------------
 // Ask for one thumb. Returns {url} on success, {none: true} for null, {error} for an API error.

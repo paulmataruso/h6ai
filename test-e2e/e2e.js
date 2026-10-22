@@ -1,6 +1,6 @@
 // End-to-end UI check against the running container. Run inside the Playwright image.
 // Covers the visitor path (themes, rows, band, archive, preview), the admin (access, folder groups,
-// anon accounts, appearance) and what each kind of account can see afterwards.
+// anon accounts, appearance, anonymous mode) and what each kind of account can see afterwards.
 const {chromium} = require('playwright');
 const assert = require('assert');
 
@@ -378,6 +378,41 @@ const drawer = async (page, open) => {
         await admin.check('input[name=clickAction][value=expand]');
         await admin.click('form:has(input[name=clickAction]) button[type=submit]');
         await admin.waitForTimeout(400);
+    });
+
+    await step('admin: anonymous mode hides sign-in and excluded folders', async () => {
+        await admin.reload();
+        await admin.waitForSelector('.tabs');
+        await accessView('visitors');
+        await admin.click('button:has-text("Exclude a folder")');
+        await admin.click('.picker-list button:has-text("team")');
+        await admin.waitForSelector('dialog .picker-crumb:text-is("/team/")');
+        await admin.click('dialog button[type=submit]');
+        await admin.waitForSelector('table.data code:text-is("/team/")');
+        await admin.check('input[name=anonymous][value="1"]');
+        await admin.click('form:has(input[name=anonymous]) button[type=submit]');
+        await admin.waitForTimeout(400);
+        await admin.screenshot({path: `${SHOTS}/e2e-17-admin-visitors.png`, fullPage: true});
+
+        const visitor = await (await browser.newContext({viewport: {width: 1280, height: 800}})).newPage();
+        watch(visitor, 'visitor');
+        await visitor.goto(BASE + '/');
+        await visitor.waitForSelector('#items .item.folder');
+        assert.equal(await visitor.locator('#account').count(), 0, 'no sign-in button');
+        assert.equal(await row(visitor, 'team').count(), 0, 'excluded folder listed');
+        assert.equal(await row(visitor, 'docs').count(), 1);
+        await visitor.goto(BASE + '/team/');
+        await visitor.waitForSelector('#view-hint:not(.hidden) .denied-icon');
+        assert.match(await visitor.textContent('#view-hint'), /isn't available/);
+        assert.equal(await visitor.locator('#view-hint button').count(), 0, 'no login offered');
+        assert.equal((await visitor.request.get(BASE + '/team/notes.txt')).status(), 403);
+        await visitor.close();
+
+        await admin.check('input[name=anonymous][value="0"]');
+        await admin.click('form:has(input[name=anonymous]) button[type=submit]');
+        await admin.waitForTimeout(400);
+        await admin.click('button[title="Show /team/ to visitors again"]');
+        await admin.waitForSelector('table.data code:text-is("/team/")', {state: 'detached'});
     });
 
     await step('admin: cleanup rule, users and folder group', async () => {

@@ -79,7 +79,8 @@ const stamp = ($band, $dl, item) => {
 };
 
 const typeLabel = item => TYPE_LABELS[(item.type || 'file').split('-')[0]] || 'file';
-const absoluteUrl = item => new URL(item.absHref, win.location.href).href;
+// the public address from the admin's reverse proxy settings, else this page's own
+const absoluteUrl = item => new URL(item.absHref, site.publicUrl || win.location.href).href;
 
 const close = (restoreFocus = true) => {
     if (!open) {

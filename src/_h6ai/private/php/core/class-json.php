@@ -28,13 +28,16 @@ final class Json {
 
         $cache_file = $cache_dir . '/json-' . sha1($path) . '.php';
         $cached = is_file($cache_file) ? @include $cache_file : null;
-        if (is_array($cached) && ($cached['m'] ?? null) === $mtime && ($cached['s'] ?? null) === $size) {
+        // mtime has a resolution of one second: a copy made in the same second the file was written
+        // can't tell a second write of the same size apart, so only copies made later are trusted
+        if (is_array($cached) && ($cached['m'] ?? null) === $mtime && ($cached['s'] ?? null) === $size
+            && ($cached['c'] ?? 0) > $mtime) {
             return $cached['d'];
         }
 
         $data = Json::load($path);
         if ($data !== null && is_dir($cache_dir) && is_writable($cache_dir)) {
-            $code = '<?php return ' . var_export(['m' => $mtime, 's' => $size, 'd' => $data], true) . ';';
+            $code = '<?php return ' . var_export(['m' => $mtime, 's' => $size, 'c' => time(), 'd' => $data], true) . ';';
             $tmp = $cache_file . '.' . bin2hex(random_bytes(4)) . '.tmp';
             if (@file_put_contents($tmp, $code) !== false && @rename($tmp, $cache_file)) {
                 if (function_exists('opcache_invalidate')) {

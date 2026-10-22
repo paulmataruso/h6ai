@@ -196,6 +196,40 @@ table.data td strong {
     margin-right: var(--s-2);
 }
 
+/* how the server sees the admin's request (reverse proxy setup) */
+.request-info {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--s-1) var(--s-4);
+    margin: 0 0 var(--s-2);
+    padding: var(--s-3) var(--s-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    font-size: var(--fs-sm);
+}
+
+.request-info dt {
+    color: var(--text-muted);
+}
+
+.request-info dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* a folder path with a leading icon (excluded folders) */
+.path-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    color: var(--text-muted);
+}
+
+.path-cell code {
+    color: var(--text);
+}
+
 /* system checks */
 .checks {
     margin: 0;

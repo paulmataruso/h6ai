@@ -37,6 +37,14 @@ Features
   non-previewable files, or always download)
 * packaged downloads name their contents ("Download 3 items · 1.2 GB · .tar"), show "Preparing…"
   until the stream starts, and selections can be cleared in one click
+* anonymous mode (Admin → Access → Visitors): no sign-in anywhere in the listing, everyone browses
+  and downloads everything except the excluded folders picked on the same page (gone from
+  listings, search, downloads and the sitemap, direct links 403). Only admins sign in, on the
+  admin page; other accounts' logins and sessions don't count while it's on
+* reverse proxy support (Admin → System): public address used for links, curl/wget lines, QR
+  codes, sitemap and server-side Analytics and accepted as login origin; trusted proxy IPs/CIDR
+  ranges whose `X-Forwarded-For/-Proto/-Host` give the real visitor address for logs, rate limits
+  and Secure cookies. The card shows how h6ai sees the admin's own request
 * folder groups and "anon" download-only accounts: an anon user sees and downloads only the folder
   groups shared with them, at the level chosen per group; everything else stays invisible
 * admin: access checker ("who can see this folder, and which rule decides it"), activity log with
@@ -55,6 +63,35 @@ Features
 * Matomo replaces Piwik (old key still read); Google Universal Analytics removed (shut down 2023)
 * Docker image (nginx + PHP-FPM, OPcache/JIT, tuned for large files)
 
+Install
+
+* two supported install types, sharing the nginx and PHP configuration in `deploy/` (see
+  `docs/INSTALL.md`)
+* Docker: `compose.yaml` is a production setup: shares `H6AI_FILES` and creates the first
+  admin on the first start (a generated password goes to the log). The sample-data test
+  environment moved to `compose.dev.yaml`
+* native installer `install.sh` for Debian 12/13, Ubuntu 22.04/24.04/26.04, Fedora, Rocky/Alma/RHEL
+  9 and Alpine:
+  * nginx and PHP-FPM come from the distribution's packages; h6ai gets its own PHP-FPM pool and
+    system user
+  * checks PHP for the CVE-2026-109618 fix, by version or distribution backport
+  * creates the first admin, configures SELinux and the firewall
+  * re-run to upgrade; `--uninstall [--purge]`
+  * tested on all of them with the integration suite (`npm run test:native`)
+* `h6ai-user` command in both install types: add admins or anon accounts, reset passwords,
+  enable or disable users
+* nginx snippets for your own server block: `http.conf`, `server.conf` and `large-files.conf`.
+  `trusted-html.map` holds sandbox exemptions and is never overwritten
+* release bundle `h6ai-<version>.tar.gz` contains `_h6ai`, the installer and `deploy/`
+* PDF thumbnails use Ghostscript directly when it's installed. Debian and Ubuntu disable PDF in
+  their system-wide ImageMagick policy
+* the admin System tab recognises distribution backports of the CVE-2026-109618 fix
+* fix: logins failed on non-default ports where `fastcgi_params` passes `$host` (Debian, Ubuntu)
+* fix: two saves of a folder rule, user or setting within one second could leave the first version
+  in effect until the next save, when both files had the same size (e.g. a rule changed from
+  `list` to `none`). The compiled JSON cache now only trusts copies made after the file's last
+  write second
+
 Breaking
 
 * requires PHP 8.2+, nginx is the supported server
@@ -64,6 +101,10 @@ Breaking
 * `filter` is enabled by default
 * the folder tree is hidden by default (`tree.show: false`); visitors switch it on in the settings drawer
 * `view.colorScheme` and the light/auto themes are gone: h6ai is dark only, with five themes
+* `docker compose up` now starts the production setup on port 8080. The test environment (sample
+  tree, `admin` / `admin-test`, port 8687) needs `-f compose.yaml -f compose.dev.yaml`, or
+  `COMPOSE_FILE=compose.yaml:compose.dev.yaml` in `.env`
+* the image no longer seeds sample data by default (`H6AI_SEED=1` turns it on)
 
 Development
 

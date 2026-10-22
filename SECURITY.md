@@ -13,12 +13,15 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
   archive and custom header request. Raw file requests are only protected if **nginx asks h6ai first**
   via `auth_request` (see `docs/DEPLOYMENT.md`). Without that config, the listing is protected but
   anyone who knows a file's URL can still download it.
+* **Forwarded headers.** `X-Forwarded-For`, `-Host` and (once proxies are configured)
+  `-Proto` are only believed from the trusted proxies set in Admin → System. Without that list,
+  the rate limiter and the activity log use the connecting address, which a client can't forge.
 * **Hidden is not protected.** `view.hidden` only removes entries from listings and API results.
   Use folder permissions or nginx rules to deny access.
 * **Active content in the share** (HTML, SVG, XML, XSL, MHTML) is served with a
   `Content-Security-Policy: sandbox; default-src 'none' …` header by the reference nginx config:
   no script, no forms, opaque origin. Trusted static sites inside the share can be exempted with
-  the `$h6ai_trusted_html` map in `docker/nginx/h6ai.conf`.
+  `deploy/nginx/trusted-html.map` (installed as `/etc/nginx/h6ai/trusted-html.map`).
 * **Custom header/footer files** (`_h6ai.header.html` etc.) are sanitised unless
   `custom.allowUnsafeHtml` is enabled. Markdown is always sanitised.
 
