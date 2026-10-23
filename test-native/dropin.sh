@@ -29,7 +29,7 @@ check() {
 }
 suite() { # name
     x 'rm -f /var/www/html/_h6ai/private/cache/ratelimit-*'
-    if H6AI_URL="http://127.0.0.1:$PORT" node --test --test-concurrency=1 test-integration/ > "test-native/logs/dropin-$1.suite.log" 2>&1; then
+    if H6AI_URL="http://127.0.0.1:$PORT" node --test --test-concurrency=1 test-integration/*.test.mjs > "test-native/logs/dropin-$1.suite.log" 2>&1; then
         echo "[dropin] suite ($1): $(grep -E '^# (pass|skipped)' "test-native/logs/dropin-$1.suite.log" | tr '\n' ' ')"
     else
         fail "suite ($1): $(grep -E '^# (pass|fail)' "test-native/logs/dropin-$1.suite.log" | tr '\n' ' ')"

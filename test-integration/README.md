@@ -28,7 +28,7 @@ Extra arguments go to `node --test`, e.g. `test-integration/run.sh --test-report
 Running without the script:
 
 ```sh
-H6AI_URL=http://127.0.0.1:8687 node --test --test-concurrency=1 test-integration/
+H6AI_URL=http://127.0.0.1:8687 node --test --test-concurrency=1 test-integration/*.test.mjs
 ```
 
 ## Files

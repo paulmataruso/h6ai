@@ -26,7 +26,7 @@ fi
 
 echo "[run] testing $URL"
 status=0
-H6AI_URL=$URL node --test --test-concurrency=1 "$@" test-integration/ || status=$?
+H6AI_URL=$URL node --test --test-concurrency=1 "$@" test-integration/*.test.mjs || status=$?
 
 if running; then
     exe=$(docker compose exec -T "$SERVICE" sh -c "find $H6AI_DIR/public/cache -type f -perm /111" || true)

@@ -82,7 +82,7 @@ for d in $DISTROS; do
        cp /opt/options.local.json /srv/www/_h6ai/private/conf/options.local.json
        chmod 0644 /srv/www/_h6ai/private/conf/options.local.json' || fail "seed"
     x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'
-    if H6AI_URL="http://127.0.0.1:$port" node --test --test-concurrency=1 test-integration/ \
+    if H6AI_URL="http://127.0.0.1:$port" node --test --test-concurrency=1 test-integration/*.test.mjs \
         > "test-native/logs/$d.suite.log" 2>&1; then
         echo "[native] $d: suite $(grep -E '^# (pass|skipped)' "test-native/logs/$d.suite.log" | tr '\n' ' ')"
         grep -E '# SKIP' "test-native/logs/$d.suite.log" | sed "s/^/[native] $d:   /" || true
