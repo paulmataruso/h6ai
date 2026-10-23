@@ -184,6 +184,8 @@ const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'a
             accessResult = resp.access;
         } else if (resp.entries) {
             activity = resp;
+        } else if (resp.probe) {
+            return resp; // the caller handles it (runFileTypeProbe)
         } else {
             state = resp;
         }
@@ -194,8 +196,18 @@ const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'a
 // --- drop-in checks: run from the browser, so they test what the server actually does --------
 
 const ERROR_PAGE_LINE = 'error_page 403 404 = /_h6ai/public/index.php;';
-// null = not checked (yet)
-const dropin = {exposed: null, routed: null, listed: null, fast: null, plainLocal: null, server: null};
+const INTERNAL_LOCATION = 'location ^~ /_h6ai/private/ {\n    internal;\n}';
+const PROBE_TEXT = 'h6ai-xaccel-ok\n';
+// the file types the fast-download probe goes out as (FileServer::PROBE_EXTS); txt decides
+const ACCEL_EXTS = ['txt', 'bin', 'iso', 'zip', 'gz', 'mp4', 'mkv', 'webm', 'mp3', 'jpg', 'png', 'pdf'];
+// null = not checked (yet). changed: types nginx sends with headers of its own; notSent: types
+// it doesn't send at all; internal: the probe link can't be fetched from outside
+const dropin = {exposed: null, routed: null, listed: null, fast: null, plainLocal: null, server: null,
+    changed: null, notSent: null, internal: null};
+// every file type reaches h6ai: null = not checked (yet), else {missing: [...], unsure: [...]}
+let fileTypes = null;
+
+const extList = exts => exts.slice(0, 8).map(ext => '.' + ext).join(', ') + (exts.length > 8 ? ` and ${exts.length - 8} more` : '');
 
 const privateBanner = () => dropin.exposed ? el('div', {cls: 'banner error'}, [icon('lock'), el('span', {text:
     'Your server sends .php files from _h6ai/private/ as plain text, so anyone can download users, password hashes and ' +
@@ -210,14 +222,81 @@ const routingBanner = () => (auth.dropin || setup.IS_DROPIN) && dropin.routed ==
     icon('info'), el('span', {}, ['nginx doesn\'t hand unknown paths to h6ai yet, so folders and files of the files folder ' +
         'can\'t be opened. Add this line to the server block and reload nginx: ', el('code', {text: ERROR_PAGE_LINE})])]) : null;
 
+// A location of the server block's own (often a caching rule) catches some file types first.
+// With the files in the web root (native, Docker, or a drop-in that kept them there) such files
+// go out without the permission check; a drop-in with its files elsewhere just can't open them.
+const fileTypesBanner = () => {
+    if (!fileTypes || !fileTypes.missing.length) {
+        return null;
+    }
+    const exts = extList(fileTypes.missing);
+    return setup.IS_DROPIN && !setup.ROOT_IN_WEBROOT
+        ? el('div', {cls: 'banner warn'}, [icon('info'), el('span', {text: `nginx answers requests for ${exts} files itself ` +
+            'instead of handing them to h6ai, so files of these types can\'t be opened. A location in your server block catches them. ' +
+            'See System → Drop-in install.'})])
+        : el('div', {cls: 'banner error'}, [icon('lock'), el('span', {text: `nginx sends ${exts} files without asking h6ai: ` +
+            'a location in your server block (often a caching rule for static files) catches them before h6ai\'s. Files of these ' +
+            'types in protected folders can be downloaded by anyone. See System.'})]);
+};
+
+const bigFilesBanner = () => !dropin.changed || (!dropin.changed.length && !dropin.notSent.length) ? null
+    : el('div', {cls: 'banner warn'}, [icon('info'), el('span', {}, [
+        dropin.changed.length ? `nginx replaces h6ai's headers on big ${extList(dropin.changed)} files it sends, so files from ` +
+            'protected folders may be kept by shared caches, and that location\'s logging applies. ' : '',
+        dropin.notSent.length ? `nginx doesn't send big ${extList(dropin.notSent)} files h6ai hands back; PHP sends all big files until that's fixed. ` : '',
+        'A location in your server block catches them. Add this one to the server block: ', el('code', {text: 'location ^~ /_h6ai/private/ { internal; }'})])]);
+
 // Shared files inside the web root bypass h6ai: rules then only hide entries.
 const dropinNote = () => setup.IS_DROPIN && setup.ROOT_IN_WEBROOT ? el('div', {cls: 'banner warn'}, [icon('info'), el('span', {text:
     'Your files are inside the web root: nginx hands them out without asking h6ai, so this only hides folders in ' +
     'listings, search and archives. See System → Drop-in install.'})]) : null;
 
-const fetchText = url => win.fetch(url, {cache: 'no-store', credentials: 'omit', redirect: 'manual'})
-    .then(resp => resp.text().then(text => ({status: resp.status, text, route: resp.headers.get('X-H6ai-Route'), server: resp.headers.get('Server')})))
+// Sends the browser's credentials: on a site behind basic auth, a request without them never gets
+// past nginx's own 401. The checks don't depend on h6ai's session.
+const fetchText = url => win.fetch(url, {cache: 'no-store', credentials: 'same-origin', redirect: 'manual'})
+    .then(resp => resp.text().then(text => ({status: resp.status, text, route: resp.headers.get('X-H6ai-Route'),
+        server: resp.headers.get('Server'), cacheControl: resp.headers.get('Cache-Control'), expires: resp.headers.get('Expires')})))
     .catch(() => null);
+
+// Every file type must reach h6ai (GateProbe): the server notes probe requests for files that
+// don't exist, a location of the server block's own answers them without h6ai.
+const runFileTypeProbe = () => adminRequest('probe.start').then(resp => {
+    const probe = resp.probe;
+    if (!probe || !probe.ok) {
+        return null;
+    }
+    if (probe.link) {
+        fetchText(probe.link).then(r => {
+            dropin.internal = !(r && r.text === PROBE_TEXT);
+            render(); // eslint-disable-line no-use-before-define
+        });
+    }
+    const statuses = {};
+    const queue = probe.exts.slice();
+    const next = () => {
+        const ext = queue.shift();
+        return ext === undefined ? null : fetchText(probe.href + ext).then(r => {
+            statuses[ext] = r ? r.status : 0;
+            return next();
+        });
+    };
+    return Promise.all([next(), next(), next(), next()])
+        .then(() => adminRequest('probe.result'))
+        .then(result => {
+            const seen = (result.probe && result.probe.seen) || [];
+            const missing = [];
+            const unsure = [];
+            probe.exts.filter(ext => !seen.includes(ext)).forEach(ext => {
+                // 403: nginx refused it itself, nothing goes out. No answer, a login or a rate
+                // limit: can't tell. Anything else came from nginx without h6ai.
+                if (statuses[ext] !== 403) {
+                    ([0, 401, 429, 503].includes(statuses[ext]) ? unsure : missing).push(ext);
+                }
+            });
+            fileTypes = {missing, unsure, total: probe.exts.length};
+            render(); // eslint-disable-line no-use-before-define
+        });
+});
 
 const runChecks = () => {
     const pub = setup.PUBLIC_HREF || '/_h6ai/public/';
@@ -240,19 +319,28 @@ const runChecks = () => {
             fetchText(priv + 'cache/').then(r => {
                 dropin.listed = !!r && (/x[sp]-[0-9a-f]{40}/).test(r.text);
             }),
-            fetchText(pub + 'index.php?h6ai-probe=accel').then(r => {
-                dropin.fast = !!r && r.text === 'h6ai-xaccel-ok\n';
+            Promise.all(ACCEL_EXTS.map(ext => fetchText(pub + 'index.php?h6ai-probe=accel&ext=' + ext).then(r => [ext, r]))).then(results => {
+                const arrived = results.filter(([, r]) => r && r.text === PROBE_TEXT);
+                dropin.fast = arrived.some(([ext]) => ext === 'txt');
+                dropin.notSent = dropin.fast ? results.filter(([, r]) => !(r && r.text === PROBE_TEXT)).map(([ext]) => ext) : [];
+                // h6ai sends "no-store"; a caching rule replaces it (expires) or adds to it (add_header)
+                dropin.changed = arrived.filter(([, r]) => r.cacheControl !== 'no-store' || r.expires).map(([ext]) => ext);
             })
         );
     }
     Promise.all(jobs).then(() => {
         render(); // eslint-disable-line no-use-before-define
+        if (user && user.isAdmin) {
+            runFileTypeProbe();
+        }
         if (isDropin && user && user.isAdmin) {
-            // files go through nginx only once a browser saw X-Accel-Redirect work here
+            // files go through nginx only once a browser saw X-Accel-Redirect work here, for
+            // every file type
+            const fast = dropin.fast === true && !dropin.notSent.length;
             adminRequest('settings.get').then(resp => {
                 const current = resp.settings && resp.settings.dropin && resp.settings.dropin.fastDownloads === true;
-                if (current !== (dropin.fast === true)) {
-                    adminRequest('settings.save', {settings: {dropin: {fastDownloads: dropin.fast === true}}});
+                if (current !== fast) {
+                    adminRequest('settings.save', {settings: {dropin: {fastDownloads: fast}}});
                 }
             });
         }
@@ -966,6 +1054,8 @@ const checks = () => [
     ['h6ai version', 'Release builds have a plain x.y.z version', (/^\d+\.\d+\.\d+$/).test(setup.VERSION), setup.VERSION],
     ['Index file', `Add ${setup.INDEX_HREF} to your nginx index directive`, !!setup.INDEX_HREF, setup.INDEX_HREF],
     ['Options parsable', 'options.json and options.local.json are valid', setup.HAS_VALID_OPTIONS !== false],
+    ['Old h5ai folder', 'None in the files folder: h6ai never serves _h5ai, but it holds h5ai\'s settings and password hash',
+        !setup.HAS_H5AI_FOLDER, setup.HAS_H5AI_FOLDER ? 'delete _h5ai' : 'none'],
     ['Server software', 'nginx (other servers may work)', setup.HAS_SERVER, `${setup.SERVER_NAME} ${setup.SERVER_VERSION}`],
     ['PHP version', `PHP ≥ ${setup.MIN_PHP_VERSION}`, true, setup.PHP_VERSION],
     ['CVE-2026-109618', 'PHP has the fix for RCE via out-of-memory corruption (8.2.35 / 8.3.36 / 8.4.27 / 8.5.12)',
@@ -1037,6 +1127,29 @@ const checkRow = (label, info, passed, result) => el('li', {cls: passed === null
     el('span', {cls: 'check-result', text: passed === null ? 'checking' : result})
 ]);
 
+const fileTypesRow = info => {
+    if (fileTypes === null) {
+        return checkRow('File types', info, null, '');
+    }
+    const {missing, unsure, total} = fileTypes;
+    return checkRow('File types', info, missing.length ? false : unsure.length ? 'advice' : true,
+        missing.length ? 'not ' + extList(missing) : unsure.length ? `all but ${extList(unsure)} (no answer)` : `all ${total}`);
+};
+
+const bigFilesResult = () => {
+    if (!dropin.fast) {
+        return 'PHP sends them';
+    }
+    const parts = [];
+    if (dropin.changed.length) {
+        parts.push('headers changed: ' + extList(dropin.changed));
+    }
+    if (dropin.notSent.length) {
+        parts.push('not sent: ' + extList(dropin.notSent));
+    }
+    return parts.join('; ') || 'as h6ai sent them';
+};
+
 // Drop-in installs (no h6ai nginx snippet): h6ai serves the files folder itself. Most checks run
 // in the browser (runChecks), so they see what nginx really does.
 const dropinPanel = () => !setup.IS_DROPIN ? null : el('section', {cls: 'card'}, [
@@ -1052,7 +1165,12 @@ const dropinPanel = () => !setup.IS_DROPIN ? null : el('section', {cls: 'card'},
         checkRow('Private cache', 'Not listed by nginx (holds the secret file links)', dropin.listed === null ? null : !dropin.listed,
             dropin.listed ? 'LISTED' : 'not listed'),
         checkRow('Fast downloads', 'nginx sends the bytes (X-Accel-Redirect); otherwise PHP does, one PHP worker per download',
-            dropin.fast, dropin.fast ? 'nginx' : 'PHP'),
+            dropin.fast === null ? null : dropin.fast && !dropin.notSent.length, dropin.fast && !dropin.notSent.length ? 'nginx' : 'PHP'),
+        checkRow('Big files', 'nginx sends what h6ai hands back as it is, for every file type (no location of the server block takes over)',
+            dropin.changed === null ? null : !dropin.changed.length && !dropin.notSent.length, bigFilesResult()),
+        checkRow('Secret links', 'nginx refuses the links h6ai hands big files through when they come from outside (recommended location below)',
+            dropin.internal === null ? null : dropin.internal ? true : 'advice', dropin.internal ? 'internal' : 'reachable'),
+        fileTypesRow('nginx hands requests for every file type to h6ai (none caught by a location of the server block)'),
         checkRow('Request bodies', 'PHP leaves them to h6ai (_h6ai/public/.user.ini), the CVE-2026-109618 trigger stays off',
             setup.HAS_POST_PARSING_OFF === true, setup.HAS_POST_PARSING_OFF ? 'off' : 'PHP parses them'),
         checkRow('Server version', 'nginx\'s own header; "server_tokens off;" in nginx.conf hides the version (optional)',
@@ -1060,6 +1178,9 @@ const dropinPanel = () => !setup.IS_DROPIN ? null : el('section', {cls: 'card'},
     ]),
     el('p', {cls: 'help', text: 'The server block needs this line, next to your usual PHP location:'}),
     el('pre', {text: ERROR_PAGE_LINE}),
+    el('p', {cls: 'help', text: 'Recommended as well: this location keeps the links h6ai hands big files through internal, ' +
+        'and keeps other locations (caching rules for .mp4, .zip, …) away from them:'}),
+    el('pre', {text: INTERNAL_LOCATION}),
     el('p', {cls: 'help', text: 'The files folder is "filesFolder" in _h6ai/private/conf/options.local.php. ' +
         'Step by step: docs/install/dropin.md.'})
 ]);
@@ -1075,7 +1196,18 @@ const checksPanel = () => el('section', {cls: 'card'}, [
     ])))
 ]);
 
-const systemPanel = () => el('div', {cls: 'stack'}, [dropinPanel(), proxyPanel(), checksPanel()]);
+// With h6ai's nginx snippet (native, Docker, hand-wired): nginx asks h6ai before sending a file.
+const nginxPanel = () => setup.IS_DROPIN ? null : el('section', {cls: 'card'}, [
+    el('h2', {text: 'nginx'}),
+    el('p', {cls: 'help', text: 'nginx asks h6ai before it sends any file. This check tests what your server actually does.'}),
+    el('ul', {cls: 'checks'}, [
+        fileTypesRow('nginx asks h6ai before sending every file type (none caught by a location of the server block)')
+    ]),
+    el('p', {cls: 'help', text: 'A location of your own that matches file types (location ~* \\.(jpg|css|js)$) wins over h6ai\'s ' +
+        '"location /". Remove it: h6ai already marks public and private files for caches. Details: docs/DEPLOYMENT.md.'})
+]);
+
+const systemPanel = () => el('div', {cls: 'stack'}, [dropinPanel(), nginxPanel(), proxyPanel(), checksPanel()]);
 
 // --- access ---------------------------------------------------------------------------------
 
@@ -1303,7 +1435,8 @@ const render = () => {
     root.setAttribute('role', 'main');
     root.appendChild(header());
 
-    const banners = [privateBanner(), plainLocalBanner(), routingBanner()].filter(Boolean);
+    const banners = [privateBanner(), plainLocalBanner(), routingBanner(), fileTypesBanner(),
+        user && user.isAdmin ? bigFilesBanner() : null].filter(Boolean);
     if (!user) {
         banners.forEach(banner => root.appendChild(banner));
         root.appendChild(loginCard());

@@ -15,6 +15,10 @@ final class Api {
     public function apply(): never {
         $action = $this->request->query('action');
         Util::json_fail(Util::ERR_UNSUPPORTED, 'unsupported action', !in_array($action, Api::ACTIONS, true));
+        // TLS early data (0-RTT) can be replayed by anyone on the network path. nginx flags it
+        // (fastcgi_param HTTP_EARLY_DATA $ssl_early_data); 425 makes the browser send the request
+        // again once the handshake is complete (RFC 8470), so no login or change runs twice.
+        Util::json_fail(Util::ERR_TOO_EARLY, 'sent as TLS early data, send it again', $this->request->header('Early-Data') === '1');
 
         match ($action) {
             'admin' => $this->on_admin(),

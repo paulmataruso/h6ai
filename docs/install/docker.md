@@ -38,12 +38,12 @@ or with `docker compose` from a git checkout.
 ## 2. Install with the installer
 
 ```sh
-tar xzf h6ai-1.0.0.tar.gz && cd h6ai-1.0.0
+tar xzf h6ai-1.0.1.tar.gz && cd h6ai-1.0.1
 sudo ./install.sh --docker --root /srv/files --port 8080
 ```
 
 ```
-==> Installing h6ai 1.0.0 with Docker
+==> Installing h6ai 1.0.1 with Docker
     shared folder: /srv/files
     listen:        *:8080
 Continue? (y/n) [y]:
@@ -53,7 +53,7 @@ Continue? (y/n) [y]:
 ==> Building the image and starting the container (the first build takes a few minutes)
     container healthy
 
-h6ai 1.0.0 is ready.
+h6ai 1.0.1 is ready.
   Files:    http://files.example.com:8080/          (shared folder /srv/files)
   Admin:    http://files.example.com:8080/_h6ai/public/
   Users:    h6ai-user list | add NAME [--admin] | passwd NAME

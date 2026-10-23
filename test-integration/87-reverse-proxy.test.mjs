@@ -3,7 +3,7 @@
 // accepted as login origin. The settings are reset in after().
 import {test, before, after} from 'node:test';
 import assert from 'node:assert/strict';
-import {get, api, getSetup, adminSession, adminOp, okJson, parseSetCookie, ADMIN_USER, ADMIN_PASS} from './lib.mjs';
+import {get, api, getSetup, adminSession, adminOp, okJson, parseSetCookie, ADMIN_USER, ADMIN_PASS, BASE} from './lib.mjs';
 
 const PUBLIC = 'https://files.example.com';
 let admin = null;
@@ -55,7 +55,10 @@ test('a trusted proxy\'s X-Forwarded-For becomes the visitor address', async () 
 test('X-Forwarded-Proto only counts from a trusted proxy once proxies are configured', async () => {
     await saveProxy({trusted: ['192.0.2.1']}); // somebody else
     let res = await api({action: 'login', user: ADMIN_USER, pass: ADMIN_PASS}, {headers: {'X-Forwarded-Proto': 'https'}});
-    assert.ok(!sessionCookie(res.res).flags.secure, 'Secure set on a forged X-Forwarded-Proto');
+    // over a real HTTPS connection the cookie is Secure whatever the header says
+    if (BASE.protocol === 'http:') {
+        assert.ok(!sessionCookie(res.res).flags.secure, 'Secure set on a forged X-Forwarded-Proto');
+    }
     await saveProxy({trusted: [me]});
     res = await api({action: 'login', user: ADMIN_USER, pass: ADMIN_PASS}, {headers: {'X-Forwarded-Proto': 'https'}});
     assert.ok(sessionCookie(res.res).flags.secure, 'Secure missing behind a trusted HTTPS proxy');

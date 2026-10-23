@@ -322,7 +322,7 @@ final class Context {
 
     // Maps a client supplied href to a filesystem path below ROOT_PATH. Returns null for
     // anything that isn't a plain path inside the root: hrefs outside ROOT_HREF, dot segments
-    // (also percent-encoded ones), NUL bytes and non-strings.
+    // (also percent-encoded ones), NUL bytes, non-strings and paths into an old _h5ai folder.
     public function to_path(mixed $href): ?string {
         if (!is_string($href) || $href === '') {
             return null;
@@ -348,7 +348,7 @@ final class Context {
             if ($segment === '' || $segment === '.') {
                 continue;
             }
-            if ($segment === '..') {
+            if ($segment === '..' || Context::is_h5ai_folder($segment)) {
                 return null;
             }
             $segments[] = $segment;
@@ -357,9 +357,17 @@ final class Context {
         return Util::normalize_path($this->setup->get('ROOT_PATH') . '/' . implode('/', $segments));
     }
 
+    // h5ai's install folder, left in the files folder after a move to h6ai (the old web root often
+    // becomes the files folder). Its private/conf/options.json holds h5ai's password hash. It's
+    // never listed, searched, archived or served, whatever view.hidden says; "_h5ai.*" files
+    // (h5ai's header and footer customisations) aren't affected.
+    public static function is_h5ai_folder(string $name): bool {
+        return strcasecmp($name, '_h5ai') === 0;
+    }
+
     public function is_hidden(string $name): bool {
         // always hide
-        if ($name === '.' || $name === '..') {
+        if ($name === '.' || $name === '..' || Context::is_h5ai_folder($name)) {
             return true;
         }
 

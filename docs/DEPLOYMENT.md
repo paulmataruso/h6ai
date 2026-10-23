@@ -24,6 +24,11 @@ thumbnails), `zip`, GNU `tar`, `du`, `timeout`.
 
 ## 2. nginx
 
+On Debian, Ubuntu, Fedora, RHEL and Alpine the native installer can do everything but the server
+block: `sudo ./install.sh --native --no-site` installs h6ai, its PHP-FPM pool, the snippets and
+nginx's http-level part (`include h6ai/http.conf;` and `upstream h6ai_php`), then prints the lines
+for your server block. Upgrades keep it that way. By hand:
+
 Copy the snippets:
 
 ```sh
@@ -81,6 +86,32 @@ Notes:
   `set_real_ip_from <proxy>;` and `real_ip_header X-Forwarded-For;` to the server block.
 * `aio threads` needs nginx built `--with-threads` (all major distributions are). Comment it out
   in `large-files.conf` otherwise.
+* TLS early data (`ssl_early_data on;`): `server.conf` passes `$ssl_early_data` to PHP, and h6ai
+  answers API requests sent as early data with `425 Too Early`; browsers repeat them after the
+  handshake.
+
+### Into a server block that already exists
+
+`server.conf` brings its own `location /`, the PHP location and some server-wide settings. The
+server block it goes into gives those up:
+
+* **Remove the block's own `location /` and PHP locations** (`location ~ \.php$`). nginx refuses a
+  second `location /`, and a PHP location of your own would run `.php` files from the share.
+* **Remove locations that match file types**, typically a caching rule such as
+  `location ~* \.(jpg|css|js|mp4)$ { expires 30d; }`. nginx prefers regex locations to h6ai's
+  `location /`, so files of those types would go out **without the permission check**. h6ai
+  already marks public and private files for caches (`Cache-Control`); leave such rules out.
+  Admin → System → **File types** tests this from your browser, for about 70 file types.
+* **Duplicate settings.** `server.conf` sets `charset`, `server_tokens`, `absolute_redirect`,
+  `client_max_body_size` and `location = /robots.txt` / `/sitemap.xml`; `large-files.conf` sets
+  `sendfile`, `tcp_nopush`, `aio`, `open_file_cache`, `keepalive_timeout`, `gzip` and friends. If
+  the block sets one of them too, nginx stops with "directive is duplicate": drop your line, or
+  leave `large-files.conf` out.
+* Everything else stays: `listen`, TLS, HTTP/2 and HTTP/3, `access_log` and `error_log`, basic
+  auth, rate limits, redirects.
+
+A drop-in (one `error_page` line, [install/dropin.md](install/dropin.md)) is the other way into a
+busy server block; its section 8 lists what to check there.
 
 ## 3. Large files
 

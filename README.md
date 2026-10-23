@@ -92,8 +92,8 @@ Three ways, with the same features. Each has a step-by-step guide:
 | **[Drop-in](docs/install/dropin.md)** | the h5ai way: unzip `_h6ai` into the web root of the nginx + PHP you already run, add one line, finish in the browser |
 
 ```sh
-curl -LO https://github.com/paulmataruso/h6ai/releases/download/v1.0.0/h6ai-1.0.0.tar.gz
-tar xzf h6ai-1.0.0.tar.gz && cd h6ai-1.0.0
+curl -LO https://github.com/paulmataruso/h6ai/releases/download/v1.0.1/h6ai-1.0.1.tar.gz
+tar xzf h6ai-1.0.1.tar.gz && cd h6ai-1.0.1
 sudo ./install.sh                              # asks: natively on this system, or in Docker
 ```
 
@@ -102,7 +102,7 @@ system user (native) or container (Docker), creates the first admin and prints t
 again to upgrade; `--uninstall` removes it. Every supported distribution is tested with the full
 integration suite.
 
-For a drop-in, unzip `h6ai-1.0.0-dropin.zip` into the web root, keep your files in a folder
+For a drop-in, unzip `h6ai-1.0.1-dropin.zip` into the web root, keep your files in a folder
 outside it, and add this to the server block:
 
 ```nginx

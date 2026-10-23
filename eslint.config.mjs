@@ -43,8 +43,8 @@ export default [
         languageOptions: {sourceType: 'commonjs'}
     },
     {
-        // Playwright script; page callbacks run in the browser
-        files: ['test-e2e/**/*.js'],
+        // Playwright scripts; page callbacks run in the browser
+        files: ['test-e2e/**/*.js', 'test-native/**/*.cjs'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'commonjs',

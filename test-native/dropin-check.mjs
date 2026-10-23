@@ -1,7 +1,9 @@
 // HTTP checks for test-native/dropin.sh, one phase per call:
 //   firstrun  fresh install: no login yet, the setup file (password hash + files folder)
-//   checks    with the setup file: routing, guarded private data, the X-Accel probe, setup flags,
-//             files reachable only through h6ai (permissions, log, sandbox on direct links)
+//   checks    with the setup file: routing, guarded private data, the X-Accel probe (as every file
+//             type the admin page tries, with h6ai's headers), the probe link from outside, setup
+//             flags, files reachable only through h6ai (permissions, log, sandbox on direct links)
+//             DROPIN_INTERNAL=1: the server block has "location ^~ /_h6ai/private/ { internal; }"
 //   fast      switches on nginx sending the files, as the admin page does after its probe
 // Logins send Sec-Fetch-Site like a browser: Debian's fastcgi_params replace the Host header
 // with $host, which drops the port, so the Origin comparison alone can't match on port 18897.
@@ -10,6 +12,8 @@ import {writeFileSync} from 'node:fs';
 import {request, get, api, apiAs, getSetup, adminOp, okJson} from '../test-integration/lib.mjs';
 
 const BROWSER = {'Sec-Fetch-Site': 'same-origin'};
+const PROBE = 'h6ai-xaccel-ok\n';
+const ACCEL_EXTS = ['txt', 'bin', 'iso', 'zip', 'gz', 'mp4', 'mkv', 'webm', 'mp3', 'jpg', 'png', 'pdf'];
 const ok = msg => console.log(`[dropin]   ok ${msg}`);
 
 const admin = async () => {
@@ -55,10 +59,26 @@ const phases = {
         const canary = await get('/_h6ai/private/conf/canary.php');
         assert.ok(!canary.text.includes('h6ai-canary'), 'guarded files are run, not sent as text');
         const probe = await get('/_h6ai/public/index.php?h6ai-probe=accel');
-        assert.equal(probe.text, 'h6ai-xaccel-ok\n', 'nginx follows X-Accel-Redirect through the link');
+        assert.equal(probe.text, PROBE, 'nginx follows X-Accel-Redirect through the link');
+        for (const ext of ACCEL_EXTS) {
+            const typed = await get('/_h6ai/public/index.php?h6ai-probe=accel&ext=' + ext);
+            assert.equal(typed.text, PROBE, `.${ext}: nginx doesn't send it`);
+            assert.equal(typed.headers['cache-control'], 'no-store', `.${ext}: nginx changed Cache-Control`);
+            assert.equal(typed.headers.expires, undefined, `.${ext}: nginx added Expires`);
+        }
         const listing = await get('/_h6ai/private/cache/');
         assert.doesNotMatch(listing.text, /x[sp]-[0-9a-f]{40}/, 'the cache folder is not listed');
-        ok('routing, guarded private data, X-Accel-Redirect, unlisted links');
+        ok('routing, guarded private data, X-Accel-Redirect for every file type with h6ai\'s headers, unlisted links');
+
+        const internal = process.env.DROPIN_INTERNAL === '1';
+        const {probe: start} = await op(a, 'probe.start');
+        assert.match(start.link, /^\/_h6ai\/private\/cache\/xp-[0-9a-f]{40}\/probe\.txt$/);
+        const outside = await get(start.link);
+        await op(a, 'probe.result');
+        assert.equal(outside.text === PROBE, !internal, internal ? 'the probe link answers from outside'
+            : 'the probe link is refused from outside, although this server block has no internal location');
+        ok(internal ? 'the links h6ai hands big files through are refused from outside (internal location)'
+            : 'without the internal location the probe link answers from outside (the admin page advises it)');
 
         // the files folder is only reachable through h6ai: permissions apply to direct links
         await op(a, 'rule.save', {rule: {path: '/team/', grants: {'*': 'none'}}});

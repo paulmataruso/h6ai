@@ -9,6 +9,7 @@ final class Util {
     public const ERR_UNSUPPORTED = 'ERR_UNSUPPORTED';
     public const ERR_FORBIDDEN = 'ERR_FORBIDDEN';
     public const ERR_RATE_LIMITED = 'ERR_RATE_LIMITED';
+    public const ERR_TOO_EARLY = 'ERR_TOO_EARLY';
     public const NO_DEFAULT = 'NO_*@+#?!_DEFAULT';
     public const RE_DELIMITER = '@';
 
@@ -19,6 +20,7 @@ final class Util {
         self::ERR_DISABLED => 403,
         self::ERR_FORBIDDEN => 403,
         self::ERR_RATE_LIMITED => 429,
+        self::ERR_TOO_EARLY => 425,
         self::ERR_FAILED => 500
     ];
 

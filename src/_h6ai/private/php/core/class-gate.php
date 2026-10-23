@@ -67,6 +67,11 @@ final class Gate {
     }
 
     public function check(): never {
+        // the admin page's check that every file type comes here (GateProbe); no such file exists
+        if (GateProbe::note($this->context, $this->request_uri())) {
+            $this->respond(204, 'no-store');
+        }
+
         $path = $this->context->decoded_to_path($this->request_uri());
         if ($path === null) {
             $this->respond(403);

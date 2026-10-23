@@ -1,6 +1,6 @@
 {
   "name": "h6ai",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "h6ai: a modern, secure file index for nginx + PHP-FPM with users, folder permissions and previews.",
   "keywords": [
     "file-index",
@@ -29,8 +29,8 @@
     "check": "npm run -s lint && npm run -s test",
     "test:integration": "sh test-integration/run.sh",
     "test:e2e": "sh test-e2e/run.sh",
-    "test:native": "sh test-native/run.sh && sh test-native/systemd.sh && sh test-native/docker-mode.sh && sh test-native/dropin.sh",
-    "lint:sh": "docker run --rm -v \"$PWD:/mnt:ro\" koalaman/shellcheck:stable -s sh /mnt/install.sh /mnt/deploy/install-app.sh /mnt/deploy/h6ai-user /mnt/docker/init.sh /mnt/docker/entrypoint.sh /mnt/docker/seed.sh /mnt/docker/bigfile.sh /mnt/test-integration/run.sh /mnt/test-e2e/run.sh /mnt/test-native/run.sh /mnt/test-native/systemd.sh /mnt/test-native/docker-mode.sh /mnt/test-native/dropin.sh",
+    "test:native": "sh test-native/run.sh && sh test-native/systemd.sh && sh test-native/docker-mode.sh && sh test-native/dropin.sh && sh test-native/dropin-custom.sh && sh test-native/own-site.sh",
+    "lint:sh": "docker run --rm -v \"$PWD:/mnt:ro\" koalaman/shellcheck:stable -s sh /mnt/install.sh /mnt/deploy/install-app.sh /mnt/deploy/h6ai-user /mnt/docker/init.sh /mnt/docker/entrypoint.sh /mnt/docker/seed.sh /mnt/docker/bigfile.sh /mnt/test-integration/run.sh /mnt/test-e2e/run.sh /mnt/test-native/run.sh /mnt/test-native/systemd.sh /mnt/test-native/docker-mode.sh /mnt/test-native/dropin.sh /mnt/test-native/dropin-custom.sh /mnt/test-native/own-site.sh",
     "lint:php": "docker run --rm -v \"$PWD/src:/src\" php:8.3-cli sh -c 'find /src -name \"*.php\" -exec php -l {} \\; | grep -v \"^No syntax\" || true'"
   },
   "dependencies": {

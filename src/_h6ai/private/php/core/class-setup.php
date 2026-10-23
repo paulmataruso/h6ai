@@ -271,6 +271,10 @@ final class Setup {
         foreach ($keys as $key) {
             $jsono[$key] = $this->get($key);
         }
+        if ($as_admin) {
+            // h5ai's install folder left in the files folder (h6ai never serves it, see Context)
+            $jsono['HAS_H5AI_FOLDER'] = is_dir($this->get('ROOT_PATH') . '/_h5ai');
+        }
         return $jsono;
     }
 }

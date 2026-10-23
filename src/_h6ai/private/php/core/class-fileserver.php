@@ -24,6 +24,10 @@ final class FileServer {
     // media, archives and images of disks, which browsers don't sniff into anything dangerous.
     private const ACCEL_MIN_SIZE = 4194304;
     private const PROBE = "h6ai-xaccel-ok\n";
+    // The probe goes out as these file types too: a caching rule of the server block
+    // (location ~* \.(mp4|zip)$ { expires 30d; }) may catch nginx's half of a fast download and
+    // replace h6ai's headers, which the admin page checks.
+    public const PROBE_EXTS = ['txt', 'bin', 'iso', 'zip', 'gz', 'mp4', 'mkv', 'webm', 'mp3', 'jpg', 'png', 'pdf'];
     // charset like nginx's "charset utf-8" (charset_types)
     private const TEXT_TYPES = ['text/html', 'text/plain', 'text/xml', 'text/css', 'application/javascript', 'application/xml'];
     private const MIME = [
@@ -55,6 +59,10 @@ final class FileServer {
         $decoded = rawurldecode($href);
         // h6ai's own folders (nginx refused to list them and handed over the 403)
         if (Util::starts_with(Util::normalize_path($decoded, true), (string) $setup->get('H6AI_HREF'))) {
+            $this->not_found();
+        }
+        // the admin page's check that every file type reaches h6ai (GateProbe)
+        if (GateProbe::note($this->context, $decoded)) {
             $this->not_found();
         }
         $path = $this->context->decoded_to_path($decoded);
@@ -171,22 +179,37 @@ final class FileServer {
         return @symlink($target, $link);
     }
 
+    private static function probe_name(Context $context): string {
+        return 'xp-' . substr(hash_hmac('sha256', 'probe-link', $context->get_secret()), 0, 40);
+    }
+
+    // Where the probe file of type $ext lives behind the probe link. Admins get it (GateProbe) to
+    // check that nginx refuses the link from outside; it only leads to the probe files.
+    public static function probe_href(Context $context, string $ext): string {
+        return $context->get_setup()->get('H6AI_HREF') . 'private/cache/' . FileServer::probe_name($context) . '/probe.' . $ext;
+    }
+
     // The admin page asks for this once: if the probe text arrives, nginx follows X-Accel-Redirect
-    // through a link in private/cache, and fast downloads can be switched on.
+    // through a link in private/cache, and fast downloads can be switched on. With ?ext= it comes
+    // as that file type, with "Cache-Control: no-store", so the page sees if nginx changes headers.
     public function probe(): never {
         $setup = $this->context->get_setup();
         $cache = (string) $setup->get('CACHE_PRV_PATH');
         $dir = $cache . '/probe';
-        $name = 'xp-' . substr(hash_hmac('sha256', 'probe-link', $this->context->get_secret()), 0, 40);
+        $ext = (string) ($_GET['ext'] ?? 'txt');
+        if (!in_array($ext, FileServer::PROBE_EXTS, true)) {
+            $ext = 'txt';
+        }
         header('Cache-Control: no-store');
-        if ((!is_dir($dir) && !@mkdir($dir, 0755)) || (!is_file($dir . '/probe.txt') && @file_put_contents($dir . '/probe.txt', FileServer::PROBE) === false)
-            || !FileServer::ensure_link($cache . '/' . $name, $dir)) {
+        if ((!is_dir($dir) && !@mkdir($dir, 0755))
+            || (!is_file($dir . '/probe.' . $ext) && @file_put_contents($dir . '/probe.' . $ext, FileServer::PROBE) === false)
+            || !FileServer::ensure_link($cache . '/' . FileServer::probe_name($this->context), $dir)) {
             header('Content-Type: text/plain');
             echo "no link\n";
             exit;
         }
         ini_set('default_mimetype', '');
-        header('X-Accel-Redirect: ' . $setup->get('H6AI_HREF') . 'private/cache/' . $name . '/probe.txt');
+        header('X-Accel-Redirect: ' . FileServer::probe_href($this->context, $ext));
         exit;
     }
 

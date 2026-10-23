@@ -23,7 +23,7 @@ final class Admin {
     }
 
     public function apply(string $op, Request $request): array {
-        $read_only = in_array($op, ['list', 'settings.get', 'activity.list'], true);
+        $read_only = in_array($op, ['list', 'settings.get', 'activity.list', 'probe.start', 'probe.result'], true);
         Util::json_fail(Util::ERR_FAILED, 'data directory not writable: ' . $this->context->get_setup()->get('DATA_PATH'),
             !$read_only && !$this->store->is_writable());
 
@@ -42,6 +42,8 @@ final class Admin {
                 'settings.save' => $this->save_settings($request->query_array('settings')),
                 'activity.list' => $this->activity($request),
                 'access.check' => $this->check_access($request->query_string('principal'), $request->query_string('path')),
+                'probe.start' => ['probe' => GateProbe::start($this->context)],
+                'probe.result' => ['probe' => GateProbe::result($this->context)],
                 default => Util::json_exit(['err' => Util::ERR_UNSUPPORTED, 'msg' => 'unsupported admin op'], 400)
             };
         } catch (InvalidArgumentException $err) {

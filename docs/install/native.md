@@ -56,15 +56,15 @@ The bundle `h6ai-<version>.tar.gz` (or `.zip`) contains the built application, t
 the configuration it writes. Copy it to the server and unpack it:
 
 ```sh
-tar xzf h6ai-1.0.0.tar.gz
-cd h6ai-1.0.0
+tar xzf h6ai-1.0.1.tar.gz
+cd h6ai-1.0.1
 ```
 
 To make a bundle yourself from a git checkout (needs Node.js 20 or later):
 
 ```sh
 npm ci
-npm run release        # build/h6ai-1.0.0.tar.gz, .zip, and the drop-in zips
+npm run release        # build/h6ai-1.0.1.tar.gz, .zip, and the drop-in zips
 ```
 
 Running `install.sh` straight from a checkout also works after `npm ci && npm run build`.
@@ -78,7 +78,7 @@ sudo ./install.sh --native
 Without `--native` the installer first asks whether to install natively or with Docker. Then:
 
 ```
-==> Installing h6ai 1.0.0 natively on Ubuntu 24.04.5 LTS
+==> Installing h6ai 1.0.1 natively on Ubuntu 24.04.5 LTS
 Folder to share [/srv/h6ai]: /srv/files
 HTTP port [80]:
     shared folder: /srv/files
@@ -88,7 +88,7 @@ Continue? (y/n) [y]:
     nginx, PHP 8.3
     PHP 8.3.6: CVE-2026-109618 fixed (distribution backport)
 ==> Setting up the h6ai system user and folders
-==> Installing h6ai 1.0.0 into /srv/files/_h6ai
+==> Installing h6ai 1.0.1 into /srv/files/_h6ai
 ==> Configuring PHP-FPM (pool h6ai, /run/php/h6ai.sock)
 ==> Configuring nginx (/etc/nginx/sites-available/h6ai.conf)
 ==> Creating the admin user "admin"
@@ -98,7 +98,7 @@ Repeat password:
 ==> Starting PHP-FPM and nginx
     check: index 200, private files 403
 
-h6ai 1.0.0 is ready.
+h6ai 1.0.1 is ready.
   Files:    http://files.example.com/          (shared folder /srv/files)
   Admin:    http://files.example.com/_h6ai/public/
   Users:    h6ai-user list | add NAME [--admin] | passwd NAME
@@ -179,6 +179,7 @@ sudo h6ai-user passwd admin
 | `--port N` | HTTP port (default 80) |
 | `--listen ADDR` | listen on one address only, e.g. `192.168.1.10` (default: all) |
 | `--server-name NAMES` | nginx `server_name`, e.g. `files.example.com`. Without it, h6ai is the default site for its port. |
+| `--no-site` | no server block: h6ai, PHP-FPM and nginx's http-level part only, for a server block of your own ([section 8](#8-https-reverse-proxies-other-sites)) |
 | `--admin NAME` | name of the first admin (default `admin`) |
 | `--admin-password-file F` | read the first admin's password from a file |
 | `--no-admin` | don't create an admin; do it later with `h6ai-user add NAME --admin` |
@@ -227,8 +228,13 @@ shows the address your own requests arrive from.
 * `--server-name files.example.com` makes h6ai answer only for that name; other sites on the same
   port keep working.
 * `--listen` binds it to one address.
-* To add h6ai to an existing server block instead, include the snippets yourself
-  ([DEPLOYMENT.md](../DEPLOYMENT.md)).
+* If another site already answers for the `--server-name` on that port, the installer stops and
+  names it, and leaves nginx as it was: nginx would only warn and keep sending those visitors to
+  the other site.
+* To add h6ai to an existing server block instead, install with `--no-site`. The installer then
+  sets up h6ai, PHP-FPM and nginx's http-level part, but no server block, and prints what to add
+  to yours ([DEPLOYMENT.md](../DEPLOYMENT.md#into-a-server-block-that-already-exists)). Upgrades
+  keep it that way.
 
 ## 9. Upgrade, backup, uninstall
 

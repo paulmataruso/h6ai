@@ -45,6 +45,9 @@ are kept.
 
 Native only:
   --server-name NAMES    nginx server_name, e.g. files.example.com (default: any host)
+  --no-site              don't write an nginx server block: install h6ai, PHP-FPM and nginx's
+                         http-level part, and include h6ai/server.conf in a server block of
+                         your own (docs/DEPLOYMENT.md). Upgrades keep this choice.
   --no-thumbnail-tools   skip ffmpeg, ImageMagick and Ghostscript (video and PDF thumbnails)
   --no-firewall          don't open the port in firewalld or ufw
   --allow-php-repo       if the distribution's PHP is older than 8.2, add the PHP repository
@@ -75,12 +78,14 @@ H6AI_LISTEN=
 H6AI_SERVER_NAME=_
 H6AI_VERSION=
 H6AI_MODE=
+H6AI_NO_SITE=0
 DISABLED_SITE=
 if [ -r "$STATE" ]; then
     # shellcheck disable=SC1090
     . "$STATE"
 fi
 PREVIOUS_VERSION=$H6AI_VERSION
+PREVIOUS_NO_SITE=$H6AI_NO_SITE
 # an install from before the Docker option is native
 [ -z "$PREVIOUS_VERSION" ] || : "${H6AI_MODE:=native}"
 MODE=
@@ -94,6 +99,7 @@ ALLOW_UNPATCHED=0
 YES=0
 UNINSTALL=0
 PURGE=0
+SITE_ARGS=
 
 need_arg() { [ $# -ge 2 ] && [ -n "$2" ] || die "$1 needs a value"; }
 while [ $# -gt 0 ]; do
@@ -101,9 +107,10 @@ while [ $# -gt 0 ]; do
         --native) MODE=native ;;
         --docker) MODE=docker ;;
         --root) need_arg "$@"; H6AI_ROOT=$2; shift ;;
-        --port) need_arg "$@"; H6AI_PORT=$2; shift ;;
-        --listen) need_arg "$@"; H6AI_LISTEN=$2; shift ;;
-        --server-name) need_arg "$@"; H6AI_SERVER_NAME=$2; shift ;;
+        --port) need_arg "$@"; H6AI_PORT=$2; SITE_ARGS="$SITE_ARGS $1"; shift ;;
+        --listen) need_arg "$@"; H6AI_LISTEN=$2; SITE_ARGS="$SITE_ARGS $1"; shift ;;
+        --server-name) need_arg "$@"; H6AI_SERVER_NAME=$2; SITE_ARGS="$SITE_ARGS $1"; shift ;;
+        --no-site) H6AI_NO_SITE=1 ;;
         --admin) need_arg "$@"; ADMIN_NAME=$2; shift ;;
         --admin-password-file) need_arg "$@"; ADMIN_PASSWORD_FILE=$2; shift ;;
         --no-admin) NO_ADMIN=1 ;;
@@ -140,6 +147,8 @@ confirm() {
 
 [ "$(id -u)" = 0 ] || die "run the installer as root, e.g. sudo $0"
 [ "$PURGE" = 0 ] || [ "$UNINSTALL" = 1 ] || die "--purge only works together with --uninstall"
+[ "$H6AI_NO_SITE" = 0 ] || [ -z "$SITE_ARGS" ] || [ "$UNINSTALL" = 1 ] \
+    || die "--no-site leaves the server block to you:${SITE_ARGS} doesn't apply. Set listen and server_name in your server block."
 case $H6AI_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
 case $H6AI_ROOT in /*) ;; *) die "--root must be an absolute path" ;; esac
 H6AI_ROOT=${H6AI_ROOT%/}
@@ -236,6 +245,10 @@ if [ "$UNINSTALL" = 1 ]; then
     for f in "${NGINX_SITE:-}" "${NGINX_SITE:-}.h6ai-new" "${NGINX_SITE_LINK:-}" "${FPM_POOL:-}" "${PHP_INI:-}" /usr/local/sbin/h6ai-user; do
         [ -n "$f" ] && { [ -e "$f" ] || [ -L "$f" ]; } && rm -f "$f" && info "removed $f"
     done
+    # with --no-site (or by hand) a server block of the admin's includes h6ai's snippets
+    own=$(grep -rlE '^[[:space:]]*include[[:space:]]+(/etc/nginx/)?h6ai/(server|large-files)\.conf' /etc/nginx 2>/dev/null \
+        | grep -v '^/etc/nginx/h6ai/' || true)
+    [ -z "$own" ] || warn "remove the h6ai includes (and the root for h6ai) from: $(echo "$own" | tr '\n' ' ')- nginx won't load them any more"
     if [ -d /etc/nginx/h6ai ]; then
         # trusted-html.map is the admin's: keep it unless purging
         if [ "$PURGE" = 1 ]; then rm -rf /etc/nginx/h6ai; else find /etc/nginx/h6ai -type f ! -name trusted-html.map -delete; fi
@@ -280,20 +293,27 @@ fi
 grep -q "H6AI_VERSION', '{" "$SRC/public/index.php" && die "$SRC is an unbuilt source tree, run 'npm run build'"
 NEW_VERSION=$(sed -n "s/.*H6AI_VERSION', '\([^']*\)'.*/\1/p" "$SRC/public/index.php")
 
+[ "$MODE" = native ] || [ "$H6AI_NO_SITE" = 0 ] || die "--no-site is for native installs; the Docker container brings its own nginx"
+[ -z "$PREVIOUS_VERSION" ] || [ "$PREVIOUS_NO_SITE" = 1 ] || [ "$H6AI_NO_SITE" = 0 ] \
+    || die "h6ai has its own server block here (${NGINX_SITE:-nginx site}); --no-site would remove it. Run --uninstall first, then install with --no-site."
 if [ "$MODE" = docker ]; then HOW="with Docker"; else HOW="natively on ${PRETTY_NAME:-$ID}"; fi
 if [ -n "$PREVIOUS_VERSION" ]; then
     step "Upgrading h6ai $PREVIOUS_VERSION to $NEW_VERSION $HOW"
 else
     step "Installing h6ai $NEW_VERSION $HOW"
     H6AI_ROOT=$(ask "Folder to share" "$H6AI_ROOT")
-    H6AI_PORT=$(ask "HTTP port" "$H6AI_PORT")
-    case $H6AI_PORT in ''|*[!0-9]*) die "the port must be a number" ;; esac
+    if [ "$H6AI_NO_SITE" = 0 ]; then
+        H6AI_PORT=$(ask "HTTP port" "$H6AI_PORT")
+        case $H6AI_PORT in ''|*[!0-9]*) die "the port must be a number" ;; esac
+    fi
 fi
 case $H6AI_ROOT in /*) ;; *) die "the folder must be an absolute path" ;; esac
 H6AI_ROOT=${H6AI_ROOT%/}
 info "shared folder: $H6AI_ROOT"
 if [ "$MODE" = docker ]; then
     info "listen:        ${H6AI_LISTEN:-*}:$H6AI_PORT"
+elif [ "$H6AI_NO_SITE" = 1 ]; then
+    info "nginx:         no server block (--no-site): you include h6ai/server.conf in your own"
 else
     info "listen:        ${H6AI_LISTEN:-*}:$H6AI_PORT  server_name $H6AI_SERVER_NAME"
 fi
@@ -321,9 +341,21 @@ summary() {
     [ "$H6AI_SERVER_NAME" = _ ] || public_host=${H6AI_SERVER_NAME%% *}
     [ -n "$public_host" ] || public_host=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo localhost)
     echo
-    printf '%sh6ai %s is ready.%s\n' "$BOLD" "$NEW_VERSION" "$RESET"
-    echo "  Files:    http://$public_host$URL_PORT/          (shared folder $H6AI_ROOT)"
-    echo "  Admin:    http://$public_host$URL_PORT/_h6ai/public/"
+    if [ "$MODE" = native ] && [ "$H6AI_NO_SITE" = 1 ]; then
+        printf '%sh6ai %s is installed.%s nginx has its http-level part (%s); add the rest to your server block:\n' \
+            "$BOLD" "$NEW_VERSION" "$RESET" "$NGINX_SITE"
+        echo "              root $H6AI_ROOT;"
+        echo "              include h6ai/large-files.conf;   # optional: sendfile, thread pool reads, gzip"
+        echo "              include h6ai/server.conf;"
+        echo "            Remove that block's own \"location /\", its PHP location and any location that matches"
+        echo "            file types (e.g. location ~* \\.(jpg|css|js)\$): they would skip h6ai's permission check."
+        echo "            Then: nginx -t && systemctl reload nginx. Details: docs/DEPLOYMENT.md"
+        echo "  Admin:    /_h6ai/public/ on that site (System shows whether every file type reaches h6ai)"
+    else
+        printf '%sh6ai %s is ready.%s\n' "$BOLD" "$NEW_VERSION" "$RESET"
+        echo "  Files:    http://$public_host$URL_PORT/          (shared folder $H6AI_ROOT)"
+        echo "  Admin:    http://$public_host$URL_PORT/_h6ai/public/"
+    fi
     if [ -n "$GENERATED_PASSWORD" ]; then
         echo "  Login:    $ADMIN_NAME / $GENERATED_PASSWORD"
         echo "            ${DIM}shown once: sign in and change it in the account menu${RESET}"
@@ -699,60 +731,113 @@ else
     [ -e /proc/net/if_inet6 ] && LISTENS="$LISTENS [::]:$H6AI_PORT"
 fi
 
-# The distribution's welcome site also claims default_server on port 80: step aside for it.
-if [ -n "$DEFAULT_SERVER" ] && [ -z "$H6AI_LISTEN" ] && [ -z "$DISABLED_SITE" ]; then
-    for site in /etc/nginx/sites-enabled/default /etc/nginx/http.d/default.conf /etc/nginx/conf.d/default.conf; do
-        if { [ -e "$site" ] || [ -L "$site" ]; } && grep -Eq "listen[[:space:]]+(\[::\]:)?${H6AI_PORT}[[:space:]]+default_server" "$site"; then
-            if [ -L "$site" ]; then
-                DISABLED_SITE_TARGET=$(readlink "$site")
-                rm -f "$site"
-            else
-                mv "$site" "$site.h6ai-disabled"
-            fi
-            DISABLED_SITE=$site
-            info "disabled the default site $site (it also claims port $H6AI_PORT; --uninstall restores it)"
-        fi
-    done
-fi
-
 # A site file edited since the last run (by hand, or by certbot) is kept; ours goes next to it.
 SITE_OUT=$NGINX_SITE
-if [ -f "$NGINX_SITE" ] && [ -n "${SITE_SUM:-}" ] && [ "$(cksum < "$NGINX_SITE")" != "$SITE_SUM" ]; then
+if [ "$H6AI_NO_SITE" = 0 ] && [ -f "$NGINX_SITE" ] && [ -n "${SITE_SUM:-}" ] && [ "$(cksum < "$NGINX_SITE")" != "$SITE_SUM" ]; then
     SITE_OUT=$NGINX_SITE.h6ai-new
 fi
-{
-    echo "# h6ai, written by install.sh. Upgrades keep this file once you edit it (e.g. certbot)."
-    echo "# The h6ai parts live in /etc/nginx/h6ai/. TLS: certbot --nginx -d your.host works on this file."
-    echo "include h6ai/http.conf;"
-    echo
-    echo "upstream h6ai_php {"
-    echo "    server unix:$FPM_SOCK;"
-    echo "}"
-    echo
-    echo "server {"
-    for l in $LISTENS; do echo "    listen $l$DEFAULT_SERVER;"; done
-    echo "    server_name $H6AI_SERVER_NAME;"
-    echo "    root \"$H6AI_ROOT\";"
-    echo
-    echo "    access_log /var/log/nginx/h6ai.access.log;"
-    echo "    error_log /var/log/nginx/h6ai.error.log;"
-    echo
-    echo "    include h6ai/large-files.conf;"
-    echo "    include h6ai/server.conf;"
-    echo "}"
-} > "$SITE_OUT"
-chmod 0644 "$SITE_OUT"
-if [ "$SITE_OUT" = "$NGINX_SITE" ]; then
-    SITE_SUM=$(cksum < "$NGINX_SITE")
+# Keep what is there, to put it back if nginx doesn't take the new configuration.
+SITE_BACKUP=
+if [ -f "$SITE_OUT" ]; then
+    SITE_BACKUP=$(mktemp)
+    cp -p "$SITE_OUT" "$SITE_BACKUP"
+fi
+LINK_EXISTED=0
+if [ -n "$NGINX_SITE_LINK" ] && { [ -e "$NGINX_SITE_LINK" ] || [ -L "$NGINX_SITE_LINK" ]; }; then LINK_EXISTED=1; fi
+DISABLED_NOW=0
+undo_site() {
+    if [ -n "$SITE_BACKUP" ]; then mv -f "$SITE_BACKUP" "$SITE_OUT"; else rm -f "$SITE_OUT"; fi
+    [ "$LINK_EXISTED" = 1 ] || [ -z "$NGINX_SITE_LINK" ] || rm -f "$NGINX_SITE_LINK"
+    if [ "$DISABLED_NOW" = 1 ]; then
+        if [ -e "$DISABLED_SITE.h6ai-disabled" ]; then mv "$DISABLED_SITE.h6ai-disabled" "$DISABLED_SITE"; else ln -s "$DISABLED_SITE_TARGET" "$DISABLED_SITE"; fi
+    fi
+}
+
+if [ "$H6AI_NO_SITE" = 1 ]; then
+    # --no-site: the http-level part only; a server block of the admin's includes h6ai/server.conf
+    {
+        echo "# h6ai, written by install.sh (--no-site): the http-level part only. Your own server block"
+        echo "# includes h6ai/server.conf, see docs/DEPLOYMENT.md. Upgrades rewrite this file."
+        echo "include h6ai/http.conf;"
+        echo
+        echo "upstream h6ai_php {"
+        echo "    server unix:$FPM_SOCK;"
+        echo "}"
+    } > "$SITE_OUT"
+    chmod 0644 "$SITE_OUT"
+    SITE_SUM=
 else
-    info "kept your edited $NGINX_SITE; the installer's version is in $SITE_OUT"
+    # The distribution's welcome site also claims default_server on port 80: step aside for it.
+    if [ -n "$DEFAULT_SERVER" ] && [ -z "$H6AI_LISTEN" ] && [ -z "$DISABLED_SITE" ]; then
+        for site in /etc/nginx/sites-enabled/default /etc/nginx/http.d/default.conf /etc/nginx/conf.d/default.conf; do
+            if { [ -e "$site" ] || [ -L "$site" ]; } && grep -Eq "listen[[:space:]]+(\[::\]:)?${H6AI_PORT}[[:space:]]+default_server" "$site"; then
+                if [ -L "$site" ]; then
+                    DISABLED_SITE_TARGET=$(readlink "$site")
+                    rm -f "$site"
+                else
+                    mv "$site" "$site.h6ai-disabled"
+                fi
+                DISABLED_SITE=$site
+                DISABLED_NOW=1
+                info "disabled the default site $site (it also claims port $H6AI_PORT; --uninstall restores it)"
+            fi
+        done
+    fi
+
+    {
+        echo "# h6ai, written by install.sh. Upgrades keep this file once you edit it (e.g. certbot)."
+        echo "# The h6ai parts live in /etc/nginx/h6ai/. TLS: certbot --nginx -d your.host works on this file."
+        echo "include h6ai/http.conf;"
+        echo
+        echo "upstream h6ai_php {"
+        echo "    server unix:$FPM_SOCK;"
+        echo "}"
+        echo
+        echo "server {"
+        for l in $LISTENS; do echo "    listen $l$DEFAULT_SERVER;"; done
+        echo "    server_name $H6AI_SERVER_NAME;"
+        echo "    root \"$H6AI_ROOT\";"
+        echo
+        echo "    access_log /var/log/nginx/h6ai.access.log;"
+        echo "    error_log /var/log/nginx/h6ai.error.log;"
+        echo
+        echo "    include h6ai/large-files.conf;"
+        echo "    include h6ai/server.conf;"
+        echo "}"
+    } > "$SITE_OUT"
+    chmod 0644 "$SITE_OUT"
+    if [ "$SITE_OUT" = "$NGINX_SITE" ]; then
+        SITE_SUM=$(cksum < "$NGINX_SITE")
+    else
+        info "kept your edited $NGINX_SITE; the installer's version is in $SITE_OUT"
+    fi
 fi
 [ -z "$NGINX_SITE_LINK" ] || ln -sf "$NGINX_SITE" "$NGINX_SITE_LINK"
 mkdir -p /var/log/nginx
-if ! nginx -t >/dev/null 2>&1; then
-    nginx -t || true
-    die "nginx rejects the configuration. Another site may use port $H6AI_PORT: try --port, --listen or --server-name."
+if ! NGINX_TEST=$(nginx -t 2>&1); then
+    printf '%s\n' "$NGINX_TEST" >&2
+    undo_site
+    die "nginx rejects the configuration (left as it was). Another site may use port $H6AI_PORT: try --port, --listen or --server-name."
 fi
+# Another server block with the same name on the same port: nginx only warns, and keeps sending
+# those visitors to whichever block it read first.
+conflicts=
+if [ "$H6AI_NO_SITE" = 0 ] && [ "$H6AI_SERVER_NAME" != _ ]; then
+    for name in $H6AI_SERVER_NAME; do
+        if printf '%s\n' "$NGINX_TEST" | grep -F "conflicting server name \"$name\" on " | grep -q ":$H6AI_PORT, ignored"; then
+            conflicts="$conflicts $name"
+        fi
+    done
+fi
+if [ -n "$conflicts" ]; then
+    others=$(nginx -T 2>/dev/null | awk -v names="$conflicts " '
+        /^# configuration file / { file = $4; sub(/:$/, "", file) }
+        $1 == "server_name" { for (i = 2; i <= NF; i++) { n = $i; sub(/;$/, "", n); if (index(names, " " n " ")) print file } }' \
+        | grep -v -x -e "$NGINX_SITE" -e "${NGINX_SITE_LINK:-/nonexistent}" | sort -u | tr '\n' ' ' | sed 's/ $//')
+    undo_site
+    die "another nginx site already answers for${conflicts} on port $H6AI_PORT (${others:-see nginx -T}). nginx would keep sending visitors there, so nothing was changed. Change or remove that site, pick another --server-name or --port, or add h6ai to that site's server block yourself with --no-site (docs/DEPLOYMENT.md)."
+fi
+[ -z "$SITE_BACKUP" ] || rm -f "$SITE_BACKUP"
 
 # --- SELinux, firewall ------------------------------------------------------------------------------
 if [ "$JIT_OFF" = 1 ] || { command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" = Permissive ]; }; then
@@ -768,7 +853,7 @@ if [ "$JIT_OFF" = 1 ] || { command -v getenforce >/dev/null 2>&1 && [ "$(getenfo
     semanage port -a -t http_port_t -p tcp "$H6AI_PORT" 2>/dev/null || true
     [ "$JIT_OFF" = 1 ] && info "PHP's JIT is off: SELinux denies it executable memory"
 fi
-if [ "$FIREWALL" = 1 ]; then
+if [ "$FIREWALL" = 1 ] && [ "$H6AI_NO_SITE" = 0 ]; then
     if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
         firewall-cmd -q --permanent --add-port="$H6AI_PORT/tcp" && firewall-cmd -q --reload
         info "firewalld: opened port $H6AI_PORT/tcp"
@@ -780,7 +865,7 @@ fi
 
 # --- state (also read by h6ai-user) --------------------------------------------------------------
 H6AI_VERSION=$NEW_VERSION
-write_state H6AI_MODE H6AI_VERSION H6AI_ROOT H6AI_PORT H6AI_LISTEN H6AI_SERVER_NAME PHP_BIN FPM_BIN FPM_SERVICE \
+write_state H6AI_MODE H6AI_VERSION H6AI_ROOT H6AI_PORT H6AI_LISTEN H6AI_SERVER_NAME H6AI_NO_SITE PHP_BIN FPM_BIN FPM_SERVICE \
     FPM_POOL PHP_INI FPM_SOCK NGINX_SITE NGINX_SITE_LINK SITE_SUM DISABLED_SITE DISABLED_SITE_TARGET
 
 # --- first admin ----------------------------------------------------------------------------------
@@ -812,7 +897,7 @@ fi
 
 URL_HOST=${H6AI_LISTEN:-127.0.0.1}
 case $URL_HOST in *:*) URL_HOST="[$URL_HOST]" ;; esac
-if [ "$STARTED" = 1 ]; then
+if [ "$STARTED" = 1 ] && [ "$H6AI_NO_SITE" = 0 ]; then
     check_host=localhost
     [ "$H6AI_SERVER_NAME" = _ ] || check_host=${H6AI_SERVER_NAME%% *}
     sleep 1

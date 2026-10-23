@@ -24,7 +24,16 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
   `-Proto` are only believed from the trusted proxies set in Admin → System. Without that list,
   the rate limiter and the activity log use the connecting address, which a client can't forge.
 * **Hidden is not protected.** `view.hidden` only removes entries from listings and API results.
-  Use folder permissions or nginx rules to deny access.
+  Use folder permissions or nginx rules to deny access. The one exception is an `_h5ai` folder (an
+  h5ai install left in the share, with h5ai's password hash): it's never listed, searched,
+  archived or served, also on direct links.
+* **Every file type has to reach h6ai.** A regex location of the server block's own (a caching
+  rule for `.jpg`, `.mp4`, …) wins over h6ai's `location /`, so files of those types would skip
+  the permission check. The admin page tests about 70 file types from the browser and raises a
+  banner for any that don't arrive.
+* **TLS early data** (0-RTT) can be replayed. With `$ssl_early_data` passed to PHP (h6ai's nginx
+  snippet does it; drop-ins add one line), h6ai answers API requests sent in it with 425, so no
+  sign-in or admin change runs from replayed data.
 * **Active content in the share** (HTML, SVG, XML, XSL, MHTML) is served with a
   `Content-Security-Policy: sandbox; default-src 'none' …` header by the reference nginx config:
   no script, no forms, opaque origin. Trusted static sites inside the share can be exempted with

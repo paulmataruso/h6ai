@@ -66,5 +66,7 @@ removes it. `./install.sh --help` lists all options.
 ## Your own nginx configuration
 
 To add h6ai to an existing server block with all of h6ai's nginx settings (the file gate on your
-web root, large-file tuning), include the snippets from `deploy/nginx/` by hand:
-[DEPLOYMENT.md](DEPLOYMENT.md).
+web root, large-file tuning), include the snippets from `deploy/nginx/`:
+[DEPLOYMENT.md](DEPLOYMENT.md). The native installer's `--no-site` sets up everything else. A
+server block that has grown around h5ai (logs, caching rules, basic auth, HTTP/3) usually takes
+the drop-in way best: [install/dropin.md, section 8](install/dropin.md#8-moving-from-h5ai-or-a-web-root-full-of-files).

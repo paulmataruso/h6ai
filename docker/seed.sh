@@ -181,6 +181,11 @@ $MEDIA jpeg "$WWW/private/photo.jpg" 800 600
 $MEDIA pdf "$WWW/private/report.pdf"
 echo "team notes" > "$WWW/team/notes.txt"
 
+# --- h5ai left behind after a move to h6ai (16-h5ai-leftover): never listed or served ------
+mkdir -p "$WWW/_h5ai/private/conf" "$WWW/_h5ai/public"
+echo '{"passhash": "H5AI-LEFTOVER-PASSHASH"}' > "$WWW/_h5ai/private/conf/options.json"
+echo '<?php echo "H5AI-LEFTOVER-RAN"; ?>' > "$WWW/_h5ai/public/index.php"
+
 # --- large file (Range / ETag / sendfile tests) ----------------------------------------
 mkdir -p "$WWW/big"
 $MEDIA bigfile "$WWW/big/big.bin" 64

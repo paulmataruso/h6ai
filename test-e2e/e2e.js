@@ -27,9 +27,10 @@ const step = async (name, fn) => {
 
 // expected noise: the sanitised XSS payload <img src=x> 404s, and Chrome reports the scripts it
 // blocked in sandboxed user documents (that's the CVE-2026-10961 protection working)
-// and the admin page's drop-in checks ask for things that must answer 404
+// and the admin page's checks ask for things that must answer 404 (drop-in checks, the file
+// type probe's made-up files)
 const EXPECTED = [/\/(docs|visible)\/x$/, /Blocked script execution .* sandboxed/, /status of 404/,
-    /\/_h6ai\/private\//, /\/h6ai-route-check-\d+\/$/];
+    /\/_h6ai\/private\//, /\/h6ai-route-check-\d+\/$/, /\/h6ai-probe-[0-9a-f]{32}\.[a-z0-9]+$/];
 
 const watch = (page, label) => {
     page.on('response', r => {
@@ -297,7 +298,13 @@ const drawer = async (page, open) => {
     await step('admin: system tab', async () => {
         await admin.click('.tab[data-tab=system]');
         await admin.waitForSelector('.checks li');
-        assert.equal(await admin.locator('.checks li.failed').count(), 0, 'all system checks pass');
+        // the file type probe answers last
+        for (let i = 0; i < 120 && await admin.locator('.checks li .check-result:text-is("checking")').count(); i += 1) {
+            await admin.waitForTimeout(250);
+        }
+        // the test tree holds an h5ai install left behind (docker/seed.sh): the one expected failure
+        const failed = await admin.locator('.checks li.failed .check-label').allTextContents();
+        assert.deepEqual(failed, ['Old h5ai folder'], `failed checks: ${failed.join(', ')}`);
         await admin.screenshot({path: `${SHOTS}/e2e-12-admin-system.png`, fullPage: true});
     });
 

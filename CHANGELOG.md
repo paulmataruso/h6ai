@@ -1,6 +1,55 @@
 # Changelog
 
 
+## v1.0.1 (h6ai) - *2026-10-23*
+
+Security
+
+* fix: an h5ai install left in the files folder after a move to h6ai (`_h5ai`, whose
+  `private/conf/options.json` holds h5ai's password hash) was served on direct links. Nothing
+  inside an `_h5ai` folder is listed, searched, archived or served any more, whatever
+  `view.hidden` says; the admin page reports such a folder (System → Old h5ai folder)
+* add: the admin page checks that nginx hands requests for every file type to h6ai (about 70
+  types, System → File types, with a banner). A regex location of the server block's own, such as
+  a caching rule for static files, wins over h6ai's `location /` and would send files of those
+  types without the permission check
+* add: API requests sent as TLS early data (0-RTT) are answered with 425 Too Early, so a replayed
+  sign-in or admin change never runs. h6ai's nginx snippet passes `$ssl_early_data`; drop-ins add
+  `fastcgi_param HTTP_EARLY_DATA $ssl_early_data;`
+* add: drop-in checks for the links big files are handed back through (Secret links: refused from
+  outside with the recommended `location ^~ /_h6ai/private/ { internal; }`) and for a location of
+  the server block taking over big files and replacing h6ai's headers (Big files, with a banner)
+
+Fixes
+
+* fix: the drop-in checks on the admin page sent no credentials. Behind basic auth they reported
+  a routing problem and switched fast downloads off
+* fix: fast downloads stay off if nginx doesn't send one of the probed file types
+* fix: a rules or settings save that landed while another request was reading the file could
+  leave the old version in effect until the next save (the compiled JSON cache took its timestamp
+  after reading)
+
+Installer
+
+* add: `--no-site` installs h6ai, PHP-FPM and nginx's http-level part without a server block, for
+  a server block of your own (`include h6ai/server.conf;`). Upgrades keep it; `--uninstall` names
+  server blocks that still include h6ai
+* fix: a `--server-name` that another site already answers for on that port was installed anyway
+  (nginx only warns, and keeps sending those visitors to the other site). The installer now stops,
+  names that site and leaves nginx as it was; so it does when nginx rejects the configuration
+
+Docs and tests
+
+* drop-in guide: moving from h5ai by pointing the server block at a new web root (nothing moves),
+  and what to check in a server block that has grown around h5ai: logs (`$uri`), caching rules,
+  caches in front of PHP, basic auth, HTTP/2 and HTTP/3, early data. `DEPLOYMENT.md`: adding h6ai
+  to an existing server block
+* `test-native/dropin-custom.sh`: a drop-in on such a server block (TLS, HTTP/2, HTTP/3, 0-RTT,
+  basic auth, caching rule) with the integration suite and the admin page in Chromium;
+  `test-native/own-site.sh`: the installer next to an existing site, and `--no-site`
+* the integration suite runs over HTTPS too
+
+
 ## v1.0.0 (h6ai) - *2026-10-23*
 
 First release as **h6ai**, a maintained and modernised fork of h5ai 0.30.0.
