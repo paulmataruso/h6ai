@@ -31,7 +31,7 @@ control and a new interface.
 
 * **The download is the hero.** Every file shows its size on a download chip. Click a file that
   can't be previewed and its row unfolds in place, without a modal or a new page:
-  * a **Download 7.5 GB** button;
+  * a **Download** button that shows the file's size;
   * the direct link;
   * ready-to-paste resumable `curl -C -` and `wget -c` commands;
   * a QR code for phones.
