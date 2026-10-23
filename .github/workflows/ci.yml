@@ -46,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check, php]
     env:
+      # the suite needs the seeded test environment, not the production compose.yaml alone
+      COMPOSE_FILE: compose.yaml:compose.dev.yaml
       H6AI_BIND: 127.0.0.1
       H6AI_PORT: 8687
       H6AI_SEED_BIG_GB: 0
