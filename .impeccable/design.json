@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-22T18:17:32+00:00",
+  "generatedAt": "2026-10-23T00:00:00+00:00",
   "title": "Design System: h6ai",
   "extensions": {
     "colorMeta": {
@@ -499,6 +499,18 @@
       }
     },
     "typographyMeta": {
+      "display-page": {
+        "displayName": "Display (page)",
+        "purpose": "The project page's \"h6ai\" title only, beside the 64px mark. A page-level exception; no app screen uses it."
+      },
+      "lead": {
+        "displayName": "Lead (page)",
+        "purpose": "The project page lead under the title, 20px (18px at 560px and below), capped at 62ch."
+      },
+      "body-reading": {
+        "displayName": "Body (reading)",
+        "purpose": "Running prose on the project page, 16px at 1.6, capped at 72ch. Listings, tables, tree and controls keep the 14px body."
+      },
       "headline": {
         "displayName": "Headline",
         "purpose": "Admin page title only (24px)."
@@ -615,13 +627,13 @@
         "name": "narrow",
         "value": "560px",
         "query": "(max-width: 560px)",
-        "purpose": "Band stacks (ticket and close, then Download again), commands wrap, stamped notice spans the width."
+        "purpose": "Band stacks (ticket and close, then Download again), commands wrap, stamped notice spans the width. Project page: secondary top-bar links hide, rows stack their description, the band loses its indent, definition lists go to one column, data tables stack into labelled lines, screenshots cap at 70vh."
       },
       {
         "name": "compact",
         "value": "720px",
         "query": "(max-width: 720px)",
-        "purpose": "Tree hidden, operator site name hidden (wordmark stays), archive action icon-only, settings drawer overlays, admin tabs scroll under a fade mask."
+        "purpose": "Tree hidden, operator site name hidden (wordmark stays), archive action icon-only, settings drawer overlays, admin tabs scroll under a fade mask. Project page: the section tree becomes a scrolling strip under the top bar (44px items, 2px Cornflower underline on the current section, 32px right-edge fade)."
       },
       {
         "name": "tiny",
@@ -633,13 +645,13 @@
         "name": "medium",
         "value": "1080px",
         "query": "(max-width: 1080px)",
-        "purpose": "Info panel removed."
+        "purpose": "Info panel removed. Project page: gutters tighten, the version label and the brand's closing hairline hide."
       },
       {
         "name": "coarse",
         "value": "pointer: coarse",
         "query": "(pointer: coarse)",
-        "purpose": "Targets 44px, rows 48px, Download button 48px, checkbox 22px."
+        "purpose": "Targets 44px, rows 48px, Download button 48px, checkbox 22px. Project page: release and documentation rows 48px, section-tree items 44px, small buttons 40px."
       },
       {
         "name": "no-hover",
@@ -906,7 +918,16 @@
       "target": "36px",
       "targetCoarse": "44px",
       "trackCaps": ".05em (--track-caps, every uppercase label)",
-      "global": "color-scheme: dark; font-variant-numeric: tabular-nums; caret-color: var(--link); ::selection uses --link-soft; thin scrollbars in --scrollbar."
+      "global": "color-scheme: dark; font-variant-numeric: tabular-nums; caret-color: var(--link); ::selection uses --link-soft; thin scrollbars in --scrollbar.",
+      "projectPage": {
+        "source": "docs/index.html (inline :root)",
+        "treeWidth": "264px",
+        "column": "760px",
+        "wideMax": "1080px",
+        "measure": "72ch",
+        "row": "40px (48px coarse)",
+        "strip": "45px at 720px and below"
+      }
     },
     "icons": "Inline SVG from js/lib/core/icons.js: 24x24 grid, 2px round strokes, currentColor, rendered 18px (15px in the download chip)."
   },
@@ -990,6 +1011,30 @@
       "description": "Flat admin card on the first raised plane; radio cards mark the checked option with the link colour.",
       "html": "<section class=\"ds-card\"><h2>Click on a file name</h2><label class=\"ds-radio\"><input type=\"radio\" name=\"ds-click\" checked><span><b>Preview, otherwise show the download panel</b><small>Other files unfold their row with Download, link and curl/wget.</small></span></label><label class=\"ds-radio\"><input type=\"radio\" name=\"ds-click\"><span><b>Always download</b><small>Every file downloads on a single click.</small></span></label></section>",
       "css": ".ds-card { padding: var(--s-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elev); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-md); line-height: 1.5; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; display: grid; gap: var(--s-2); } .ds-card h2 { margin: 0 0 var(--s-1); font-size: var(--fs-card); font-weight: 600; line-height: 1.25; } .ds-radio { display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-3); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s var(--ease); } .ds-radio:hover { border-color: var(--border-strong); } .ds-radio:has(input:checked) { border-color: var(--link); background: var(--link-soft); } .ds-radio input { width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--link); } .ds-radio input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .ds-radio span { display: flex; flex-direction: column; gap: 2px; } .ds-radio b { font-weight: 500; } .ds-radio small { color: var(--text-muted); font-size: var(--fs-sm); }"
+    },
+    {
+      "name": "Section Tree (project page)",
+      "kind": "nav",
+      "refersTo": "section-tree",
+      "description": "The project page's sticky section tree, styled as the app's folder tree; the section in view takes Cornflower Soft.",
+      "html": "<nav class=\"ds-tree\"><a href=\"#\"><svg class=\"ds-chev\" viewBox=\"0 0 24 24\"><path d=\"m9 18 6-6-6-6\"/></svg><svg class=\"ds-folder\" viewBox=\"0 0 24 24\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg>Install</a><a href=\"#\" aria-current=\"location\"><svg class=\"ds-chev\" viewBox=\"0 0 24 24\"><path d=\"m9 18 6-6-6-6\"/></svg><svg class=\"ds-folder\" viewBox=\"0 0 24 24\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg>Screenshots</a><a href=\"#\"><svg class=\"ds-chev\" viewBox=\"0 0 24 24\"><path d=\"m9 18 6-6-6-6\"/></svg><svg class=\"ds-folder\" viewBox=\"0 0 24 24\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg>Features</a></nav>",
+      "css": ".ds-tree { width: 264px; padding: 12px 8px; background: #11141e; border-right: 1px solid #232838; font: 400 .875rem/1.4 system-ui, sans-serif; } .ds-tree a { position: relative; display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 3px 8px 3px 26px; border-radius: 6px; color: #a3aabd; text-decoration: none; transition: background-color .15s cubic-bezier(.2,.7,.2,1), color .15s cubic-bezier(.2,.7,.2,1); } .ds-tree a:hover { background: rgba(232,234,242,.06); color: #e8eaf2; } .ds-tree a:focus-visible { outline: 2px solid #82a8ff; outline-offset: 2px; } .ds-tree a[aria-current] { background: rgba(130,168,255,.14); color: #e8eaf2; font-weight: 600; } .ds-tree svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } .ds-folder { width: 18px; height: 18px; flex: none; } .ds-chev { position: absolute; left: 6px; top: 50%; width: 14px; height: 14px; margin-top: -7px; color: #8d94a9; transform: rotate(90deg); }"
+    },
+    {
+      "name": "Screenshot Viewer (project page)",
+      "kind": "custom",
+      "refersTo": "screenshot-frame",
+      "description": "Underline tabs in the admin-tab grammar over a fixed-aspect, letterboxed screenshot frame.",
+      "html": "<div class=\"ds-viewer\"><div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Details view</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Grid view</button><span class=\"ds-sep\"></span><span class=\"ds-group\">Admin</span><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Users</button></div><div class=\"ds-frame\"></div><p class=\"ds-cap\">The details view with a band open.</p></div>",
+      "css": ".ds-tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid #232838; } .ds-tab { height: 40px; margin-bottom: -1px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: #a3aabd; font: 500 .875rem/1 system-ui, sans-serif; cursor: pointer; transition: color .15s, border-color .15s; } .ds-tab:hover { color: #e8eaf2; } .ds-tab:focus-visible { outline: 2px solid #82a8ff; outline-offset: -2px; } .ds-tab[aria-selected=\"true\"] { border-bottom-color: #82a8ff; color: #e8eaf2; } .ds-sep { width: 1px; height: 20px; margin: 0 8px; background: #232838; } .ds-group { padding-right: 4px; color: #8d94a9; font: .8125rem system-ui, sans-serif; } .ds-frame { margin-top: 16px; aspect-ratio: 1903 / 935; border: 1px solid #232838; border-radius: 10px; background: #0b0d14; transition: border-color .15s; } .ds-frame:hover { border-color: #353d54; } .ds-cap { max-width: 72ch; margin: 12px 0 0; color: #a3aabd; font: .875rem/1.6 system-ui, sans-serif; }"
+    },
+    {
+      "name": "Code Block (project page)",
+      "kind": "card",
+      "refersTo": "code-block",
+      "description": "Install commands on the first raised plane with a 40px header row: label and small Copy button.",
+      "html": "<div class=\"ds-code\"><div class=\"ds-code-head\"><span>Shell, as a user with sudo</span><button class=\"ds-btn-sm\" type=\"button\">Copy</button></div><pre><span class=\"ds-c\"># download and unpack</span>\ntar xzf h6ai-1.0.0.tar.gz &amp;&amp; cd h6ai-1.0.0\nsudo ./install.sh --native</pre></div>",
+      "css": ".ds-code { overflow: hidden; border: 1px solid #232838; border-radius: 10px; background: #11141e; } .ds-code-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 4px 6px 4px 16px; border-bottom: 1px solid #232838; color: #a3aabd; font: .8125rem system-ui, sans-serif; } .ds-btn-sm { min-width: 72px; height: 30px; padding: 0 12px; border: 1px solid #5c6584; border-radius: 6px; background: #181c29; color: #e8eaf2; font: 500 .8125rem/1 system-ui, sans-serif; cursor: pointer; transition: border-color .15s; } .ds-btn-sm:hover { border-color: #8d94a9; } .ds-btn-sm:active { background: rgba(232,234,242,.10); } .ds-btn-sm:focus-visible { outline: 2px solid #82a8ff; outline-offset: 2px; } .ds-code pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: #e8eaf2; font: .875rem/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; } .ds-c { color: #8d94a9; }"
     }
   ],
   "narrative": {

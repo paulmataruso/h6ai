@@ -53,8 +53,9 @@ Features
   server-side GA4 `file_download` events (Measurement Protocol) that also count direct links and
   `curl`/`wget`, generated `robots.txt` and `sitemap.xml` for public content, CSP updated to match
 * CVE-2026-109618 (PHP multipart RCE): patched PHP 8.3.36 base image with a build-time version
-  gate, plus nginx rejecting multipart bodies; CVE-2026-10961 (stored XSS via served user files):
-  HTML/SVG/XML in the share are served with a sandboxing CSP
+  gate, plus nginx rejecting multipart bodies; CVE-2026-10961 (Chrome for iOS sandbox escape through
+  a crafted HTML page): HTML/SVG/XML in the share are served with a sandboxing CSP, so h6ai can't
+  deliver it
 * login/account menu on the listing, change own password
 * `options.local.json` overrides, deep-merged over `options.json`
 * WebP/AVIF thumbnails, more audio/image types, EXIF orientation for all thumbnails, video
@@ -140,7 +141,7 @@ Development
 * update `marked` to 18, add `dompurify` 3, update `kjua`, `lolight`
 
 
-## v0.30.0 (h5ai) - *never released upstream*
+## v0.30.0 (h5ai) - *2021-01-24*
 
 * now require PHP 7.0.0+
 * fix archive-single-item problem

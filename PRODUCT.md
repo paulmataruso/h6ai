@@ -34,7 +34,8 @@ operator: publishing is "copy files into a folder", and they can see who downloa
 - **Zero-friction browsing.** No app to learn and no account needed for public content: a URL is
   a folder, the listing is instantly usable, works on phones and without JavaScript (fallback
   listing), previews just work.
-- Drop-in for an existing nginx web root (an `_h6ai` folder plus an `index` directive), not a
+- Installs three ways with the same features: natively (`install.sh`), in Docker, or as a
+  drop-in for an existing nginx web root (an `_h6ai` folder plus one `error_page` line). Never a
   separate file-server process.
 
 ## Operating Context
@@ -60,7 +61,8 @@ operator: publishing is "copy files into a folder", and they can see who downloa
   original strings, newer strings fall back to English).
 - Dark only: five dark themes (Midnight default, Graphite, Deep Sea, Ember, OLED Black). The admin
   sets the site default; visitors can pick another theme for themselves.
-- Undecided: public project URL / repository location.
+- Repository: https://github.com/paulmataruso/h6ai. Project page:
+  https://paulmataruso.github.io/h6ai/ (`docs/index.html`, GitHub Pages from `main` `/docs`).
 
 ## Brand Commitments
 

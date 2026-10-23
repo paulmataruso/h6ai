@@ -11,17 +11,19 @@
 </p>
 
 <p align="center">
+  <a href="https://paulmataruso.github.io/h6ai/">Project page</a> ·
+  <a href="https://github.com/paulmataruso/h6ai/releases">Download</a> ·
   <a href="#install">Install</a> ·
-  <a href="docs/INSTALL.md">Docker &amp; native guide</a> ·
+  <a href="docs/INSTALL.md">Install guides</a> ·
   <a href="#access-control">Access control</a> ·
   <a href="SECURITY.md">Security</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
-![A 7.5 GB file unfolded into its download band: Download button with the size, direct link, resumable curl and wget commands](docs/images/screenshot-band.png)
+![The details view of a folder: the folder tree on the left, folders with their dates and sizes on the right](docs/home-screen.png)
 
-h6ai is a maintained successor of [h5ai](https://github.com/lrsjng/h5ai) by Lars Jung, which has
-not been maintained since 2020. It keeps what made h5ai good: a URL is a folder, no app to learn,
+h6ai is a maintained successor of [h5ai](https://github.com/lrsjng/h5ai) by Lars Jung, whose last
+version, 0.30.0, dates from January 2021. It keeps what made h5ai good: a URL is a folder, no app to learn,
 no account needed for public files. It rebuilds the rest for today: security, large files, access
 control and a new interface.
 
@@ -36,9 +38,10 @@ control and a new interface.
 
   A stamped confirmation tells you what started. Images, video, audio, text, code and markdown
   open in a preview.
-* **Huge files, fast.** h6ai never sits in the data path of a file download. nginx serves every
+* **Huge files, fast.** h6ai never sits in the data path of a big download. nginx serves every
   byte with sendfile, Range/resume and ETags, and only asks h6ai whether the request is allowed
-  (`auth_request`, ~15 ms including the permission check). Multi-GB files resume, stream and
+  (`auth_request`, ~15 ms including the permission check; a drop-in hands big files back to
+  nginx with `X-Accel-Redirect`). Multi-GB files resume, stream and
   seek. Folders download as streamed tar or zip archives, with no temp files and no size limit.
   Numbers are in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 * **Zero-friction browsing.**
@@ -65,41 +68,53 @@ control and a new interface.
 
   Details are in [`SECURITY.md`](SECURITY.md) and [`docs/AUDIT.md`](docs/AUDIT.md).
 
-<table>
-  <tr>
-    <td width="62%"><img src="docs/images/screenshot-admin.png" alt="Admin: access checker explaining which rule decides who can see a folder, above the users table"></td>
-    <td width="38%"><img src="docs/images/screenshot-mobile.png" alt="Phone: a file row unfolded into its download band"></td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="docs/images/screenshot-themes.png" alt="Admin theme gallery: Midnight, Graphite, Deep Sea, Ember and OLED Black"></td>
-  </tr>
-</table>
+## Screenshots
+
+| | |
+|---|---|
+| ![A folder of images: every file row ends in a download chip with its size](docs/images.png) | ![The settings drawer: views, five dark themes, panels and language](docs/settings.png) |
+| Every file row ends in a download chip with its size. | Settings: views, the five dark themes, panels, language. |
+| ![A 7.5 GB file unfolded into its download band: Download button with the size, direct link, resumable curl and wget commands](docs/images/screenshot-band.png) | ![Admin, Access: the access checker and the user list](docs/admin-home.png) |
+| A file without a preview unfolds into its download band. | Admin, Access: who can see a folder, and which rule decides it. |
+| ![Admin, Appearance: the theme gallery and what a click on a file name does](docs/admin-appearance.png) | ![Admin, Google and SEO: paste Google's snippet, robots.txt and sitemap.xml](docs/admin-seo.png) |
+| Admin, Appearance: the site's default theme and click behaviour. | Admin, Google & SEO: Search Console, GA4, sitemap. |
+| ![Admin, Activity: totals, top files and users, and the event log](docs/admin-activity.png) | ![Phone: a file row unfolded into its download band](docs/images/screenshot-mobile.png) |
+| Admin, Activity: downloads, archives and logins. | On a phone. |
 
 ## Install
 
-Pick how h6ai runs: **natively**, directly on the server's OS (bare metal or VM, no Docker), or in
-**Docker**. One installer does either:
+Three ways, with the same features. Each has a step-by-step guide:
+
+| | |
+|---|---|
+| **[Native](docs/install/native.md)** | directly on the server's OS (bare metal or VM): `sudo ./install.sh --native` sets up nginx and PHP-FPM from the distribution's packages on Debian, Ubuntu, Fedora, RHEL/Rocky/Alma and Alpine |
+| **[Docker](docs/install/docker.md)** | one container with its own nginx and PHP-FPM: `sudo ./install.sh --docker`, or `docker compose up -d` in a checkout |
+| **[Drop-in](docs/install/dropin.md)** | the h5ai way: unzip `_h6ai` into the web root of the nginx + PHP you already run, add one line, finish in the browser |
 
 ```sh
-tar xzf h6ai-1.0.0.tar.gz && cd h6ai-1.0.0     # release bundle: npm run release
+curl -LO https://github.com/paulmataruso/h6ai/releases/download/v1.0.0/h6ai-1.0.0.tar.gz
+tar xzf h6ai-1.0.0.tar.gz && cd h6ai-1.0.0
 sudo ./install.sh                              # asks: natively on this system, or in Docker
 ```
 
-`--native` or `--docker` choose up front. Both use the same nginx and PHP configuration and
-hardening, create the first admin, print the URLs, upgrade when run again from a newer release
-and remove themselves with `--uninstall`. Details and options: [`docs/INSTALL.md`](docs/INSTALL.md).
+The installer checks PHP for the CVE-2026-109618 fix. It runs h6ai in its own PHP-FPM pool and
+system user (native) or container (Docker), creates the first admin and prints the URLs. Run it
+again to upgrade; `--uninstall` removes it. Every supported distribution is tested with the full
+integration suite.
 
-* **Native** (Debian, Ubuntu, Fedora, RHEL/Rocky/Alma, Alpine): nginx and PHP-FPM from the
-  distribution's packages, PHP checked for the CVE-2026-109618 fix, h6ai in its own PHP-FPM pool
-  and system user, services enabled at boot. Every supported distribution is tested with the full
-  integration suite.
-* **Docker** (any Linux with Docker): one container with nginx and PHP-FPM 8.3 (patched,
-  version-gated at build time), OPcache and JIT. Users and settings live in a volume. Without the
-  installer: `cp .env.example .env && docker compose up -d --build` in a git checkout.
+For a drop-in, unzip `h6ai-1.0.0-dropin.zip` into the web root, keep your files in a folder
+outside it, and add this to the server block:
 
-Both come with `h6ai-user` to create admins or reset a lost password from the shell. To add h6ai
-to an nginx you configure yourself, include the snippets in `deploy/nginx/`
-([`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)).
+```nginx
+error_page 403 404 = /_h6ai/public/index.php;
+```
+
+Then open `/_h6ai/public/`: it asks for the files folder and a password and gives you a setup file
+to upload. No shell is needed. Every request reaches h6ai, so permissions, the download log and
+the HTML sandbox work as in the other two, and nginx still sends big files. The admin page checks
+the setup from your browser.
+
+Overview and comparison: [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ## Access control
 
@@ -133,8 +148,9 @@ Levels are ordered:
 * **The access checker** answers "who can see this folder, and which rule decides it?" before you
   share a link.
 
-nginx asks h6ai about every file request (`auth_request`), so a denied file returns 401 or 403
-even when someone has the direct URL. Protected folders never appear in the sitemap.
+Every file request passes h6ai first, so a denied file returns 401 or 403 even when someone has
+the direct URL. Native and Docker installs use nginx's `auth_request`; a drop-in serves its files
+folder through h6ai. Protected folders never appear in the sitemap.
 
 ### Behind a reverse proxy
 
@@ -184,7 +200,7 @@ npm ci
 npm run build          # -> build/_h6ai
 npm run build:dev      # unminified + sourcemaps
 npm run watch          # rebuild on change
-npm run release        # build/h6ai-<version>.tar.gz (+ .zip if `zip` is installed)
+npm run release        # build/h6ai-<version>.{tar.gz,zip} (installer) and -dropin.{tar.gz,zip}
 ```
 
 The frontend is vanilla JavaScript and plain CSS bundled by esbuild. The backend is PHP ≥ 8.2
@@ -196,7 +212,7 @@ with `strict_types`. There are no runtime dependencies beyond marked, DOMPurify,
 npm run check              # ESLint + unit tests
 npm run test:integration   # 125 HTTP tests against the dev container (security, RBAC, CVEs, large files)
 npm run test:e2e           # Playwright in Docker: visitor, admin, anon and mobile flows
-npm run test:native        # install.sh on 8 distributions in clean containers, then the HTTP suite
+npm run test:native        # install.sh on 8 distributions + systemd + Docker mode; a drop-in on stock nginx
 ```
 
 The integration and browser tests expect the development environment:

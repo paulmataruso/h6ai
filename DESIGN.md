@@ -32,6 +32,25 @@ colors:
   leaf-green: "#4cc96a"
   ochre-amber: "#e3ad3c"
 typography:
+  display-page:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif"
+    fontSize: "clamp(3rem, 2.25rem + 2.5vw, 4.5rem)"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.035em"
+  lead:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 400
+    lineHeight: 1.55
+    letterSpacing: "0.005em"
+  body-reading:
+    fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: "0.005em"
+    fontFeature: "\"tnum\""
   headline:
     fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif"
     fontSize: "1.5rem"
@@ -187,6 +206,32 @@ components:
     backgroundColor: "{colors.indigo-night}"
     rounded: "{rounded.lg}"
     padding: "24px"
+  section-tree:
+    backgroundColor: "{colors.indigo-night}"
+    textColor: "{colors.fog-grey}"
+    width: "264px"
+  section-tree-current:
+    backgroundColor: "{colors.cornflower-soft}"
+    textColor: "{colors.frost-white}"
+    rounded: "{rounded.sm}"
+  viewer-tab:
+    textColor: "{colors.fog-grey}"
+    typography: "{typography.button}"
+    padding: "0 12px"
+    height: "40px"
+  screenshot-frame:
+    backgroundColor: "{colors.indigo-black}"
+    rounded: "{rounded.md}"
+  code-block:
+    backgroundColor: "{colors.indigo-night}"
+    textColor: "{colors.frost-white}"
+    typography: "{typography.mono}"
+    rounded: "{rounded.md}"
+  code-block-head:
+    textColor: "{colors.fog-grey}"
+    typography: "{typography.small}"
+    padding: "4px 6px 4px 16px"
+    height: "40px"
 ---
 
 # Design System: h6ai
@@ -254,13 +299,16 @@ Midnight is normative for the tokens above. Graphite (neutral charcoal, zero tin
 
 ## Typography
 
-**Display Font:** none. The largest type is a 24px headline.
+**Display Font:** none in the app, where the largest type is a 24px headline. The project page (docs/index.html) is the one exception: its "h6ai" title is set at display scale in the same system stack (see Display (page) below). No app screen may borrow it.
 **Body Font:** the system UI stack (system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif)
 **Label/Mono Font:** the system monospace stack (ui-monospace, SF Mono, Menlo, Consolas, Liberation Mono) for links, curl/wget commands, code and keycaps.
 
 **Character:** the operating system's own voice, so the index feels native on every device and costs no bytes. A compact product scale with a ratio of about 1.2 around a 14px body; slightly loosened tracking for light-on-dark legibility and tabular numerals so sizes and dates align in columns.
 
 ### Hierarchy
+- **Display (page)** (700, clamp(48px → 72px), 1, -0.035em): the project page's "h6ai" title only, beside the 64px mark (48px mark at 560px and below). A page-level exception, not an app style.
+- **Lead (page)** (400, 20px, 1.55; 18px at 560px and below): the two-sentence lead under the page title, capped at 62ch.
+- **Body (reading)** (400, 16px, 1.6, tabular numerals): running prose on the project page, capped at the 72ch measure. Listings, tables, the tree and controls on that page keep the 14px product body.
 - **Headline** (600, 24px, 1.25): the admin page title only.
 - **Title** (600, 20px, 1.25): dialog headings.
 - **Title Card** (600, 18px, 1.25): admin card and section headings.
@@ -282,6 +330,8 @@ The index is a full-height app frame: a 56px top bar (brand, breadcrumb, grouped
 
 The admin page is a centred column (max 1120px) with a header, a tab bar and stacked cards.
 
+The project page (docs/index.html) reads the way the index is used: the 56px top bar (mark, wordmark, version, then Guides, Releases, GitHub as 36px bar links), a 264px sticky section tree on the first raised plane with a hairline on its right, and a reading column. Text blocks cap at 760px and prose at 72ch; screenshots and the comparison and performance tables may run wide to 1080px. Sections are separated by 64px of space, a hairline and 48px of padding; the column pads 48px (32px at 1080px and below, 16px sides at 720px and below). Anchors clear the top bar, the strip when present, and 24px.
+
 Spacing follows a 4px grid: 4, 8, 12, 16, 24, 32, 48, 64. Controls are at least 36px, 44px on coarse pointers; the Download button is 40px (48px on touch). Toolbar tool groups are separated by a 1px, 20px-tall hairline.
 
 Responsive behaviour:
@@ -289,6 +339,7 @@ Responsive behaviour:
 - **720px and below:** the folder tree is removed (the breadcrumb is the navigation), the operator's site name hides while the h6ai mark and wordmark stay, the archive action collapses to its icon, the settings drawer overlays from the right at min(88vw, 340px) with a shadow, the filter input narrows to 120px and the breadcrumb keeps only the current folder while typing.
 - **560px and below:** the band stacks (Download and close on one line, note beneath; once started, ticket and close on the first line, "Download again" on the second; link labels above their values, commands wrap instead of scrolling); the stamped notice spans the screen width.
 - **360px and below:** the wordmark hides and the logo mark alone carries the brand.
+- **Project page:** at 1080px the gutters tighten and the version label hides, taking the brand's closing hairline with it; at 720px the section tree becomes a horizontally scrolling strip under the top bar (top-level sections only, no icons, 44px items, a 2px Cornflower underline on the current section, a 32px fading mask at the right edge); at 560px the secondary top-bar links hide, release and documentation rows stack their description under the name, the band loses its indent, definition lists and features go to one column, data tables stack each row into labelled lines and screenshots drop the fixed aspect for a 70vh cap.
 - **Coarse pointers:** targets grow to 44px, rows to 48px, the selection box to 22px. With no hover, checkboxes and download chips are always visible.
 
 ### Named Rules
@@ -312,7 +363,7 @@ Depth is tonal first: the page ground, a first raised plane and a second raised 
 
 ## Shapes
 
-Gently rounded, never pill-shaped except for status chips. Three radii: 6px for controls, rows, chips in the list, fields, code wells and the in-band ticket; 10px for the band, menus, notifications, the stamped notice and theme cards; 14px for dialogs and admin cards. Status chips are full pills; the selection checkbox and segment buttons use 5px, keycaps 4px. Containers are drawn with 1px hairline borders; inputs and buttons use the stronger input edge. The ticket is the one recurring silhouette of its own: an accent-bordered box with a stub on the accent wash, separated from the body by a 1px dashed accent perforation. The only hard-white shape is the QR code plate, which must stay white to scan.
+Gently rounded, never pill-shaped except for status chips. Three radii: 6px for controls, rows, chips in the list, fields, code wells and the in-band ticket; 10px for the band, menus, notifications, the stamped notice and theme cards; 14px for dialogs and admin cards. Status chips are full pills; the selection checkbox and segment buttons use 5px, keycaps 4px. Containers are drawn with 1px hairline borders; inputs and buttons use the stronger input edge. The ticket is the one recurring silhouette of its own: an accent-bordered box with a stub on the accent wash, separated from the body by a 1px dashed accent perforation. On the project page, code blocks and screenshot frames take the 10px radius and a hairline; the frame strengthens to Slate Rule on hover. The only hard-white shape is the QR code plate, which must stay white to scan.
 
 ## Components
 
@@ -366,6 +417,15 @@ Rows are 6px-rounded, transparent at rest, hover veil on hover and while expande
 - **Top bar:** 56px, first raised plane, hairline beneath. Left: the 28px logo mark, the 16px 700 wordmark, the site name in Fog Grey after a slash, closed by a hairline. Then the breadcrumb. Right: tool groups (find, output, preferences, account), 36px transparent tools with 6px radius, hover veil, pressed veil when active, hairline separators between visible groups. Filter and search are icon tools that expand into a 220px input with a Cornflower focus halo.
 - **Admin tabs:** icon and label, Fog Grey at rest, Frost White on hover, active tab gets a 2px Cornflower underline; on narrow screens the bar scrolls sideways under a fading mask.
 - **Settings drawer:** 288px column with uppercase group headings, a segmented control for views, theme swatches (four-colour chip strips; the active swatch gets the second plane and a strong border), and switches (36x20 track, Cornflower when on).
+
+### Project Page
+The GitHub Pages page (docs/index.html) is built from the index's own parts; it adds no colour, radius or shadow of its own.
+- **Section tree:** styled as the app's folder tree: 14px Fog Grey items with an 18px folder icon and a chevron in Pewter, nested levels indented behind a 1px hairline, hover veil on hover. The section in view (scroll-spy) takes Cornflower Soft, Frost White and 600 weight. At 720px and below it becomes the underline strip described in Layout.
+- **Release rows:** a details/summary listing under an uppercase Label header, each row 40px (48px on touch) with a 20px file icon, the name in 500 weight, a 13px Fog Grey description, and the size-labelled download chip. Opening a row unfolds the expansion band (Download button with the size, a curl line in a well, small Copy button); one row is open at a time, and a started download is stamped with the ticket.
+- **Screenshot viewer:** underline tabs in the admin-tab grammar (40px, 14px 500 Fog Grey, active tab Frost White over a 2px Cornflower underline, a hairline under the strip, a 1px 20px-tall hairline and a 13px Pewter group name between groups). While the strip overflows, its right 48px fades out. The frame keeps the screenshots' 1903/935 aspect, letterboxes the image (object-fit contain) on the page ground inside a 10px hairline frame, with a 14px Fog Grey caption at 72ch. Without JavaScript the tabs stay hidden and every figure is listed.
+- **Code blocks:** first raised plane, hairline, 10px radius. A 40px header row carries the 13px Fog Grey label and a small Copy button (shown only when JavaScript can copy), over a hairline; the body is 14px monospace at 1.7 line height with comments in Pewter.
+- **Definition lists and tables:** features are a two-column definition list (200px term in 600 weight, Fog Grey description) with a hairline above each pair; requirements use a 112px term column. Tables are 14px with hairline row rules, uppercase Label column headers and right-aligned numeric columns; the h5ai comparison table keeps its headers in normal case at 13px so product names stay lowercase.
+- **Documentation listing:** guides are listed as h6ai file rows: icon, name, description and a Pewter external-link mark that turns Frost White on hover, under an uppercase Label header.
 
 ### Motion
 Short and functional, on two curves: a standard ease (cubic-bezier(.2, .7, .2, 1)) for state changes at 120-150ms and an out-ease (cubic-bezier(.16, 1, .3, 1)) for arrivals: dialogs and notifications 160ms, the band 180ms, the stamped notice 220ms, the filter input 200ms. The one authored moment is the 320ms ticket stamp; nothing else rotates or overshoots.

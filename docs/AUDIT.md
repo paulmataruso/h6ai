@@ -1,6 +1,6 @@
 # h5ai code & security audit
 
-Baseline: upstream `lrsjng/h5ai` @ `aa94de49` (v0.30.0, last release 2020, unmaintained).
+Baseline: upstream `lrsjng/h5ai` @ `aa94de49` (v0.30.0 of 2021-01-24, the last version and last commit; unmaintained since).
 Scope: all PHP (`src/_h5ai/private/php`, `public/index.php`), all frontend JS/LESS/Pug,
 config (`options.json`, `.htaccess`), build tooling and dependencies.
 
