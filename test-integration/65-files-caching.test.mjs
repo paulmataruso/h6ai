@@ -63,18 +63,26 @@ test('full download of the big file streams completely', async () => {
     assert.ok(res.body.subarray(BIG_SIZE - 8).equals(bigBytes(BIG_SIZE - 8, BIG_SIZE - 1)));
 });
 
+// the script and stylesheet URLs as the page references them (drop-in installs route them
+// through h6ai, which sets the same headers h6ai's nginx snippet does)
+const assetUrls = async () => {
+    const page = (await get('/')).text;
+    const url = re => (page.match(re) || [])[1].replace(/&amp;/g, '&');
+    return [url(/<script[^>]+src="([^"]+scripts\.js[^"]*)"/), url(/<link rel="stylesheet" href="([^"]+styles\.css[^"]*)"/)];
+};
+
 test('media is never gzipped; text assets are', async () => {
     const jpg = await get('/images/photo.jpg', {headers: {'Accept-Encoding': 'gzip'}});
     assert.equal(jpg.status, 200);
     assert.ok(!jpg.headers['content-encoding'], 'jpeg gzipped');
 
-    const js = await get('/_h6ai/public/js/scripts.js', {headers: {'Accept-Encoding': 'gzip'}});
+    const js = await get((await assetUrls())[0], {headers: {'Accept-Encoding': 'gzip'}});
     assert.equal(js.status, 200);
     assert.equal(js.headers['content-encoding'], 'gzip', 'scripts.js not gzipped');
 });
 
 test('h6ai static assets are immutable-cacheable', async () => {
-    for (const p of ['/_h6ai/public/js/scripts.js', '/_h6ai/public/css/styles.css']) {
+    for (const p of await assetUrls()) {
         const res = await request('HEAD', p);
         assert.equal(res.status, 200, p);
         const cc = res.headers['cache-control'] || '';

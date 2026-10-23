@@ -2,7 +2,36 @@
 declare(strict_types=1);
 
 final class Json {
+    // Data in private/ may sit in a web root that the server hands out as is (drop-in installs).
+    // It's stored in .php files that answer 404 and stop when a request runs them; the data follows
+    // the first line. Without a PHP handler they'd be sent as text, which the admin page checks.
+    public const GUARD = "<?php http_response_code(404); exit; ?>\n";
+
+    public static function unguard(string $raw): string {
+        if (!str_starts_with($raw, '<?php')) {
+            return $raw;
+        }
+        $newline = strpos($raw, "\n");
+        return $newline === false ? '' : substr($raw, $newline + 1);
+    }
+
+    // Writes $content behind the guard line, atomically (temp file + rename), readable by PHP only.
+    public static function write_guarded(string $path, string $content): bool {
+        $tmp = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
+        if (@file_put_contents($tmp, Json::GUARD . $content) === false) {
+            @unlink($tmp);
+            return false;
+        }
+        @chmod($tmp, 0600);
+        if (!@rename($tmp, $path)) {
+            @unlink($tmp);
+            return false;
+        }
+        return true;
+    }
+
     // Returns [] for missing/unreadable files and null if the content is not valid JSON.
+    // Guarded files (see GUARD) are read the same way.
     public static function load(string $path): ?array {
         if (!is_file($path) || !is_readable($path)) {
             return [];
@@ -12,7 +41,7 @@ final class Json {
         if ($json === false) {
             return [];
         }
-        $data = json_decode(Json::strip($json), true);
+        $data = json_decode(Json::strip(Json::unguard($json)), true);
         return is_array($data) ? $data : null;
     }
 

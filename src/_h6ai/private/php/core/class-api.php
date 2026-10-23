@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 final class Api {
-    private const ACTIONS = ['admin', 'download', 'get', 'login', 'logout', 'password'];
+    private const ACTIONS = ['admin', 'download', 'get', 'login', 'logout', 'passhash', 'password'];
 
     private Request $request;
     private Setup $setup;
@@ -22,8 +22,49 @@ final class Api {
             'password' => $this->on_password(),
             'get' => $this->on_get(),
             'login' => $this->on_login(),
-            'logout' => $this->on_logout()
+            'logout' => $this->on_logout(),
+            'passhash' => $this->on_passhash()
         };
+    }
+
+    // First run without a shell (drop-in installs): hashes a setup password for the admin to
+    // save as private/conf/options.local.json by hand. Saving that file proves the admin owns the
+    // server, so h6ai never stores it itself. Only while no password or user exists at all.
+    private function on_passhash(): never {
+        $this->require_same_origin();
+        Util::json_fail(Util::ERR_DISABLED, 'a password or users already exist', $this->context->has_password());
+        $limiter = new RateLimiter(
+            $this->setup->get('CACHE_PRV_PATH'),
+            $this->request->client_ip(),
+            max(1, (int) $this->context->query_option('security.loginMaxAttempts', 5)),
+            max(1, (int) $this->context->query_option('security.loginWindow', 900))
+        );
+        Util::json_fail(Util::ERR_RATE_LIMITED, 'too many requests, try again later', $limiter->is_limited());
+        $limiter->hit();
+        $pass = $this->request->query('pass');
+        Util::json_fail(Util::ERR_ILLEGAL_PARAM, 'the password needs at least 8 characters',
+            !is_string($pass) || mb_strlen($pass) < 8 || strlen($pass) > 1024);
+        $local = ['passhash' => password_hash($pass, PASSWORD_DEFAULT)];
+
+        // drop-in: the folder to share, outside the web root
+        $folder = $this->request->query('filesFolder', '');
+        $check = null;
+        if (is_string($folder) && trim($folder) !== '') {
+            $folder = rtrim(trim($folder), '/');
+            Util::json_fail(Util::ERR_ILLEGAL_PARAM, 'the files folder must be an absolute path, e.g. /srv/files',
+                !str_starts_with($folder, '/') || str_contains($folder, "\0") || strlen($folder) > 1024);
+            $real = realpath($folder) ?: $folder;
+            $web_root = (string) $this->setup->get('DOCUMENT_ROOT');
+            $check = [
+                'exists' => is_dir($real),
+                'readable' => is_dir($real) && is_readable($real) && @scandir($real) !== false,
+                'insideWebRoot' => $web_root !== '' && ($real === $web_root || str_starts_with($real . '/', $web_root . '/'))
+            ];
+            $local['filesFolder'] = $folder;
+        }
+        $json = json_encode($local, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        // options.local.php: the guard line keeps it unreadable if requested over HTTP
+        Util::json_exit(['passhash' => $local['passhash'], 'file' => Json::GUARD . $json . "\n", 'folder' => $check]);
     }
 
     private function on_download(): never {
@@ -91,6 +132,8 @@ final class Api {
                 'loginAvailable' => $this->context->has_password(),
                 // no sign-in in the listing; the admin page still offers it to admins
                 'anonymous' => $this->context->is_anonymous_mode(),
+                // the first-run card asks for the files folder of a drop-in install
+                'dropin' => $this->setup->get('IS_DROPIN'),
                 'restricted' => $this->context->get_acl()->is_enabled()
             ];
             if ($is_admin) {

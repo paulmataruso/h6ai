@@ -17,7 +17,9 @@ final class Request {
 
     // Parameters are only taken from the POST body. JSON is only accepted with a JSON content
     // type, so cross-site "simple" requests (text/plain forms) can't smuggle JSON payloads.
-    // Cookies and query string are never mixed in (unlike $_REQUEST).
+    // Cookies and query string are never mixed in (unlike $_REQUEST). Form bodies are parsed here,
+    // not by PHP: h6ai runs with enable_post_data_reading=Off, so PHP's multipart parser (the
+    // CVE-2026-109618 trigger) never sees a request, with or without h6ai's nginx rules.
     public static function from_globals(): Request {
         $params = [];
         if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
@@ -26,11 +28,21 @@ final class Request {
                 $body = file_get_contents('php://input', false, null, 0, self::MAX_BODY_BYTES);
                 $data = is_string($body) ? json_decode($body, true, 64) : null;
                 $params = is_array($data) ? $data : [];
-            } else {
+            } elseif ($content_type === 'application/x-www-form-urlencoded') {
                 $params = $_POST;
+                if (!$params) {
+                    $body = file_get_contents('php://input', false, null, 0, self::MAX_BODY_BYTES);
+                    if (is_string($body)) {
+                        parse_str($body, $params);
+                    }
+                }
             }
         }
         return new Request($params, $_SERVER);
+    }
+
+    public function is_multipart(): bool {
+        return str_starts_with(strtolower(trim((string) ($this->server['CONTENT_TYPE'] ?? ''))), 'multipart/');
     }
 
     public function header(string $name): ?string {
@@ -171,6 +183,11 @@ final class Request {
         $site = $this->header('Sec-Fetch-Site');
         if ($site !== null && !in_array(strtolower($site), ['same-origin', 'none'], true)) {
             return false;
+        }
+        // the browser itself vouches for it (pages can't set Sec-Fetch-*). Also covers servers
+        // whose fastcgi_params replace the Host header with one that lost its port.
+        if ($site !== null && strtolower($site) === 'same-origin') {
+            return true;
         }
 
         $origin = $this->header('Origin');

@@ -1,8 +1,11 @@
 # Running h6ai on an nginx you configure yourself
 
-Most installs should use Docker or the native installer ([INSTALL.md](INSTALL.md)). This page is
-for adding h6ai to an existing nginx by hand, e.g. next to other sites in one server block. The
-pieces are the same ones the installer and the Docker image use, from `deploy/`.
+Most installs should use the [native installer](install/native.md), [Docker](install/docker.md)
+or a [drop-in](install/dropin.md) (unzip `_h6ai`, one nginx line); see [INSTALL.md](INSTALL.md).
+This page is for wiring h6ai into a server block of your own by hand, with h6ai's nginx snippets:
+nginx then serves the web root itself and asks h6ai about every file (`auth_request`). The
+pieces are the same ones the installer and the Docker image use, from `deploy/`. Once
+`server.conf` is included, h6ai no longer runs as a drop-in.
 
 ## 1. Install the application
 

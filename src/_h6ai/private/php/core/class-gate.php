@@ -23,11 +23,11 @@ final class Gate {
         http_response_code(204);
         header('X-H6ai-Cache-Control: ' . $cache_control);
         header('Content-Length: 0');
-        if ($file !== null && $this->is_download_start()) {
+        if ($file !== null && Gate::is_download_start($this->context, (string) ($_SERVER['H6AI_GATE_METHOD'] ?? 'GET'))) {
             if (function_exists('fastcgi_finish_request')) {
                 fastcgi_finish_request();
             }
-            $this->record($file);
+            Gate::record_download($this->context, $file);
         }
         exit;
     }
@@ -41,27 +41,26 @@ final class Gate {
     }
 
     // One log entry per download: skip HEAD requests and Range requests that continue an earlier
-    // request (video seeking, resumed or segmented downloads).
-    private function is_download_start(): bool {
-        $method = strtoupper((string) ($_SERVER['H6AI_GATE_METHOD'] ?? 'GET'));
-        if ($method !== 'GET') {
+    // request (video seeking, resumed or segmented downloads). Also used by FileServer.
+    public static function is_download_start(Context $context, string $method): bool {
+        if (strtoupper($method) !== 'GET') {
             return false;
         }
-        $range = $this->context->get_request()->header('Range');
+        $range = $context->get_request()->header('Range');
         return $range === null || preg_match('/^\s*bytes\s*=\s*0-/i', $range) === 1;
     }
 
-    private function record(string $file): void {
+    public static function record_download(Context $context, string $file): void {
         try {
-            $request = $this->context->get_request();
-            $href = $this->context->to_href($file, false);
+            $request = $context->get_request();
+            $href = $context->to_href($file, false);
             $size = @filesize($file);
-            (new ActivityLog($this->context))->log('file', rawurldecode($href), [
+            (new ActivityLog($context))->log('file', rawurldecode($href), [
                 'size' => $size === false ? null : $size,
                 'dest' => $request->header('Sec-Fetch-Dest'),
                 'range' => $request->header('Range') !== null
             ]);
-            (new Analytics($this->context))->download('file', $href, (new Seo($this->context))->base_url());
+            (new Analytics($context))->download('file', $href, (new Seo($context))->base_url());
         } catch (Throwable $err) {
             Logger::log('gate: recording failed: ' . $err->getMessage());
         }

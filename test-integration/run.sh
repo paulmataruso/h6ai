@@ -19,7 +19,7 @@ running() { [ -n "$(docker compose ps --status running -q "$SERVICE" 2>/dev/null
 
 if running; then
     echo "[run] resetting login rate limits in service '$SERVICE'"
-    docker compose exec -T "$SERVICE" sh -c "rm -f $H6AI_DIR/private/cache/ratelimit-*.json"
+    docker compose exec -T "$SERVICE" sh -c "rm -f $H6AI_DIR/private/cache/ratelimit-*"
 else
     echo "[run] service '$SERVICE' not running via compose - rate limits not reset"
 fi
@@ -38,7 +38,7 @@ if running; then
         echo "[run] ok: no executable files in the public cache (S15)"
     fi
     # leave the client unlocked for manual testing
-    docker compose exec -T "$SERVICE" sh -c "rm -f $H6AI_DIR/private/cache/ratelimit-*.json"
+    docker compose exec -T "$SERVICE" sh -c "rm -f $H6AI_DIR/private/cache/ratelimit-*"
 fi
 
 exit $status

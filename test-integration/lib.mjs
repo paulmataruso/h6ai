@@ -110,8 +110,12 @@ export const parseJson = res => {
     }
 };
 
-// POST a JSON API request to a folder URL (default "/"). Returns {res, json}.
-export const api = async (body, {path = '/', headers = {}, contentType = 'application/json', timeout} = {}) => {
+// API requests go to h6ai's entry point, like the browser UI's: drop-in installs route unknown
+// paths with nginx's error_page, which turns a POST to a folder URL into a GET.
+export const API_PATH = '/_h6ai/public/index.php';
+
+// POST a JSON API request (default: to the entry point). Returns {res, json}.
+export const api = async (body, {path = API_PATH, headers = {}, contentType = 'application/json', timeout} = {}) => {
     const res = await request('POST', path, {
         headers: {'Content-Type': contentType, Origin: ORIGIN, ...headers},
         body: JSON.stringify(body),
@@ -120,7 +124,8 @@ export const api = async (body, {path = '/', headers = {}, contentType = 'applic
     return {res, json: parseJson(res)};
 };
 
-// POST an application/x-www-form-urlencoded request (used by downloads).
+// POST an application/x-www-form-urlencoded request (used by downloads), to the entry point like
+// the UI's download form; `path` is the folder the request is about (it's in the fields too).
 export const form = (path, fields, {headers = {}, timeout = 60000} = {}) => {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(fields)) {
@@ -130,7 +135,7 @@ export const form = (path, fields, {headers = {}, timeout = 60000} = {}) => {
             params.append(k, v);
         }
     }
-    return request('POST', path, {
+    return request('POST', API_PATH, {
         headers: {'Content-Type': 'application/x-www-form-urlencoded', Origin: ORIGIN, ...headers},
         body: params.toString(),
         timeout
@@ -208,8 +213,8 @@ export const adminOp = (jar, csrf, op, payload = {}, opts = {}) => apiAs(jar, {a
 
 // --- thumbnails ------------------------------------------------------------------------------
 // Ask for one thumb. Returns {url} on success, {none: true} for null, {error} for an API error.
-export const thumb = async (t, {path = '/', jar = null} = {}) => {
-    const {res, json} = await apiAs(jar, {action: 'get', thumbs: [t]}, {path});
+export const thumb = async (t, {jar = null} = {}) => {
+    const {res, json} = await apiAs(jar, {action: 'get', thumbs: [t]});
     if (!json) {
         return {invalid: true, res};
     }

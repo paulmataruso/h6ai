@@ -1,10 +1,17 @@
 <?php
 /**
  * Page template for the index and the info page.
- * @var array $page module, title, site_name, head_meta, version, public_href, nonce, skin, skins, x_head_tags, fallback_mode, fallback_html
+ * @var array $page module, title, site_name, head_meta, version, public_href, asset_href, index_href, nonce, skin, skins,
+ *                  x_head_tags, fallback_mode, fallback_html
  */
+// requested directly (drop-in installs run every .php file): nothing to render
+if (!isset($page) || !is_array($page)) {
+    http_response_code(404);
+    exit;
+}
 $h = fn ($value) => Util::html($value);
-$asset = fn ($path) => $h($page['public_href'] . $path . '?v=' . rawurlencode($page['version']));
+// versioned: cacheable for a year (asset_href carries the version on drop-in installs)
+$asset = fn ($path) => $h($page['asset_href'] . $path . '?v=' . rawurlencode($page['version']));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="no-js" data-skin="<?= $h($page['skin']) ?>" data-site-skin="<?= $h($page['skin']) ?>">
@@ -32,7 +39,7 @@ $asset = fn ($path) => $h($page['public_href'] . $path . '?v=' . rawurlencode($p
     </script>
     <link rel="stylesheet" href="<?= $asset('css/styles.css') ?>">
 <?php if (!$page['fallback_mode']) { ?>
-    <script type="module" nonce="<?= $h($page['nonce']) ?>" src="<?= $asset('js/scripts.js') ?>" data-module="<?= $h($page['module']) ?>"></script>
+    <script type="module" nonce="<?= $h($page['nonce']) ?>" src="<?= $asset('js/scripts.js') ?>" data-module="<?= $h($page['module']) ?>" data-api="<?= $h($page['index_href']) ?>"></script>
 <?php } ?>
     <?= $page['x_head_tags'] ?>
 

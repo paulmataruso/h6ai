@@ -42,7 +42,8 @@ test('valid image thumbnails work for jpg/png/gif/webp/avif and are served as JP
 test('thumbnail URLs are long-term cacheable static files', async () => {
     const r = await thumb({type: 'img', href: '/images/photo.jpg', width: 100, height: 100});
     assert.ok(r.url);
-    assert.ok(r.url.startsWith('/_h6ai/public/cache/'), `thumb URL outside public cache: ${r.url}`);
+    // the public cache, or (drop-in installs) the same file through h6ai's versioned asset path
+    assert.ok(/^\/_h6ai\/public\/(v\/\d+\/)?cache\/thumbs\//.test(r.url), `thumb URL outside public cache: ${r.url}`);
     const {res} = await fetchThumb(r.url);
     assert.match(res.headers['cache-control'] || '', /max-age=31536000/);
 });

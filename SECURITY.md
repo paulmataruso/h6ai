@@ -10,9 +10,16 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
 * **h6ai is read-only.** It lists, previews and packages files. It never writes into served folders.
   It only writes to `_h6ai/private/{cache,data}` and `_h6ai/public/cache`.
 * **Permissions:** with folder rules configured, h6ai checks every listing, search, thumbnail,
-  archive and custom header request. Raw file requests are only protected if **nginx asks h6ai first**
-  via `auth_request` (see `docs/DEPLOYMENT.md`). Without that config, the listing is protected but
-  anyone who knows a file's URL can still download it.
+  archive and custom header request. Raw file requests are protected because every one of them
+  reaches h6ai first: through nginx's `auth_request` (native and Docker installs,
+  `docs/DEPLOYMENT.md`), or because a drop-in keeps the files outside the web root and serves them
+  itself (`docs/install/dropin.md`). If shared files sit in a web root that nginx serves without
+  asking h6ai, the listing is protected but anyone who knows a file's URL can still download it;
+  the admin page warns about that.
+* **Private data in a web root.** `_h6ai/private/` is denied by h6ai's nginx snippet. A drop-in
+  can't rely on that: users, settings, the secret, the activity log and rate limits are stored
+  as `.php` files whose first line answers 404 and exits, so their content never leaves the
+  server when PHP runs them. The admin page checks this with a canary file.
 * **Forwarded headers.** `X-Forwarded-For`, `-Host` and (once proxies are configured)
   `-Proto` are only believed from the trusted proxies set in Admin → System. Without that list,
   the rate limiter and the activity log use the connecting address, which a client can't forge.
@@ -43,5 +50,5 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
 
 | CVE | Component | Status in h6ai |
 |-----|-----------|----------------|
-| [CVE-2026-109618](https://nvd.nist.gov/vuln/detail/CVE-2026-109618) (GHSA-w8hw-w9fx-j79w): RCE via out-of-memory corruption, CVSS 4.0 9.2 | PHP < 8.2.35 / 8.3.36 / 8.4.27 / 8.5.12 | **Fixed by version:** the Docker image is pinned to `php:8.3.36-fpm-alpine` and the build fails on an affected PHP. The admin page (System tab + banner) flags affected PHP versions on other installs. **Defence in depth** (the advisory's risk reducers): nginx rejects `multipart/*` bodies (415), methods other than GET/HEAD/POST (405) and bodies > 1 MiB (413) before PHP; PHP runs with `file_uploads=Off`, `max_multipart_body_parts=1`, `post_max_size=1M`, `max_input_vars=5000`, `max_input_nesting_level=8`; h6ai never raises `memory_limit` and bounds attacker-influenced allocations (thumbnail pixel/memory headroom check, folder listing and archive entry caps, search result caps). Patching PHP is the only complete fix. |
+| [CVE-2026-109618](https://nvd.nist.gov/vuln/detail/CVE-2026-109618) (GHSA-w8hw-w9fx-j79w): RCE via out-of-memory corruption, CVSS 4.0 9.2 | PHP < 8.2.35 / 8.3.36 / 8.4.27 / 8.5.12 | **Fixed by version:** the Docker image is pinned to `php:8.3.36-fpm-alpine` and the build fails on an affected PHP. The admin page (System tab + banner) flags affected PHP versions on other installs. **Defence in depth** (the advisory's risk reducers): nginx rejects `multipart/*` bodies (415), methods other than GET/HEAD/POST (405) and bodies > 1 MiB (413) before PHP; PHP runs with `enable_post_data_reading=Off` (h6ai parses its own JSON and form posts, so PHP's multipart parser never runs; drop-in installs get it from `_h6ai/public/.user.ini`) and h6ai itself answers multipart requests with 415 and odd methods with 405, `file_uploads=Off`, `max_multipart_body_parts=1`, `post_max_size=1M`, `max_input_vars=5000`, `max_input_nesting_level=8`; h6ai never raises `memory_limit` and bounds attacker-influenced allocations (thumbnail pixel/memory headroom check, folder listing and archive entry caps, search result caps). Patching PHP is the only complete fix. |
 | [CVE-2026-10961](https://nvd.nist.gov/vuln/detail/CVE-2026-10961): use-after-free sandbox escape via crafted HTML page | Google Chrome for iOS < 149.0.7827.53 (client side) | **Not fixable server side** (visitors must update Chrome). h6ai makes sure it can't be the delivery vehicle: HTML/SVG/XML files from the share are served sandboxed without script (the exploit chain needs a compromised renderer, i.e. script); markdown and custom header/footer HTML are sanitized with DOMPurify; the h6ai UI runs under a strict nonce-based CSP. |

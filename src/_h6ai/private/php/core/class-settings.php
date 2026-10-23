@@ -44,6 +44,11 @@ final class Settings {
         'activityLog' => [
             'enabled' => true,
             'retentionDays' => 90
+        ],
+        // drop-in installs: nginx sends files via X-Accel-Redirect (set by the admin page once it
+        // has seen that work), otherwise PHP streams them
+        'dropin' => [
+            'fastDownloads' => false
         ]
     ];
 
@@ -240,6 +245,9 @@ final class Settings {
         foreach (['allowIndexing', 'sitemap'] as $key) {
             Settings::bool_field($seo, $key, $next['seo']);
         }
+
+        $dropin = is_array($input['dropin'] ?? null) ? $input['dropin'] : [];
+        Settings::bool_field($dropin, 'fastDownloads', $next['dropin']);
 
         $log = is_array($input['activityLog'] ?? null) ? $input['activityLog'] : [];
         Settings::bool_field($log, 'enabled', $next['activityLog']);

@@ -27,7 +27,9 @@ const step = async (name, fn) => {
 
 // expected noise: the sanitised XSS payload <img src=x> 404s, and Chrome reports the scripts it
 // blocked in sandboxed user documents (that's the CVE-2026-10961 protection working)
-const EXPECTED = [/\/(docs|visible)\/x$/, /Blocked script execution .* sandboxed/, /status of 404/];
+// and the admin page's drop-in checks ask for things that must answer 404
+const EXPECTED = [/\/(docs|visible)\/x$/, /Blocked script execution .* sandboxed/, /status of 404/,
+    /\/_h6ai\/private\//, /\/h6ai-route-check-\d+\/$/];
 
 const watch = (page, label) => {
     page.on('response', r => {
@@ -121,12 +123,13 @@ const drawer = async (page, open) => {
     await step('file row: download chip and inline band with resumable commands', async () => {
         await page.goto(BASE + '/big/');
         await page.waitForSelector('#items .item.file');
-        const r = row(page, 'big-7g.bin');
+        // big.bin (64 MiB) is in every seeded tree; big-7g.bin only where the 7 GiB file was made
+        const r = row(page, 'big.bin');
         assert.equal(await r.locator('a.dl').getAttribute('download'), '');
-        assert.match(await r.locator('a.dl').getAttribute('aria-label'), /^Download big-7g\.bin, /);
+        assert.match(await r.locator('a.dl').getAttribute('aria-label'), /^Download big\.bin, /);
         await r.locator('a.main').click();
         await page.waitForSelector('#items .band .download-btn');
-        assert.match(await page.getAttribute('.band .download-btn', 'href'), /\/big\/big-7g\.bin$/);
+        assert.match(await page.getAttribute('.band .download-btn', 'href'), /\/big\/big\.bin$/);
         assert.match(await page.textContent('.band .download-btn'), /Download \d/);
         assert.ok(await page.evaluate(() => document.activeElement.classList.contains('download-btn')), 'focus on Download');
         const lines = await page.locator('.band-line code').allTextContents();
@@ -443,7 +446,7 @@ const drawer = async (page, open) => {
         await mobile.waitForSelector('#items .item.file');
         const box = await mobile.locator('#account').boundingBox();
         assert.ok(box && box.x + box.width <= 390, 'account button visible');
-        await row(mobile, 'big-7g.bin').locator('a.main').tap();
+        await row(mobile, 'big.bin').locator('a.main').tap();
         await mobile.waitForSelector('.band .download-btn');
         const overflow = await mobile.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         assert.ok(overflow <= 0, 'overflow ' + overflow);

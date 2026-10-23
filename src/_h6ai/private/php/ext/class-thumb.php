@@ -102,7 +102,14 @@ final class Thumb {
         clearstatcache(true, $thumb_path);
         $mtime = @filemtime($thumb_path);
         // the version parameter lets clients cache thumbnails forever (immutable)
-        return $mtime === false ? null : $this->thumbs_href . '/' . $name . '?v=' . $mtime;
+        if ($mtime === false) {
+            return null;
+        }
+        // drop-in installs: through h6ai, which sends the cache headers (FileServer::asset)
+        if ($this->setup->get('IS_DROPIN')) {
+            return $this->setup->get('PUBLIC_HREF') . 'v/' . $mtime . '/cache/' . Thumb::THUMB_CACHE . '/' . $name;
+        }
+        return $this->thumbs_href . '/' . $name . '?v=' . $mtime;
     }
 
     private function key(string $value): string {

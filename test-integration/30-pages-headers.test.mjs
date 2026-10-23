@@ -2,7 +2,7 @@
 // private folder and server hardening.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {api, get, request} from './lib.mjs';
+import {api, get, request, adminSession} from './lib.mjs';
 
 const CURL_UA = 'curl/8.4.0';
 
@@ -64,25 +64,41 @@ test('S12: JSON API responses are nosniff + no-store', async () => {
 });
 
 test('private folder and other _h6ai internals are never served', async () => {
-    const paths = [
+    // h6ai's own defaults: public anyway (they're in the release), but with h6ai's nginx snippet
+    // the whole of _h6ai/ except public/ is denied
+    const defaults = [
         '/_h6ai/private/conf/options.json',
-        '/_h6ai/private/conf/options.local.json',
         '/_h6ai/private/conf/types.json',
-        '/_h6ai/private/php/class-bootstrap.php',
-        '/_h6ai/private/cache/',
-        '/_h6ai/private/data/',
-        '/_h6ai/private/data/auth.json',
-        '/_h6ai/private/',
         '/_h6ai/README.md',
         '/_h6ai/%70rivate/conf/options.json',
         '/_h6ai/public/../private/conf/options.json',
         '/_h6ai/public/%2e%2e/private/conf/options.json',
         '/_H6AI/private/conf/options.json'
     ];
-    for (const p of paths) {
+    // never, on any install: secrets, user data, code
+    const secret = [
+        '/_h6ai/private/conf/options.local.json',
+        '/_h6ai/private/conf/options.local.php',
+        '/_h6ai/private/conf/canary.php',
+        '/_h6ai/private/php/class-bootstrap.php',
+        '/_h6ai/private/php/pages/page.php',
+        '/_h6ai/private/cache/',
+        '/_h6ai/private/data/',
+        '/_h6ai/private/data/auth.json',
+        '/_h6ai/private/data/auth.json.php',
+        '/_h6ai/private/data/settings.json.php',
+        '/_h6ai/private/data/secret.key.php',
+        '/_h6ai/private/'
+    ];
+    const {setup} = await adminSession();
+    const denied = setup.IS_DROPIN ? secret : defaults.concat(secret);
+    for (const p of denied) {
         const res = await get(p);
         assert.ok([400, 401, 403, 404].includes(res.status), `${p} -> ${res.status}`);
-        assert.ok(!res.text.includes('"passhash"') && !res.text.includes('<?php'), `${p} leaks content`);
+    }
+    for (const p of defaults.concat(secret)) {
+        const res = await get(p);
+        assert.ok(!/\$2y\$\d\d\$[./A-Za-z0-9]{53}|h6ai-canary|<\?php|"users"\s*:/.test(res.text), `${p} leaks content`);
     }
 });
 
@@ -106,7 +122,13 @@ test('directory without trailing slash redirects with a relative Location', asyn
     assert.equal(res.headers.location, '/images/');
 });
 
-test('server does not advertise its version', async () => {
+test('server does not advertise its version', async t => {
+    // nginx's own Server header: server_tokens is the server's global setting, which a drop-in
+    // install leaves alone (the admin page's drop-in checks recommend it)
+    if ((await adminSession()).setup.IS_DROPIN) {
+        t.skip('drop-in: the server\'s own server_tokens setting');
+        return;
+    }
     const res = await get('/images/');
     assert.ok(!/\d/.test(res.headers.server || ''), `Server header: ${res.headers.server}`);
 });

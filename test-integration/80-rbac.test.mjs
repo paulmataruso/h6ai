@@ -35,7 +35,7 @@ const denied = (r, what) => {
 };
 
 const listedHrefs = async (jar, folder) => {
-    const {res, json} = await apiAs(jar, {action: 'get', items: {href: folder, what: 1}}, {path: '/'});
+    const {res, json} = await apiAs(jar, {action: 'get', items: {href: folder, what: 1}});
     if (res.status !== 200 || !json || json.err) {
         return [];
     }

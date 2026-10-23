@@ -82,7 +82,7 @@ printf '%-12s %s\n' "/many/" "$($LOAD latency /many/ 50)"
 printf '%-12s %s\n' "/" "$($LOAD latency / 50)"
 
 hr "file gate overhead (10 s, 16 concurrent keep-alive clients, small file)"
-docker compose exec -T "$SERVICE" sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json'
+docker compose exec -T "$SERVICE" sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'
 printf '%-44s %s\n' "static asset, no gate (/_h6ai/public/...)" "$($LOAD rps /_h6ai/public/images/favicon/favicon.svg 10 16)"
 printf '%-44s %s\n' "/docs/notes.txt, gate, no rules" "$($LOAD rps /docs/notes.txt 10 16)"
 $LOAD rule add >/dev/null

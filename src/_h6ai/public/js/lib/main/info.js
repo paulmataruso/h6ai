@@ -6,6 +6,7 @@ const server = require('../server');
 const resource = require('../core/resource');
 const store = require('../core/store');
 const format = require('../core/format');
+const {copyText} = require('../util/clipboard');
 
 const win = global.window;
 const doc = win.document;
@@ -190,15 +191,154 @@ const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'a
         return resp;
     });
 
+// --- drop-in checks: run from the browser, so they test what the server actually does --------
+
+const ERROR_PAGE_LINE = 'error_page 403 404 = /_h6ai/public/index.php;';
+// null = not checked (yet)
+const dropin = {exposed: null, routed: null, listed: null, fast: null, plainLocal: null, server: null};
+
+const privateBanner = () => dropin.exposed ? el('div', {cls: 'banner error'}, [icon('lock'), el('span', {text:
+    'Your server sends .php files from _h6ai/private/ as plain text, so anyone can download users, password hashes and ' +
+    'settings. Let PHP run every .php file (the usual "location ~ \\.php$" block) or deny /_h6ai/private/ in nginx.'})]) : null;
+
+// a hand-written options.local.json (maybe with the passhash) is served as text by a drop-in
+const plainLocalBanner = () => dropin.plainLocal ? el('div', {cls: 'banner error'}, [icon('lock'), el('span', {}, [
+    'Anyone can download _h6ai/private/conf/options.local.json. Rename it to ', el('code', {text: 'options.local.php'}),
+    ' and put this line in front of its content: ', el('code', {text: '<?php http_response_code(404); exit; ?>'})])]) : null;
+
+const routingBanner = () => (auth.dropin || setup.IS_DROPIN) && dropin.routed === false ? el('div', {cls: 'banner warn'}, [
+    icon('info'), el('span', {}, ['nginx doesn\'t hand unknown paths to h6ai yet, so folders and files of the files folder ' +
+        'can\'t be opened. Add this line to the server block and reload nginx: ', el('code', {text: ERROR_PAGE_LINE})])]) : null;
+
+// Shared files inside the web root bypass h6ai: rules then only hide entries.
+const dropinNote = () => setup.IS_DROPIN && setup.ROOT_IN_WEBROOT ? el('div', {cls: 'banner warn'}, [icon('info'), el('span', {text:
+    'Your files are inside the web root: nginx hands them out without asking h6ai, so this only hides folders in ' +
+    'listings, search and archives. See System → Drop-in install.'})]) : null;
+
+const fetchText = url => win.fetch(url, {cache: 'no-store', credentials: 'omit', redirect: 'manual'})
+    .then(resp => resp.text().then(text => ({status: resp.status, text, route: resp.headers.get('X-H6ai-Route'), server: resp.headers.get('Server')})))
+    .catch(() => null);
+
+const runChecks = () => {
+    const pub = setup.PUBLIC_HREF || '/_h6ai/public/';
+    const priv = pub.replace(/public\/$/, 'private/');
+    const isDropin = auth.dropin || setup.IS_DROPIN;
+    const jobs = [
+        fetchText(priv + 'conf/canary.php').then(r => {
+            dropin.exposed = !!r && r.text.includes('h6ai-canary');
+        }),
+        fetchText(priv + 'conf/options.local.json').then(r => {
+            dropin.plainLocal = !!r && r.status === 200 && r.text.trim().startsWith('{');
+        })
+    ];
+    if (isDropin) {
+        jobs.push(
+            fetchText((setup.ROOT_HREF || '/') + 'h6ai-route-check-' + Date.now() + '/').then(r => {
+                dropin.routed = !!r && r.route === 'not-found';
+                dropin.server = r && r.server ? r.server : '';
+            }),
+            fetchText(priv + 'cache/').then(r => {
+                dropin.listed = !!r && (/x[sp]-[0-9a-f]{40}/).test(r.text);
+            }),
+            fetchText(pub + 'index.php?h6ai-probe=accel').then(r => {
+                dropin.fast = !!r && r.text === 'h6ai-xaccel-ok\n';
+            })
+        );
+    }
+    Promise.all(jobs).then(() => {
+        render(); // eslint-disable-line no-use-before-define
+        if (isDropin && user && user.isAdmin) {
+            // files go through nginx only once a browser saw X-Accel-Redirect work here
+            adminRequest('settings.get').then(resp => {
+                const current = resp.settings && resp.settings.dropin && resp.settings.dropin.fastDownloads === true;
+                if (current !== (dropin.fast === true)) {
+                    adminRequest('settings.save', {settings: {dropin: {fastDownloads: dropin.fast === true}}});
+                }
+            });
+        }
+    });
+};
+
 // --- login ---------------------------------------------------------------------------------
+
+// First run, no password and no users yet (typically a drop-in install without a shell): the
+// server hashes a password, the admin saves the result as options.local.php by hand. Saving
+// that file proves they own the server; h6ai never writes it itself.
+const firstRunCard = () => {
+    const error = el('p', {cls: 'dialog-error', attrs: {role: 'alert', hidden: true}});
+    const result = el('div', {cls: 'setup-result', attrs: {hidden: true}});
+    const folderField = auth.dropin ? field('Files folder', el('input', {attrs: {name: 'filesFolder', required: true,
+        autocomplete: 'off', spellcheck: 'false', placeholder: '/srv/files'}}),
+    'The folder to share, outside the web root, readable for PHP. h6ai hands out every file in it itself.') : null;
+    const form = el('form', {cls: 'login-form'}, [
+        folderField,
+        field('Password', el('input', {attrs: {name: 'pass', type: 'password', autocomplete: 'new-password', minlength: 8, required: true}}),
+            'At least 8 characters. You log in as "admin" with it once, to create your own admin account.'),
+        field('Repeat password', el('input', {attrs: {name: 'repeat', type: 'password', autocomplete: 'new-password', minlength: 8, required: true}})),
+        error,
+        button('Create the setup file', {cls: 'btn primary', type: 'submit', iconId: 'key'})
+    ]);
+    form.addEventListener('submit', ev => {
+        ev.preventDefault();
+        error.hidden = true;
+        const data = new win.FormData(form);
+        if (data.get('pass') !== data.get('repeat')) {
+            error.textContent = 'The passwords don\'t match.';
+            error.hidden = false;
+            return;
+        }
+        server.request({action: 'passhash', pass: data.get('pass'), filesFolder: data.get('filesFolder') || ''}, {quiet: true}).then(resp => {
+            if (!resp.file) {
+                error.textContent = resp.msg || 'Could not create the setup file.';
+                error.hidden = false;
+                return;
+            }
+            const f = resp.folder;
+            const name = data.get('filesFolder');
+            const folderProblem = !f ? null : [
+                f.insideWebRoot ? `${name} is inside the web root, where nginx hands files out without asking h6ai. Use a folder outside it.` : null,
+                !f.exists ? `${name} doesn't exist yet. Create it before you reload.` : null,
+                f.exists && !f.readable ? `PHP can't read ${name}. Make it readable for the PHP user.` : null
+            ].filter(Boolean).join(' ') || null;
+            const download = el('a', {cls: 'btn primary', text: 'Download options.local.php', attrs: {
+                href: win.URL.createObjectURL(new win.Blob([resp.file], {type: 'application/octet-stream'})), download: 'options.local.php'}});
+            result.innerHTML = '';
+            [
+                folderProblem ? el('div', {cls: 'banner warn'}, [icon('info'), el('span', {text: folderProblem})]) : null,
+                el('h3', {text: 'Now put it on the server'}),
+                el('ol', {cls: 'steps'}, [
+                    el('li', {}, ['Save it as ', el('code', {text: '_h6ai/private/conf/options.local.php'}),
+                        ' (FTP, file manager or shell). Its first line keeps it unreadable over the web.']),
+                    el('li', {text: 'Reload this page and log in as "admin" with the password you just chose.'}),
+                    el('li', {text: 'Create your own admin account on the Access tab. The setup password stops working then.'})
+                ]),
+                el('pre', {text: resp.file}),
+                el('div', {cls: 'form-actions'}, [
+                    button('Copy', {cls: 'btn', onClick: () => copyText(resp.file).then(ok => toast(ok ? 'Copied' : 'Copy failed', ok ? 'info' : 'error'))}),
+                    download
+                ])
+            ].forEach(node => node && result.appendChild(node));
+            result.hidden = false;
+            form.hidden = true;
+        });
+    });
+    return el('section', {cls: 'card narrow login-card'}, [
+        el('img', {cls: 'login-logo', attrs: {src: setup.PUBLIC_HREF + 'images/brand/logo-mark.svg', alt: '', width: 56, height: 56}}),
+        el('h2', {text: 'Set up h6ai'}),
+        el('p', {cls: 'help', text: auth.dropin ? 'No admin exists yet. Tell h6ai which folder to share and choose a password for the first login.'
+            : 'No admin exists yet. Choose a password for the first login.'}),
+        form,
+        result,
+        el('div', {cls: 'shell-hint'}, [
+            el('p', {cls: 'help', text: 'With a shell, as the web server\'s user, this works too:'}),
+            el('pre', {text: 'php _h6ai/private/bin/h6ai-user.php add NAME --admin'})
+        ])
+    ]);
+};
 
 const loginCard = () => {
     if (!auth.loginAvailable) {
-        return el('section', {cls: 'card'}, [
-            el('h2', {text: 'Admin login is not set up'}),
-            el('p', {text: 'Set a bootstrap password to log in the first time, then create real admin users here:'}),
-            el('pre', {text: 'php _h6ai/private/bin/h6ai-passhash.php\n# put the hash into _h6ai/private/conf/options.local.json:\n{"passhash": "<hash>"}\n# or set the H6AI_PASSHASH environment variable'})
-        ]);
+        return firstRunCard();
     }
     const error = el('p', {cls: 'dialog-error', attrs: {role: 'alert', hidden: true}});
     const form = el('form', {cls: 'login-form'}, [
@@ -554,6 +694,7 @@ const permissionsPanel = () => el('section', {cls: 'card'}, [
     ]),
     el('p', {cls: 'help', text: 'Grants on single folders, e.g. to make one private. Without rules everything is public. ' +
         'Levels: none < list < read < download.'}),
+    state.rules.length ? dropinNote() : null,
     state.rules.length
         ? el('div', {cls: 'table-wrap'}, el('table', {cls: 'data'}, [
             headRow(['Folder', 'Grants', '']),
@@ -888,6 +1029,41 @@ const proxyPanel = () => {
     });
 };
 
+// passed: true, false, null (still checking) or 'advice' (worth doing, nothing broken)
+const checkRow = (label, info, passed, result) => el('li', {cls: passed === null || passed === 'advice' ? 'pending' : passed ? 'passed' : 'failed'}, [
+    el('span', {cls: 'check-state', html: resource.ui(passed === null || passed === 'advice' ? 'info' : passed ? 'check' : 'close')}),
+    el('span', {cls: 'check-label', text: label}),
+    el('span', {cls: 'check-info', text: info}),
+    el('span', {cls: 'check-result', text: passed === null ? 'checking' : result})
+]);
+
+// Drop-in installs (no h6ai nginx snippet): h6ai serves the files folder itself. Most checks run
+// in the browser (runChecks), so they see what nginx really does.
+const dropinPanel = () => !setup.IS_DROPIN ? null : el('section', {cls: 'card'}, [
+    el('h2', {text: 'Drop-in install'}),
+    el('p', {cls: 'help', text: 'h6ai runs from your web root and hands out the files folder itself: every file passes its ' +
+        'permission check, download log and HTML sandbox. These checks test what your server actually does.'}),
+    el('ul', {cls: 'checks'}, [
+        checkRow('Files folder', 'Outside the web root, so only h6ai hands out its files', !setup.ROOT_IN_WEBROOT,
+            setup.ROOT_PATH + (setup.ROOT_IN_WEBROOT ? ' (inside the web root)' : '')),
+        checkRow('Routing', `nginx hands unknown paths to h6ai (${ERROR_PAGE_LINE})`, dropin.routed, dropin.routed ? 'yes' : 'no'),
+        checkRow('Private data', '_h6ai/private/ can\'t be read over the web', dropin.exposed === null ? null : !dropin.exposed,
+            dropin.exposed ? 'EXPOSED' : 'protected'),
+        checkRow('Private cache', 'Not listed by nginx (holds the secret file links)', dropin.listed === null ? null : !dropin.listed,
+            dropin.listed ? 'LISTED' : 'not listed'),
+        checkRow('Fast downloads', 'nginx sends the bytes (X-Accel-Redirect); otherwise PHP does, one PHP worker per download',
+            dropin.fast, dropin.fast ? 'nginx' : 'PHP'),
+        checkRow('Request bodies', 'PHP leaves them to h6ai (_h6ai/public/.user.ini), the CVE-2026-109618 trigger stays off',
+            setup.HAS_POST_PARSING_OFF === true, setup.HAS_POST_PARSING_OFF ? 'off' : 'PHP parses them'),
+        checkRow('Server version', 'nginx\'s own header; "server_tokens off;" in nginx.conf hides the version (optional)',
+            dropin.server === null ? null : (/\d/).test(dropin.server) ? 'advice' : true, dropin.server || 'hidden')
+    ]),
+    el('p', {cls: 'help', text: 'The server block needs this line, next to your usual PHP location:'}),
+    el('pre', {text: ERROR_PAGE_LINE}),
+    el('p', {cls: 'help', text: 'The files folder is "filesFolder" in _h6ai/private/conf/options.local.php. ' +
+        'Step by step: docs/install/dropin.md.'})
+]);
+
 const checksPanel = () => el('section', {cls: 'card'}, [
     el('div', {cls: 'card-head'}, [el('h2', {text: 'System'}),
         button('Re-check', {cls: 'btn', title: 'Re-detect installed tools', onClick: reload})]),
@@ -899,7 +1075,7 @@ const checksPanel = () => el('section', {cls: 'card'}, [
     ])))
 ]);
 
-const systemPanel = () => el('div', {cls: 'stack'}, [proxyPanel(), checksPanel()]);
+const systemPanel = () => el('div', {cls: 'stack'}, [dropinPanel(), proxyPanel(), checksPanel()]);
 
 // --- access ---------------------------------------------------------------------------------
 
@@ -1041,6 +1217,7 @@ const visitorsPanel = () => {
             ]),
             el('p', {cls: 'help', text: 'Hidden from visitors who aren\'t signed in, with everything inside: not listed, not searchable, ' +
                 'not downloadable, not in the sitemap. Direct links answer 403. Admins still see them.'}),
+            excluded.length ? dropinNote() : null,
             excluded.length
                 ? el('div', {cls: 'table-wrap'}, el('table', {cls: 'data'}, [
                     headRow(['Folder', '']),
@@ -1126,7 +1303,9 @@ const render = () => {
     root.setAttribute('role', 'main');
     root.appendChild(header());
 
+    const banners = [privateBanner(), plainLocalBanner(), routingBanner()].filter(Boolean);
     if (!user) {
+        banners.forEach(banner => root.appendChild(banner));
         root.appendChild(loginCard());
         return;
     }
@@ -1140,6 +1319,9 @@ const render = () => {
         return;
     }
 
+    if (user.isAdmin) {
+        banners.forEach(banner => root.appendChild(banner));
+    }
     if (user.bootstrap) {
         root.appendChild(el('div', {cls: 'banner warn'}, [icon('key'), el('span', {text:
             'You\'re using the setup password. Create an admin user: the setup password then stops working and you log in as that user.'})]));
@@ -1174,6 +1356,7 @@ const render = () => {
 
 const init = () => {
     doc.title = `${site.name || 'h6ai'} admin`;
+    runChecks();
     if (user && user.isAdmin) {
         adminRequest('list').then(resp => {
             if (resp.error) {

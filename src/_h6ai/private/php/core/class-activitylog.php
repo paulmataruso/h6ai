@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 // Append-only activity log (downloads, archive downloads, logins) in private/data/logs, one JSON
-// object per line, one file per month. Reading scans files backwards, so the newest entries are
-// cheap to get even for large logs.
+// object per line, one file per month (activity-2026-10.jsonl.php, guarded, see Json::GUARD;
+// plain .jsonl files of older versions are still read). Reading scans files backwards, so the
+// newest entries are cheap to get even for large logs.
 final class ActivityLog {
     private const MAX_SCAN_LINES = 200000;
     private const CHUNK = 65536;
@@ -35,7 +36,12 @@ final class ActivityLog {
         ], $extra);
         $line = json_encode($entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         if ($line !== false) {
-            @file_put_contents($this->dir . '/activity-' . gmdate('Y-m') . '.jsonl', $line . "\n", FILE_APPEND | LOCK_EX);
+            $file = $this->dir . '/activity-' . gmdate('Y-m') . '.jsonl.php';
+            // a new month's file starts with the guard line; appends after it are plain lines
+            if (!is_file($file) && @file_put_contents($file, Json::GUARD, FILE_APPEND | LOCK_EX) !== false) {
+                @chmod($file, 0600);
+            }
+            @file_put_contents($file, $line . "\n", FILE_APPEND | LOCK_EX);
         }
         if (random_int(1, 500) === 1) {
             $this->prune();
@@ -46,11 +52,15 @@ final class ActivityLog {
     public function prune(): void {
         $days = (int) $this->context->get_settings()->get('activityLog.retentionDays', 90);
         $cutoff = gmdate('Y-m', time() - $days * 86400);
-        foreach (glob($this->dir . '/activity-*.jsonl') ?: [] as $file) {
-            if (preg_match('/activity-(\d{4}-\d{2})\.jsonl$/', $file, $m) && $m[1] < $cutoff) {
+        foreach ($this->files() as $file) {
+            if (preg_match('/activity-(\d{4}-\d{2})\.jsonl(\.php)?$/', $file, $m) && $m[1] < $cutoff) {
                 @unlink($file);
             }
         }
+    }
+
+    private function files(): array {
+        return array_merge(glob($this->dir . '/activity-*.jsonl') ?: [], glob($this->dir . '/activity-*.jsonl.php') ?: []);
     }
 
     // Yields lines of a file from the last to the first.
@@ -85,7 +95,7 @@ final class ActivityLog {
     }
 
     public function query(int $limit, ?string $user, ?string $kind, ?string $path): array {
-        $files = glob($this->dir . '/activity-*.jsonl') ?: [];
+        $files = $this->files();
         rsort($files);
 
         $entries = [];

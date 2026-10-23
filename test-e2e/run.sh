@@ -11,6 +11,6 @@ URL=${H6AI_URL:-http://${H6AI_BIND:-172.16.1.67}:${H6AI_PORT:-8687}}
 IMAGE=mcr.microsoft.com/playwright:v1.49.1-noble
 mkdir -p shots && chmod 777 shots
 # the bootstrap admin login only works while no users exist
-(cd .. && docker compose exec -T h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json') || true
+(cd .. && docker compose exec -T h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*') || true
 docker run --rm -e H6AI_URL="$URL" -v "$PWD":/w -w /w "$IMAGE" sh -c \
     '[ -d node_modules/playwright ] || npm i --no-save --silent playwright@1.49.1 >/dev/null 2>&1; node e2e.js'

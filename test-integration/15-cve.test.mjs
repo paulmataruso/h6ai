@@ -8,7 +8,7 @@
 // can't patch browsers, but user supplied active documents are served script-free (CSP sandbox).
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {request, get, ORIGIN, adminSession, getSetup, ACTIVE_DOCS} from './lib.mjs';
+import {request, get, ORIGIN, adminSession, adminOp, getSetup, ACTIVE_DOCS} from './lib.mjs';
 
 const SANDBOX = /(^|;)\s*sandbox\s*(;|$)/;
 
@@ -98,11 +98,19 @@ test('CVE-2026-10961: case variants and unmanaged index.html are sandboxed too',
 });
 
 test('CVE-2026-10961: regular files are not affected', async () => {
+    // A drop-in install with fast downloads lets nginx send files from 4 MiB up (X-Accel-Redirect),
+    // and nginx keeps only a few of PHP's headers then: no nosniff on big.bin unless the server
+    // adds it itself. Active documents and smaller files always go through PHP.
+    const {jar, csrf, setup} = await adminSession();
+    const settings = setup.IS_DROPIN ? (await adminOp(jar, csrf, 'settings.get')).json.settings : null;
+    const nginxSends = settings && settings.dropin.fastDownloads === true;
     for (const path of ['/docs/readme.md', '/docs/notes.txt', '/docs/data.json', '/images/photo.jpg', '/big/big.bin']) {
         const res = await request('HEAD', path);
         assert.equal(res.status, 200, path);
         assert.equal(res.headers['content-security-policy'], undefined, `${path} has a CSP`);
-        assert.equal(res.headers['x-content-type-options'], 'nosniff', `${path}: nosniff`);
+        if (!nginxSends || path !== '/big/big.bin') {
+            assert.equal(res.headers['x-content-type-options'], 'nosniff', `${path}: nosniff`);
+        }
     }
 });
 

@@ -2,12 +2,12 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {
-    api, get, request, href, lastSegment, parseJson,
+    api, get, request, href, lastSegment, parseJson, API_PATH,
     SEEDED_FOLDERS, UNICODE_CONTENT
 } from './lib.mjs';
 
 const items = async folder => {
-    const {res, json} = await api({action: 'get', items: {href: folder, what: 1}}, {path: folder});
+    const {res, json} = await api({action: 'get', items: {href: folder, what: 1}});
     assert.equal(res.status, 200, `items ${folder}: HTTP ${res.status} ${res.text.slice(0, 200)}`);
     assert.ok(json && Array.isArray(json.items), `items ${folder}: no items array: ${res.text.slice(0, 200)}`);
     return json.items;
@@ -85,7 +85,7 @@ test('unsupported action -> 400 ERR_UNSUPPORTED', async () => {
 });
 
 test('malformed JSON body -> JSON error, not a PHP error page', async () => {
-    const res = await request('POST', '/', {headers: {'Content-Type': 'application/json'}, body: '{"action": '});
+    const res = await request('POST', API_PATH, {headers: {'Content-Type': 'application/json'}, body: '{"action": '});
     assert.ok(res.status >= 400 && res.status < 500, `status ${res.status}`);
     const json = parseJson(res);
     assert.ok(json && json.err, `expected JSON error, got: ${res.text.slice(0, 200)}`);
@@ -122,7 +122,7 @@ test('info page is served', async () => {
 });
 
 test('S18: requests without User-Agent still work (no PHP warnings / blank page)', async () => {
-    const res = await request('POST', '/', {
+    const res = await request('POST', API_PATH, {
         headers: {'User-Agent': null, 'Content-Type': 'application/json'},
         body: JSON.stringify({action: 'get', items: {href: '/', what: 1}})
     });

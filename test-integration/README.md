@@ -2,7 +2,9 @@
 
 Black-box tests that run against a live h6ai instance, normally the Docker development container
 (`compose.yaml` + `compose.dev.yaml`, seeded with `docker/seed.sh`). `test-native/run.sh` runs
-the same suite against native installs. They use only Node's built-in `node:test` and
+the same suite against native installs, `test-native/dropin.sh` against a drop-in install on a
+stock nginx (twice: with PHP and with nginx sending the files). API calls go to
+`/_h6ai/public/index.php`, like the browser UI's. They use only Node's built-in `node:test` and
 `node:http`, so nothing needs installing. Every security test names the finding it covers
 (`S1`…`S18`, see `docs/AUDIT.md`).
 
@@ -63,12 +65,12 @@ file-gate overhead against the running container. Results and hardware notes are
 
 * **Rate limiting:** `90-ratelimit` locks the test client out of logins for the limiter window.
   Without `run.sh`, unlock with
-  `docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json'`.
+  `docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'`.
 * **RBAC state:** `80-rbac` creates user `alice` and rules on `/private/` and `/site/`; `68-activity`
   and `85-groups-anon` create users, a role, folder groups and a rule. All of them are removed in
   `after()`. If a run is killed half-way, `alice` can stay in the `h6ai-data` volume. While
   any user exists, the bootstrap admin (`H6AI_PASSHASH`) is disabled. Reset with
-  `docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json`.
+  `docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json.php`.
 * Names of seeded files are mirrored in `lib.mjs`. Keep them in sync with `docker/seed.sh`.
 * `lib.mjs` sends paths byte-for-byte (no URL normalisation), so traversal probes such as
   `/%2e%2e/` really reach the server.

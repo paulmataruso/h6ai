@@ -81,7 +81,7 @@ for d in $DISTROS; do
     x '. /etc/h6ai/install.conf; H6AI_WEBROOT=/srv/www H6AI_OUTSIDE=/srv/outside PHP_BIN=$PHP_BIN sh /opt/seed/seed.sh
        cp /opt/options.local.json /srv/www/_h6ai/private/conf/options.local.json
        chmod 0644 /srv/www/_h6ai/private/conf/options.local.json' || fail "seed"
-    x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json'
+    x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'
     if H6AI_URL="http://127.0.0.1:$port" node --test --test-concurrency=1 test-integration/ \
         > "test-native/logs/$d.suite.log" 2>&1; then
         echo "[native] $d: suite $(grep -E '^# (pass|skipped)' "test-native/logs/$d.suite.log" | tr '\n' ' ')"
@@ -94,9 +94,9 @@ for d in $DISTROS; do
     [ -z "$exe" ] || fail "executable files in the public cache"
 
     # 3. user command, upgrade, uninstall, re-install, purge
-    x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json'
+    x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'
     x 'echo "alice-secret-1" | h6ai-user add alice --admin --password-stdin && h6ai-user has-admin && h6ai-user list' || fail "h6ai-user add"
-    x '[ "$(stat -c %U /srv/www/_h6ai/private/data/auth.json)" = h6ai ]' || fail "auth.json not owned by h6ai"
+    x '[ "$(stat -c %U /srv/www/_h6ai/private/data/auth.json.php)" = h6ai ]' || fail "auth.json.php not owned by h6ai"
     H6AI_URL="http://127.0.0.1:$port" node -e '
         import("./test-integration/lib.mjs").then(async ({login}) => {
             const {res, json} = await login("alice", "alice-secret-1");

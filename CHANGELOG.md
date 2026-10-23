@@ -1,7 +1,7 @@
 # Changelog
 
 
-## v1.0.0 (h6ai) - *unreleased*
+## v1.0.0 (h6ai) - *2026-10-23*
 
 First release as **h6ai**, a maintained and modernised fork of h5ai 0.30.0.
 
@@ -82,7 +82,34 @@ Install
   enable or disable users
 * nginx snippets for your own server block: `http.conf`, `server.conf` and `large-files.conf`.
   `trusted-html.map` holds sandbox exemptions and is never overwritten
-* release bundle `h6ai-<version>.tar.gz` contains `_h6ai`, the installer and `deploy/`
+* release bundle `h6ai-<version>.tar.gz`/`.zip` contains `_h6ai`, the installer and `deploy/`
+* drop-in install, the h5ai way, with the full feature set (`docs/install/dropin.md`):
+  * `h6ai-<version>-dropin.zip`/`.tar.gz` is just `_h6ai`. Unzip it into the web root of an
+    existing nginx + PHP server, keep the files in a folder outside the web root, and add one
+    line to the server block: `error_page 403 404 = /_h6ai/public/index.php;`.
+  * Every request reaches h6ai, which serves the files folder itself (`FileServer`):
+    permission checks on direct links, the download log, the HTML/SVG/XML sandbox,
+    robots/sitemap, Range and ETag.
+  * Files from 4 MiB go back to nginx through `X-Accel-Redirect` to a secret link, so big
+    downloads don't hold a PHP worker. Server-side script files (`.php`, …) are always sent
+    as data by PHP.
+  * h6ai's own assets come with versioned URLs, immutable caching and gzip; small text files
+    are gzipped like nginx would.
+  * First run without a shell: the admin page asks for the files folder and a password and
+    hands out an `options.local.php` to upload, which also proves server ownership.
+  * The System tab checks from the browser what the server really does: routing, private
+    data, unlisted links, fast downloads, request bodies, the server version
+* private data is stored guarded: `auth.json.php`, `settings.json.php`, `secret.key.php`, the
+  activity log and rate limits answer 404 when requested over HTTP. Existing plain files are
+  migrated on their next write. `options.local.php` (guarded JSON) is read next to
+  `options.local.json`
+* PHP no longer parses request bodies (`enable_post_data_reading = Off`, also through
+  `_h6ai/public/.user.ini`): h6ai reads its JSON and form posts itself, so PHP's multipart
+  parser never runs. Multipart requests and other methods get 415/405 from h6ai too
+* the frontend sends API requests and download forms to `/_h6ai/public/index.php` instead of the
+  folder URL
+* logins and admin requests accept `Sec-Fetch-Site: same-origin` from the browser even when the
+  server's `fastcgi_params` hand PHP a `Host` without its port
 * PDF thumbnails use Ghostscript directly when it's installed. Debian and Ubuntu disable PDF in
   their system-wide ImageMagick policy
 * the admin System tab recognises distribution backports of the CVE-2026-109618 fix

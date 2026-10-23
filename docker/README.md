@@ -4,7 +4,7 @@ One image, one container: **nginx** in the foreground (PID 1) and **php-fpm** be
 `127.0.0.1:9000`. Two compose files use it:
 
 * `compose.yaml`: production. Shares `H6AI_FILES`, creates the first admin, no sample data.
-  Setup, upgrades and backups: [`docs/INSTALL.md`](../docs/INSTALL.md#docker).
+  Setup, upgrades and backups: [`docs/install/docker.md`](../docs/install/docker.md).
 * `compose.dev.yaml`, layered on top: the development and test environment described here.
 
 ## Development environment
@@ -160,14 +160,14 @@ benchmark results (`test-integration/bench.sh`).
 ## Your own files
 
 Use the production setup (`compose.yaml` alone) with `H6AI_FILES=/path/to/files` in `.env`, see
-[`docs/INSTALL.md`](../docs/INSTALL.md#docker). h6ai installs itself into
+[`docs/install/docker.md`](../docs/install/docker.md). h6ai installs itself into
 `/path/to/files/_h6ai` (hidden in listings).
 
 ## Maintenance
 
 ```sh
 docker compose logs -f h6ai                                      # nginx + php-fpm logs
-docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*.json'   # unlock logins
-docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json  # forget all users/rules
+docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'   # unlock logins
+docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json.php  # forget all users/rules
 docker compose down -v                                           # remove container AND user volume (./webroot stays)
 ```

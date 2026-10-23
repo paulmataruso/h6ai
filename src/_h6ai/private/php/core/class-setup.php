@@ -102,6 +102,9 @@ final class Setup {
         $this->set('SERVER_NAME', $server_name);
         $this->set('SERVER_VERSION', $server_version);
         $this->set('HAS_SERVER', in_array($server_name, ['apache', 'caddy', 'cherokee', 'lighttpd', 'litespeed', 'nginx', 'openlitespeed'], true));
+        // set by h6ai's own nginx snippet (deploy/nginx/server.conf): file gate, private folder
+        // denied, active content sandboxed. Missing on drop-in installs with a plain index line.
+        $this->set('HAS_SERVER_CONF', Setup::server_var('H6AI_SERVER_CONF') === '1');
     }
 
     private function add_paths(): void {
@@ -114,12 +117,30 @@ final class Setup {
         $this->set('H6AI_PATH', Util::normalize_path(dirname(__FILE__, 4), false));
 
         $this->set('ROOT_HREF', Util::normalize_path(dirname($this->get('H6AI_HREF')), true));
-        $this->set('ROOT_PATH', Util::normalize_path(dirname($this->get('H6AI_PATH')), false));
+        // Drop-in installs (no h6ai nginx snippet) share a folder outside the web root and serve
+        // every file through h6ai (FileServer). With the snippet, nginx serves the web root itself.
+        $document_root = Setup::server_var('DOCUMENT_ROOT');
+        $this->set('DOCUMENT_ROOT', $document_root === '' ? '' : Util::normalize_path(realpath($document_root) ?: $document_root, false));
+        $files_folder = $this->get('HAS_SERVER_CONF') ? '' : Setup::files_folder($this->get('H6AI_PATH') . '/private/conf');
+        $this->set('FILES_FOLDER', $files_folder);
+        $this->set('ROOT_PATH', $files_folder !== '' ? $files_folder : Util::normalize_path(dirname($this->get('H6AI_PATH')), false));
+        $this->set('IS_DROPIN', !$this->get('HAS_SERVER_CONF'));
+        // the shared folder inside the web root: nginx hands its files out without asking h6ai
+        $root = $this->get('ROOT_PATH');
+        $this->set('ROOT_IN_WEBROOT', $document_root !== ''
+            && ($root === $this->get('DOCUMENT_ROOT') || Util::starts_with($root . '/', $this->get('DOCUMENT_ROOT') . '/')));
+        // .user.ini (or the pool) took effect: PHP leaves request bodies to h6ai
+        $this->set('HAS_POST_PARSING_OFF', !filter_var(ini_get('enable_post_data_reading'), FILTER_VALIDATE_BOOLEAN));
 
         $this->set('PUBLIC_HREF', Util::normalize_path($this->get('H6AI_HREF') . '/public/', true));
         $this->set('PUBLIC_PATH', Util::normalize_path($this->get('H6AI_PATH') . '/public/', false));
 
         $this->set('INDEX_HREF', Util::normalize_path($this->get('PUBLIC_HREF') . '/index.php', false));
+        // static files as pages reference them: on drop-in installs through h6ai (FileServer::asset,
+        // with the cache headers h6ai's nginx snippet would set), else straight from public/
+        $this->set('ASSET_HREF', $this->get('IS_DROPIN')
+            ? $this->get('PUBLIC_HREF') . 'v/' . rawurlencode(str_replace('/', '-', H6AI_VERSION)) . '/'
+            : $this->get('PUBLIC_HREF'));
         $this->set('CACHE_PUB_HREF', Util::normalize_path($this->get('PUBLIC_HREF') . '/cache', true));
         $this->set('CACHE_PUB_PATH', Util::normalize_path($this->get('PUBLIC_PATH') . '/cache', false));
         $this->set('HAS_WRITABLE_CACHE_PUB', @is_writable($this->get('CACHE_PUB_PATH')));
@@ -148,6 +169,25 @@ final class Setup {
         }
         $this->set('PHP_CVE_2026_109618_FIXED', $fix !== '');
         $this->set('PHP_CVE_2026_109618_FIX', $fix);
+    }
+
+    // The shared folder of a drop-in install: H6AI_FILES_FOLDER, else "filesFolder" in
+    // options.local.php / options.local.json. '' = the folder that contains _h6ai (classic layout).
+    public static function files_folder(string $conf_path): string {
+        $folder = getenv('H6AI_FILES_FOLDER');
+        if (!is_string($folder) || $folder === '') {
+            foreach (['/options.local.php', '/options.local.json'] as $name) {
+                $local = Json::load($conf_path . $name);
+                if (is_string($local['filesFolder'] ?? null) && trim($local['filesFolder']) !== '') {
+                    $folder = trim($local['filesFolder']);
+                    break;
+                }
+            }
+        }
+        if (!is_string($folder) || $folder === '' || !str_starts_with($folder, '/')) {
+            return '';
+        }
+        return Util::normalize_path(realpath($folder) ?: $folder, false);
     }
 
     private function add_sys_cmd_checks(): void {
@@ -200,6 +240,13 @@ final class Setup {
                 'SERVER_NAME',
                 'SERVER_VERSION',
                 'HAS_SERVER',
+                'HAS_SERVER_CONF',
+                'IS_DROPIN',
+                'FILES_FOLDER',
+                'DOCUMENT_ROOT',
+                'ROOT_PATH',
+                'ROOT_IN_WEBROOT',
+                'HAS_POST_PARSING_OFF',
 
                 'INDEX_HREF',
 

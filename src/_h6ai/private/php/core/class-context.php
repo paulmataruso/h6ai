@@ -36,13 +36,16 @@ final class Context {
         $this->options_valid = $options !== null;
         $options = $options ?? [];
 
-        // Local overrides survive upgrades: options.local.json is deep-merged over options.json.
-        $local = Json::load_cached($conf_path . '/options.local.json', $cache_path);
-        if ($local === null) {
-            Logger::log('options.local.json is not valid JSON, ignored');
-            $this->options_valid = false;
-        } elseif ($local) {
-            $options = Util::array_merge_deep($options, $local);
+        // Local overrides survive upgrades: options.local.json, then options.local.php (the same
+        // JSON behind a guard line, safe in a web root), deep-merged over options.json.
+        foreach (['options.local.json', 'options.local.php'] as $name) {
+            $local = Json::load_cached($conf_path . '/' . $name, $cache_path);
+            if ($local === null) {
+                Logger::log($name . ' is not valid JSON, ignored');
+                $this->options_valid = false;
+            } elseif ($local) {
+                $options = Util::array_merge_deep($options, $local);
+            }
         }
         $this->options = $options;
 
@@ -51,7 +54,8 @@ final class Context {
         $passhash = is_string($env_passhash) && $env_passhash !== '' ? $env_passhash : Util::array_query($this->options, 'passhash', '');
         $this->passhash = is_string($passhash) ? trim($passhash) : '';
         $this->options['hasCustomPasshash'] = $this->has_password();
-        unset($this->options['passhash']);
+        // never sent to browsers: a password hash and a server path
+        unset($this->options['passhash'], $this->options['filesFolder']);
     }
 
     public function get_session(): Session {
@@ -571,20 +575,24 @@ final class Context {
         return $hrefs;
     }
 
-    // Per installation secret, e.g. to make thumbnail names unguessable.
+    // Per installation secret, e.g. to make thumbnail names unguessable. Stored guarded
+    // (secret.key.php); a plain secret.key from an older version is moved over.
     public function get_secret(): string {
         foreach ([$this->setup->get('DATA_PATH'), $this->setup->get('CACHE_PRV_PATH')] as $dir) {
-            $file = $dir . '/secret.key';
-            $secret = @file_get_contents($file);
-            if (is_string($secret) && strlen($secret) >= 32) {
+            $file = $dir . '/secret.key.php';
+            $raw = @file_get_contents($file);
+            $secret = is_string($raw) ? trim(Json::unguard($raw)) : '';
+            if (strlen($secret) >= 32) {
                 return $secret;
             }
-            if (is_dir($dir) && is_writable($dir)) {
-                $secret = bin2hex(random_bytes(32));
-                if (@file_put_contents($file, $secret, LOCK_EX) !== false) {
-                    @chmod($file, 0600);
-                    return $secret;
-                }
+            $legacy = @file_get_contents($dir . '/secret.key');
+            $secret = is_string($legacy) && strlen(trim($legacy)) >= 32 ? trim($legacy) : bin2hex(random_bytes(32));
+            if (is_dir($dir) && is_writable($dir) && Json::write_guarded($file, $secret)) {
+                @unlink($dir . '/secret.key');
+                return $secret;
+            }
+            if (is_string($legacy) && strlen(trim($legacy)) >= 32) {
+                return trim($legacy);
             }
         }
         return hash('sha256', $this->setup->get('H6AI_PATH') . php_uname() . $this->passhash);

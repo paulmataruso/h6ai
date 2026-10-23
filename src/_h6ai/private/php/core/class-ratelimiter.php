@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 
-// File based fixed-window limiter for failed logins, keyed by a hash of the client IP.
+// File based fixed-window limiter for failed logins, keyed by a hash of the client IP. The files
+// are guarded (see Json::GUARD): they list login times per IP hash.
 final class RateLimiter {
     private string $file;
 
     public function __construct(string $cache_path, string $key, private readonly int $max_attempts, private readonly int $window) {
-        $this->file = $cache_path . '/ratelimit-' . hash('sha256', $key) . '.json';
+        $this->file = $cache_path . '/ratelimit-' . hash('sha256', $key) . '.json.php';
     }
 
     private function with_lock(callable $fn): mixed {
@@ -22,14 +23,14 @@ final class RateLimiter {
         try {
             flock($fp, LOCK_EX);
             $raw = stream_get_contents($fp);
-            $data = is_string($raw) ? json_decode($raw, true) : null;
+            $data = is_string($raw) ? json_decode(Json::unguard($raw), true) : null;
             $attempts = is_array($data) ? array_values(array_filter($data, 'is_int')) : [];
             $now = time();
             $attempts = array_values(array_filter($attempts, fn ($t) => $t > $now - $this->window));
             [$result, $attempts] = $fn($attempts);
             ftruncate($fp, 0);
             rewind($fp);
-            fwrite($fp, json_encode($attempts));
+            fwrite($fp, Json::GUARD . json_encode($attempts));
             fflush($fp);
             return $result;
         } finally {

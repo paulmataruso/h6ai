@@ -258,6 +258,8 @@ table.data td strong {
 
 .checks .passed .check-state { color: var(--success); }
 .checks .failed .check-state { color: var(--danger); }
+.checks .pending .check-state { color: var(--text-faint); }
+.checks + .help { margin-top: var(--s-4); }
 .check-label { font-weight: 600; }
 .check-info { color: var(--text-muted); font-size: var(--fs-sm); }
 .check-result { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--fs-xs); text-align: right; }
@@ -357,6 +359,52 @@ table.data td strong {
     width: 56px;
     height: 56px;
     margin: var(--s-1) auto var(--s-3);
+}
+
+/* first run: the setup file to save on the server */
+.shell-hint {
+    margin-top: var(--s-5);
+    text-align: left;
+}
+
+.shell-hint pre {
+    margin: var(--s-1) 0 0;
+    white-space: pre-wrap;
+}
+
+.setup-result {
+    text-align: left;
+}
+
+.setup-result h3 {
+    margin: 0 0 var(--s-2);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+}
+
+.setup-result pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.setup-result .form-actions {
+    gap: var(--s-2);
+}
+
+.steps,
+.limits {
+    margin: 0 0 var(--s-3);
+    padding-left: var(--s-5);
+    color: var(--text-muted);
+}
+
+.steps li,
+.limits li {
+    margin-bottom: var(--s-1);
+}
+
+.banner code {
+    white-space: nowrap;
 }
 
 .settings-form .card h2 {
