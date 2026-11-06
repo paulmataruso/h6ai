@@ -82,12 +82,19 @@ for d in $DISTROS; do
        cp /opt/options.local.json /srv/www/_h6ai/private/conf/options.local.json
        chmod 0644 /srv/www/_h6ai/private/conf/options.local.json' || fail "seed"
     x 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'
-    if H6AI_URL="http://127.0.0.1:$port" node --test --test-concurrency=1 test-integration/*.test.mjs \
+    # the search index (pdo_sqlite from the installer's package list), built before the suite
+    indexed=0
+    if x '. /etc/h6ai/install.conf; $PHP_BIN -m | grep -qx pdo_sqlite && h6ai-index refresh && h6ai-index status | grep -q "^index *ready"'; then
+        indexed=1
+    else
+        fail "search index"
+    fi
+    if H6AI_URL="http://127.0.0.1:$port" H6AI_SEARCH_INDEXED=$indexed node --test --test-concurrency=1 test-integration/*.test.mjs \
         > "test-native/logs/$d.suite.log" 2>&1; then
-        echo "[native] $d: suite $(grep -E '^# (pass|skipped)' "test-native/logs/$d.suite.log" | tr '\n' ' ')"
+        echo "[native] $d: suite $(grep -E '^(#|ℹ) (pass|skipped)' "test-native/logs/$d.suite.log" | tr '\n' ' ')"
         grep -E '# SKIP' "test-native/logs/$d.suite.log" | sed "s/^/[native] $d:   /" || true
     else
-        fail "suite ($(grep -E '^# (pass|fail)' "test-native/logs/$d.suite.log" | tr '\n' ' '))"
+        fail "suite ($(grep -E '^(#|ℹ) (pass|fail)' "test-native/logs/$d.suite.log" | tr '\n' ' '))"
         grep -E '^not ok' "test-native/logs/$d.suite.log" | sed "s/^/[native] $d:   /" || true
     fi
     exe=$(docker exec "$c" sh -c 'find /srv/www/_h6ai/public/cache -type f -perm /111' 2>/dev/null || true)

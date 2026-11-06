@@ -177,10 +177,14 @@ final class Api {
         if ($this->request->query('search', false)) {
             Util::json_fail(Util::ERR_DISABLED, 'search disabled', $this->context->query_option('search.enabled', false) !== true);
             $href = $this->request->query('search.href');
-            $pattern = $this->request->query_string('search.pattern');
-            $ignorecase = $this->request->query_boolean('search.ignorecase', false);
-            $search = new Search($this->context);
-            $response['search'] = $search->get_items($href, $pattern, $ignorecase);
+            // "q": what the user typed (see SearchQuery); "pattern": a regular expression (h5ai API)
+            $q = $this->request->query('search.q', null);
+            $legacy = !is_string($q);
+            $input = $legacy ? $this->request->query_string('search.pattern') : $q;
+            $ignorecase = $this->request->query_boolean('search.ignorecase', true);
+            $result = (new Search($this->context))->run($href, $input, $legacy, $ignorecase);
+            $response['search'] = $result['items'];
+            $response['searchInfo'] = $result['info'];
         }
 
         if ($this->request->query('thumbs', false)) {

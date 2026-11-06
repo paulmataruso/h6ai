@@ -31,7 +31,7 @@ export default [
         }
     },
     {
-        files: ['*.mjs', 'test/**/*.js', 'test-integration/**/*.mjs', 'test-integration/**/*.js', 'test-native/**/*.mjs'],
+        files: ['*.mjs', 'test/**/*.js', 'test-integration/**/*.mjs', 'test-integration/**/*.js', 'test-native/**/*.mjs', 'test-php/**/*.mjs'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'module',

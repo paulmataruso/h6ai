@@ -44,6 +44,13 @@ control and a new interface.
   nginx with `X-Accel-Redirect`). Multi-GB files resume, stream and
   seek. Folders download as streamed tar or zip archives, with no temp files and no size limit.
   Numbers are in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+* **Search that scales to millions of files.** Names go into an index (SQLite FTS5 trigrams)
+  that a background indexer keeps current at idle priority, checking only folders whose dates
+  changed. A search on a share of a million files takes tens of milliseconds, never walks the
+  disk and has a fixed upper bound on work; concurrent searches and searches per visitor are
+  capped, so downloads always have PHP workers left. Best matches come first. Words in any
+  order, `"exact phrases"`, `-exclusions`, `*.iso` wildcards, `re:` expressions, case and
+  accents ignored. Details: [`docs/SEARCH.md`](docs/SEARCH.md).
 * **Zero-friction browsing.**
   * Navigation: breadcrumb, folder tree, filter (`/`) and recursive search (`s`).
   * Views and thumbnails: details, grid and gallery views, with image, video and PDF thumbnails.
@@ -187,7 +194,9 @@ upgrades. Every option is documented inline.
 | `security.sessionMaxAge` | `43200` | seconds |
 | `view.maxEntries` | `20000` | most entries listed per folder |
 | `download.type` / `maxEntries` | `"php-tar"` / `200000` | archive format and size cap |
-| `search.enabled` / `maxResults` / `timeLimit` | `false` / `1000` / `10` | recursive search and its bounds |
+| `search.enabled` / `maxResults` / `timeLimit` | `false` / `200` / `3` | recursive search, results per search, seconds at most |
+| `search.concurrency` / `rateLimit` | `4` / 60 per 10 s | searches at once on the server; per client IP |
+| `search.index.refreshInterval` | `300` | seconds between the indexer's checks for changes |
 | `thumbnails.maxPixels` / `cacheMaxSize` | `40000000` / `1024` | decompression-bomb guard; cache MB |
 | `foldersize.cacheTtl` | `600` | seconds a computed folder size is cached |
 
@@ -210,7 +219,8 @@ with `strict_types`. There are no runtime dependencies beyond marked, DOMPurify,
 
 ```sh
 npm run check              # ESLint + unit tests
-npm run test:integration   # 125 HTTP tests against the dev container (security, RBAC, CVEs, large files)
+npm run test:integration   # 160 HTTP tests against the dev container (security, RBAC, CVEs, large files, search)
+sh test-php/run.sh         # the search index against a reference walk, over randomly changing trees
 npm run test:e2e           # Playwright in Docker: visitor, admin, anon and mobile flows
 npm run test:native        # install.sh on 8 distributions + systemd + Docker mode; a drop-in on stock nginx
 ```
@@ -227,8 +237,8 @@ src/_h6ai/private/      PHP backend, options, translations, data (users, setting
 install.sh              native installer
 deploy/                 nginx and PHP configuration shared by Docker and the native install
 docker/                 container entrypoint, nginx main config, seed scripts for the dev environment
-docs/                   install, deployment, audit, plan, performance, Rust evaluation
-test/ test-integration/ test-e2e/ test-native/
+docs/                   install, deployment, search, audit, plan, performance, Rust evaluation
+test/ test-integration/ test-e2e/ test-native/ test-php/
 ```
 
 ## Credits and license

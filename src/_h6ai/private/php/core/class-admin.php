@@ -23,7 +23,8 @@ final class Admin {
     }
 
     public function apply(string $op, Request $request): array {
-        $read_only = in_array($op, ['list', 'settings.get', 'activity.list', 'probe.start', 'probe.result'], true);
+        // (the search index lives in the cache, not in the data folder)
+        $read_only = in_array($op, ['list', 'settings.get', 'activity.list', 'probe.start', 'probe.result', 'search.status', 'search.rebuild'], true);
         Util::json_fail(Util::ERR_FAILED, 'data directory not writable: ' . $this->context->get_setup()->get('DATA_PATH'),
             !$read_only && !$this->store->is_writable());
 
@@ -44,11 +45,19 @@ final class Admin {
                 'access.check' => $this->check_access($request->query_string('principal'), $request->query_string('path')),
                 'probe.start' => ['probe' => GateProbe::start($this->context)],
                 'probe.result' => ['probe' => GateProbe::result($this->context)],
+                'search.status' => ['search' => (new SearchIndex($this->context))->status()],
+                'search.rebuild' => $this->search_rebuild(),
                 default => Util::json_exit(['err' => Util::ERR_UNSUPPORTED, 'msg' => 'unsupported admin op'], 400)
             };
         } catch (InvalidArgumentException $err) {
             Util::json_exit(['err' => Util::ERR_ILLEGAL_PARAM, 'msg' => $err->getMessage()], 400);
         }
+    }
+
+    private function search_rebuild(): array {
+        $index = new SearchIndex($this->context);
+        Util::json_fail(Util::ERR_FAILED, 'the cache folder is not writable', !$index->request_rebuild());
+        return ['search' => $index->status()];
     }
 
     private static function access_list(mixed $access): array {

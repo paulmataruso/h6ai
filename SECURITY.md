@@ -40,6 +40,15 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
   `deploy/nginx/trusted-html.map` (installed as `/etc/nginx/h6ai/trusted-html.map`).
 * **Custom header/footer files** (`_h6ai.header.html` etc.) are sanitised unless
   `custom.allowUnsafeHtml` is enabled. Markdown is always sanitised.
+* **The search index holds every name**, also those in folders only some users may see (the
+  index is shared; permissions apply per search). It lives in
+  `_h6ai/private/cache/search-<h>/`, where `<h>` is an HMAC of the installation secret, with an
+  `index.php` against listing: nginx denies `_h6ai/private/` on native and Docker installs, and
+  on a drop-in (where nginx could serve it) its name can't be guessed, like the file links next
+  to it. Results never come from the index alone: the visitor's folder permissions are compiled
+  into the SQL query, and every result is checked again in PHP the way a listing would check it
+  (hidden names and folders, unmanaged folders and nested installs, `hideIf403`, permissions,
+  still on disk) before it's sent.
 
 ## Hardening in this fork
 
@@ -50,7 +59,7 @@ issue. Include steps to reproduce and the affected version (shown on the admin p
 | CSRF | JSON API requires `Content-Type: application/json`; `login`/`logout` require same origin (`Origin`/`Sec-Fetch-Site`); admin operations additionally need a per-session CSRF token. |
 | XSS | All server-rendered names are escaped; markdown and custom HTML go through DOMPurify; strict, config-derived CSP with nonces; no runtime `<style>` injection. |
 | Headers | CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Cross-Origin-Opener-Policy`, `Permissions-Policy`; `Cache-Control: no-store` on API responses, `private` for protected files. |
-| DoS | Thumbnail dimensions clamped (≤ 2048), source pixel cap (decompression bombs), subprocess timeouts, ReDoS-bounded search (PCRE limits, result/time/depth caps), symlink cycle protection in search, archives and folder sizes. |
+| DoS | Thumbnail dimensions clamped (≤ 2048), source pixel cap (decompression bombs), subprocess timeouts, symlink cycle protection in search, archives and folder sizes. Search: every SQL statement has a `LIMIT` and work is split into id windows with a deadline check in between (`search.timeLimit`), regular expressions under PCRE limits and the deadline, a fixed number of concurrent searches (`search.concurrency`, 503 when busy, so search can't take the PHP workers downloads need), a per-IP rate limit (`search.rateLimit`, 429), input length and word count limits, and the indexer at idle CPU and disk priority. |
 | Subprocesses | No shell anywhere for user-influenced input (`proc_open` with argv arrays), forced ImageMagick coders (`pdf:`/`ps:`), `file:` prefix for ffmpeg inputs, restrictive ImageMagick policy in Docker. |
 | Thumbnails | Names are an HMAC of the path with a server secret, so protected files' thumbnails can't be guessed. |
 | Archives | Only the configured archive type is accepted, entries must be inside the base folder and readable for the user, RFC 6266 filenames, PAX headers for long names and > 8 GiB files. |

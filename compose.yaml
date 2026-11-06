@@ -27,6 +27,8 @@ services:
       # code only changes when the container starts, so PHP never has to re-check files
       PHP_OPCACHE_VALIDATE_TIMESTAMPS: "0"
       PHP_MEMORY_LIMIT: "${PHP_MEMORY_LIMIT:-256M}"
+      # the search indexer daemon (docs/SEARCH.md); 0: web requests keep the index current instead
+      H6AI_SEARCH_INDEXER: "${H6AI_SEARCH_INDEXER:-1}"
     volumes:
       # the folder to share; h6ai installs itself into <folder>/_h6ai (hidden in listings)
       - "${H6AI_FILES:-./files}:/srv/www"

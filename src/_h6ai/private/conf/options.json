@@ -370,27 +370,72 @@
 
 
     /*
-    Allow searching files and folders in and below current folder.
-    Checks for substrings.
+    Search file and folder names in and below the current folder (docs/SEARCH.md).
 
-    If advanced is enabled it checks entries for right order of characters,
-    i.e. "ab" matches "ab", "axb", "xaxbx" but not "ba". Space separated
-    sequences get OR-ed. Searches will be treated as JavaScript regular
-    expressions if you prefix them with "re:".
+    What visitors can type (case and accents don't matter, words in any order):
+        ubuntu iso          names containing every word
+        "release notes"     exact text, spaces included
+        -draft              leave out names containing it
+        *.iso  IMG_20??*    wildcards over the whole name (* any text, ? one character)
+        re:^IMG_\d+         a regular expression (slow on big trees, time limited)
+    Best matches first: exact names, then names starting with the first word, then
+    names where it starts a word, folders before files, shorter names first.
 
-    - advanced: boolean, use advanced pattern parsing
-    - debounceTime: number, debounce wait time in milliseconds
-    - ignorecase: boolean, ignore case
-    - maxResults: number, stop searching after this many matches
-    - timeLimit: number, stop searching after this many seconds
+    Big file servers search a name index (SQLite, in private/cache), not the disk:
+    tens of milliseconds, a few hundred at worst, however many files there are, and
+    every search has a fixed upper bound on work. A background indexer keeps it current
+    (the h6ai-index daemon in Docker and with install.sh; elsewhere a web request does
+    a few seconds of work now and then, after its response is sent). Until the index
+    is ready, and in folders it doesn't cover, searches walk the folders instead.
+    Results are checked against permissions and hidden names when they are shown.
+
+    - advanced: boolean, understand the syntax above (false: the text is one literal)
+    - debounceTime: number, wait this many milliseconds after typing stops
+    - ignorecase: boolean, re: expressions ignore case
+    - maxResults: number, results per search (at most 1000)
+    - timeLimit: number, seconds a search may take before it returns what it has
+    - concurrency: number, searches running at the same time on the server; as
+      many more may wait 150 ms for a turn, the rest get "busy" at once and the
+      browser retries. Search never holds more than twice this many PHP workers,
+      the rest stay free for downloads and listings
+    - rateLimit: searches per client IP: at most "max" every "window" seconds
+      (0 turns it off)
+    - candidates: number, matching names a search looks at before ranking; very
+      broad searches stop there and say so
+    - regex: boolean, allow re: searches
+    - index:
+      - enabled: boolean, use and maintain the index (false: always walk folders)
+      - refreshInterval: number, seconds between checks for changes
+      - verifyInterval: number, seconds between passes that re-list every folder
+        (catches changes that folder dates don't show, e.g. some network mounts)
+      - trustMtime: boolean, false: every pass re-lists every folder
+      - sliceTime: number, seconds of index work per web request (no daemon)
+      - maxEntriesPerFolder: number, entries indexed per folder
+      - maxDepth: number, folder levels indexed
+      - background: "auto" (web requests help when no daemon runs), "daemon"
+        (only the h6ai-index daemon or cron indexes), "requests"
     */
     "search": {
         "enabled": false,
         "advanced": true,
-        "debounceTime": 300,
+        "debounceTime": 250,
         "ignorecase": true,
-        "maxResults": 1000,
-        "timeLimit": 10
+        "maxResults": 200,
+        "timeLimit": 3,
+        "concurrency": 4,
+        "rateLimit": {"max": 60, "window": 10},
+        "candidates": 20000,
+        "regex": true,
+        "index": {
+            "enabled": true,
+            "refreshInterval": 300,
+            "verifyInterval": 604800,
+            "trustMtime": true,
+            "sliceTime": 2,
+            "maxEntriesPerFolder": 100000,
+            "maxDepth": 64,
+            "background": "auto"
+        }
     },
 
 

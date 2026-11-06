@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-// File based fixed-window limiter for failed logins, keyed by a hash of the client IP. The files
-// are guarded (see Json::GUARD): they list login times per IP hash.
+// File based sliding-window limiter, keyed by a hash of the client IP (failed logins) or of a
+// prefixed key (searches). The files are guarded (see Json::GUARD): they list event times.
 final class RateLimiter {
     private string $file;
 
@@ -48,6 +48,17 @@ final class RateLimiter {
             $attempts[] = time();
             return [null, $attempts];
         });
+    }
+
+    // Counts an event unless the limit is reached: check and count in one locked step.
+    public function take(): bool {
+        return $this->with_lock(function ($attempts) {
+            if (count($attempts) >= $this->max_attempts) {
+                return [false, $attempts];
+            }
+            $attempts[] = time();
+            return [true, $attempts];
+        }) !== false;
     }
 
     public function reset(): void {

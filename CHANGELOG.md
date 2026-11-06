@@ -1,6 +1,79 @@
 # Changelog
 
 
+## Unreleased
+
+Search, rebuilt for file servers with millions of files ([docs/SEARCH.md](docs/SEARCH.md))
+
+* add: a name index (SQLite FTS5 trigrams, in `_h6ai/private/cache/search-<secret hash>/`). A
+  search on a share of a million files takes tens of milliseconds and never walks the disk. Every
+  statement has a `LIMIT` and the work is split into windows with a deadline check in between,
+  so no search, however broad, runs longer than `search.timeLimit`
+* add: a background indexer keeps it current: a full build, then a check every 5 minutes
+  (`search.index.refreshInterval`) that re-lists only folders whose mtime or ctime changed (one
+  `stat` per folder on an unchanged tree). Renamed and moved folders are recognised by device and
+  inode and keep their entries. A rebuild writes a new generation; searches use the old one
+  until it's ready. A pass that re-lists every folder runs weekly (`verifyInterval`), or always
+  with `trustMtime: false` (network mounts with unreliable times)
+* add: who runs the indexer: the `h6ai-index` service (native installs), a daemon in the
+  container (Docker, `H6AI_SEARCH_INDEXER`), both at idle CPU and disk priority; elsewhere
+  (drop-in, shared hosting) one PHP-FPM worker after a response has been sent, 2 s at most every
+  15 s. `h6ai-index status | refresh | rebuild | search` in the shell, **System → Search index**
+  (status, Rebuild) on the admin page
+* add: what visitors can type: words in any order (all must occur), `"exact phrases"`,
+  `-exclusions`, `*.iso` and `IMG_20??*` wildcards, `re:` regular expressions (`search.regex`).
+  Case and accents are ignored (`cafe` finds `Café`, `strasse` finds `Straße`)
+* add: best matches first: the exact name (also with an extension), then names starting with
+  the first word, then names where it starts a word, then anywhere; folders before files,
+  shorter names and paths first. The list keeps that order until a column header is clicked.
+  The status line says when there are more results than shown, or when a search stopped early
+* add: admission control. At most `search.concurrency` (4) searches run at once on the server,
+  as many more may wait 150 ms for a turn, and the rest get 503 "busy" at once: search never
+  holds more than 8 PHP workers, so downloads and listings keep theirs (64 clients searching
+  non-stop on a million files left download latency unchanged; the old search took downloads
+  from 4 ms to 6 s). At most `search.rateLimit` (60 per 10 s) per client IP (429). The
+  browser waits for a typing pause (250 ms), has one search in flight per tab, cancels outdated
+  ones, keeps the last 20 answers for a minute and retries busy or rate limited searches with
+  growing pauses. Enter searches at once
+* add: every result is checked again before it's sent, the way a listing would show it to this
+  visitor: folder permissions (also compiled into the SQL query), hidden names and folders,
+  unmanaged folders, nested installs, `hideIf403`, still on disk
+* change: `search.maxResults` 1000 → 200, `search.timeLimit` 10 → 3 s, `search.debounceTime`
+  300 → 250 ms. `search.advanced` now means the syntax above; the fuzzy matching it used to do
+  (`abc` matching `a…b…c`) matched far too much on big trees and is gone. Requests with the old
+  `pattern` parameter are still answered (as a regular expression)
+* change: without the index (no `pdo_sqlite`, SQLite older than 3.34, not built yet) searches
+  walk the folders as before, but under the same time limit, concurrency and rate limits, ranked
+  the same way, without computing folder sizes. Symlinked folders that lead out of the share
+  (another disk) are searched once; links back into it and loops are listed, not followed. The
+  index does the same
+* perf: the "is this folder managed" check remembers what subfolders inherit (hidden ancestors,
+  nested installs) for the request: 0.5 → 0.07 ms per folder five levels deep, which is most of
+  the cost of a page of search results
+
+Installer and Docker
+
+* native: installs `pdo_sqlite` (`php-sqlite3`, `php-pdo`, `phpNN-pdo_sqlite`) and the
+  `h6ai-index` service (systemd: `Nice=19`, idle CPU and I/O scheduling, read-only file system
+  except `_h6ai/private/cache`; OpenRC: supervise-daemon). `--uninstall` removes both, and the new
+  `h6ai-index` command
+* Docker: the entrypoint starts the indexer daemon (`nice`, `ionice`); the image build fails
+  without SQLite FTS5 trigram support; `h6ai-index` in `/usr/local/bin`
+
+Docs and tests
+
+* `docs/SEARCH.md`: the design, its critique and the measurements on a million files. Search
+  sections in the native, Docker and drop-in guides (status, the daemon or a cron line on a
+  drop-in), `README.md`, `SECURITY.md`, `PERFORMANCE.md`
+* `test-php/run.sh` (and in CI on PHP 8.2 and 8.4): the index against a reference walk over
+  random trees with random changes between passes (renames, moves, deletes, chmod, symlinks,
+  nested installs, another disk linked in), every query and permission set compared, and the
+  first results of a short page against the full ranking
+* integration: the query language, ranking, scope, caps, `searchInfo`, the rate limit; e2e: the
+  search box (ranking, status line, sorting, Escape); `test-native/systemd.sh`: the indexer
+  service builds the index under its sandbox and survives a reboot
+
+
 ## v1.0.1 (h6ai) - *2026-10-23*
 
 Security

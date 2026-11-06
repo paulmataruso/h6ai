@@ -24,6 +24,7 @@ final class Context {
     private ?Acl $acl = null;
     private ?array $user = null;
     private bool $user_resolved = false;
+    private array $managed_chain = [];
 
     public function __construct(
         private readonly Session $session,
@@ -455,27 +456,34 @@ final class Context {
             return false;
         }
 
-        if ($this->is_hidden_path($path)) {
-            return false;
-        }
-
         foreach ($this->query_option('view.unmanaged', []) as $name) {
             if (is_string($name) && file_exists($path . '/' . $name)) {
                 return false;
             }
         }
 
-        while ($path !== $root_path) {
-            if (@is_dir($path . '/_h6ai/private/conf')) {
-                return false;
-            }
-            $parent_path = Util::normalize_path(dirname($path));
-            if ($parent_path === $path) {
-                return false;
-            }
-            $path = $parent_path;
+        return $this->is_managed_chain($path);
+    }
+
+    // The part of is_managed_path() that subfolders inherit: neither the folder nor any folder
+    // above it (below the root) is hidden or holds a nested install. Remembered for the request:
+    // a search checks hundreds of folders that share most of their ancestors.
+    private function is_managed_chain(string $path): bool {
+        $root_path = $this->setup->get('ROOT_PATH');
+        if ($path === $root_path) {
+            return true;
         }
-        return true;
+        if (isset($this->managed_chain[$path])) {
+            return $this->managed_chain[$path];
+        }
+        $parent = Util::normalize_path(dirname($path));
+        $name = basename($path);
+        $ok = $parent !== $path
+            && $this->is_managed_chain($parent)
+            && !$this->is_hidden($name)
+            && !$this->is_hidden($this->to_href($parent) . $name)
+            && !@is_dir($path . '/_h6ai/private/conf');
+        return $this->managed_chain[$path] = $ok;
     }
 
     // A file that may be exposed through the API: inside a managed folder, not hidden and

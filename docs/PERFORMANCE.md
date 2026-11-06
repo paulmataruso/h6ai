@@ -98,6 +98,33 @@ Ideas if small-file request rates ever matter: run more FPM children (`pm.max_ch
 gate decisions in nginx (`proxy_cache`-style caching of the `auth_request` subrequest, keyed by
 session cookie + URI, with a short TTL).
 
+### Search on a million files (2026-11-06)
+
+The search index, measured with `test-php/bench/` on a generated tree of 1 000 000 entries
+(28 354 folders), same VM, PHP 8.3.36, SQLite 3.53.4. Method and every number:
+[SEARCH.md, section 6](SEARCH.md#6-measurements).
+
+| | |
+|---|---|
+| Typical query (one or two words, a phrase, `*.iso`), HTTP, 200 results | 46–97 ms (h6ai 1.0.1: 0.3–10 s, first 1000 found in walk order) |
+| One-letter query | 200 ms (bounded scan) |
+| Query without matches | 9 ms (1.0.1: 10 s, its time limit) |
+| Index build, niced | 112–136 s, 175.5 MiB, at most 4 MiB of PHP memory |
+| Check for changes, nothing changed | 1.0–1.4 s (one `stat` per folder) |
+| Check after 10 000 new files and a renamed 60 000-entry folder | 4.4 s |
+
+While clients search without pause, downloads through the gate and listings keep their
+latency:
+
+| | downloads/s | download p50 / p99 | listing p50 / p99 |
+|---|---:|---:|---:|
+| no search | 689 | 5.3 / 15 ms | 15 / 38 ms |
+| 64 clients searching | 1026 | 3.3 / 11 ms | 8.9 / 29 ms |
+| 64 clients searching, h6ai 1.0.1 | 0.8 | 6.2 / 9.0 s | 6.4 / 9.0 s |
+
+Search never holds more than 2 × `search.concurrency` PHP workers (8 of 32), running or waiting
+for a turn. The rest get "busy" at once, and the browser retries later.
+
 ## Tuning in place
 
 * nginx: `sendfile`, `tcp_nopush`, `aio threads`, `directio 16m`, `output_buffers 2 1m`,
@@ -106,3 +133,6 @@ session cookie + URI, with a short TTL).
   `request_terminate_timeout=0` for long downloads, `output_buffering=Off`.
 * h6ai: compiled config cache (OPcache-served), persistent folder-size cache, thumbnails cached
   with immutable URLs.
+* Search: a SQLite FTS5 name index kept current by an idle-priority daemon, every statement
+  bounded, at most `search.concurrency` searches at once, a per-IP rate limit
+  ([SEARCH.md](SEARCH.md)).

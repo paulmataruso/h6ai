@@ -112,6 +112,37 @@ const drawer = async (page, open) => {
         await page.waitForTimeout(300);
     });
 
+    await step('search: "s" opens it, best matches first, status line, sorting by a header', async () => {
+        await page.goto(BASE + '/');
+        await page.waitForSelector('#items .item');
+        await page.locator('#content').click({position: {x: 600, y: 700}});
+        await page.keyboard.press('s');
+        assert.ok(await page.evaluate(() => document.activeElement.matches('#search input')));
+        await page.keyboard.type('file');
+        await page.keyboard.press('Enter'); // no typing pause needed
+        // (locators: the page's CSP doesn't allow waitForFunction's eval)
+        await page.locator('#view-status', {hasText: /results? for "file" in all folders/}).waitFor();
+        const labels = await page.locator('#items .item:not(.folder-parent) .label').allTextContents();
+        assert.equal(labels[0], 'file.txt', 'ranked: ' + labels.slice(0, 5).join(','));
+        assert.ok(labels.slice(1, 10).every(l => /^file-\d\.txt$/.test(l)), 'ranked: ' + labels.slice(0, 12).join(','));
+        // ranked: no column claims the order, until one is clicked
+        assert.equal((await page.textContent('#items .header button.label')).includes('sorted'), false);
+        await page.screenshot({path: `${SHOTS}/e2e-03-search.png`});
+        await page.click('#items .header button.label');
+        assert.match(await page.textContent('#items .header button.label'), /sorted (a|de)scending/);
+        // words narrow it down, accents don't matter, no match says so
+        await page.fill('#search input', 'umlaut ordner');
+        await page.keyboard.press('Enter');
+        await page.locator('#view-status', {hasText: /^1 result for "umlaut ordner"/}).waitFor();
+        await page.fill('#search input', 'zzqqxx');
+        await page.keyboard.press('Enter');
+        await page.locator('#view-hint', {hasText: /no match|Nothing in all folders matches "zzqqxx"/i}).waitFor();
+        assert.equal(await page.locator('#items .item:not(.folder-parent)').count(), 0);
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+        assert.ok(await page.locator('#items .item').count() > 5, 'the folder is back');
+    });
+
     await step('sort headers are buttons that announce their state', async () => {
         await page.focus('#items .header button.date');
         await page.keyboard.press('Space');
@@ -305,6 +336,10 @@ const drawer = async (page, open) => {
         // the test tree holds an h5ai install left behind (docker/seed.sh): the one expected failure
         const failed = await admin.locator('.checks li.failed .check-label').allTextContents();
         assert.deepEqual(failed, ['Old h5ai folder'], `failed checks: ${failed.join(', ')}`);
+        // the search index card: built by the daemon in the container
+        await admin.waitForSelector('.check-label:text-is("Index")');
+        assert.equal(await admin.locator('li:has(.check-label:text-is("Index")) .check-result').textContent(), 'ready');
+        assert.equal(await admin.locator('li:has(.check-label:text-is("Indexer")) .check-result').textContent(), 'daemon running');
         await admin.screenshot({path: `${SHOTS}/e2e-12-admin-system.png`, fullPage: true});
     });
 

@@ -134,6 +134,61 @@ final class Acl {
         return false;
     }
 
+    // The same decisions as level() and is_reachable(), as data for filtering search results in
+    // SQL (see SearchEngine). Null if this principal sees every folder. Otherwise:
+    //   rules      [path, level] for every rule with a grant for this principal, most specific
+    //              first: the first one whose path is a prefix of a folder decides its level
+    //   default    the level without a deciding rule
+    //   reachable  folders shown although not listable, because a rule below them grants listing
+    //   roots      if the root itself isn't listable: the topmost listable rule paths (everything
+    //              visible lies below one of them), else null
+    public function search_plan(): ?array {
+        if ($this->is_admin() || !$this->is_enabled()) {
+            return null;
+        }
+        $rules = [];
+        foreach ($this->rules as $path => $grants) {
+            $granted = $this->grant_level($grants);
+            if ($granted !== null) {
+                $rules[] = [$path, $granted];
+            }
+        }
+        $reachable = [];
+        $listable = [];
+        foreach (array_keys($this->rules) as $path) {
+            if ($this->level($path) < Acl::LIST) {
+                continue;
+            }
+            $listable[] = $path;
+            $segments = array_values(array_filter(explode('/', $path), fn ($s) => $s !== ''));
+            $ancestor = '/';
+            for ($i = 0; $i < count($segments); $i += 1) {
+                $reachable[$ancestor] = true;
+                $ancestor .= $segments[$i] . '/';
+            }
+        }
+        $roots = null;
+        if ($this->level('/') < Acl::LIST) {
+            usort($listable, fn ($a, $b) => strlen($a) <=> strlen($b));
+            $roots = [];
+            foreach ($listable as $path) {
+                $covered = false;
+                foreach ($roots as $root) {
+                    $covered = $covered || str_starts_with($path, $root);
+                }
+                if (!$covered) {
+                    $roots[] = $path;
+                }
+            }
+        }
+        return [
+            'rules' => $rules,
+            'default' => $this->anon ? Acl::NONE : Acl::DOWNLOAD,
+            'reachable' => array_keys($reachable),
+            'roots' => $roots
+        ];
+    }
+
     // Whether anonymous visitors could read files in this folder; used for cache headers.
     public static function is_public(array $rules, string $rel_dir): bool {
         return (new Acl($rules, null, []))->level($rel_dir) >= Acl::READ;

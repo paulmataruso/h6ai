@@ -54,6 +54,23 @@ final class Filesize {
         return $size;
     }
 
+    // A folder's size from the persistent cache if it is there and fresh, else null. Never
+    // computes one (search results list folders from anywhere in the tree).
+    public static function cached_folder_size(Context $context, string $path): ?int {
+        if ($context->query_option('foldersize.enabled', false) !== true) {
+            return null;
+        }
+        $with_du = $context->get_setup()->get('HAS_CMD_DU') && $context->query_option('foldersize.type', null) === 'shell-du';
+        $ttl = (int) $context->query_option('foldersize.cacheTtl', Filesize::DEFAULT_CACHE_TTL);
+        $file = $context->get_setup()->get('CACHE_PRV_PATH') . '/foldersize/' . sha1($path . '|' . ($with_du ? 'du' : 'php')) . '.json';
+        $mtime = $ttl > 0 ? @filemtime($file) : false;
+        if ($mtime === false || $mtime <= time() - $ttl) {
+            return null;
+        }
+        $cached = @file_get_contents($file);
+        return is_string($cached) && preg_match('/^\d+$/', $cached) ? (int) $cached : null;
+    }
+
     private function __construct(private readonly Context $context) {}
 
     // Sums file sizes below $path. Symlinked directories are not descended into, which

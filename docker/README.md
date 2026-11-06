@@ -39,9 +39,10 @@ and while it's set the container doesn't create an admin of its own.
 | `/srv/www` | web root = **`./webroot` on the host** (bind mount). Put your files there. |
 | `/opt/h6ai/_h6ai` | the h6ai build inside the image |
 | `/usr/local/bin/h6ai-user` | user management from the shell (`docker compose exec h6ai h6ai-user list`) |
+| `/usr/local/bin/h6ai-index` | the search index from the shell (`docker compose exec h6ai h6ai-index status`) |
 | `/srv/www/_h6ai` | h6ai as installed into the web root on every start (code read-only for PHP) |
 | `/srv/www/_h6ai/private/data` | users, roles, folder groups, permissions, settings, activity log. **Named volume `h6ai-data`** |
-| `/srv/www/_h6ai/private/cache` | rate limiter, folder-size, compiled config and command caches |
+| `/srv/www/_h6ai/private/cache` | rate limiter, folder-size, compiled config and command caches, the search index (`search-*/`) |
 | `/srv/www/_h6ai/public/cache` | generated thumbnails (served statically, immutable) |
 | `/srv/outside` | files *outside* the web root (traversal test targets), re-created on every start |
 
@@ -122,6 +123,15 @@ copy of `deploy/nginx/trusted-html.map` and mount it over `/etc/nginx/h6ai/trust
 | `PHP_OPCACHE_REVALIDATE_FREQ` | `2` | seconds between file checks when validating |
 | `PHP_MEMORY_LIMIT` | `256M` | |
 
+### Search indexer
+
+The entrypoint starts `h6ai-index.php daemon` next to PHP-FPM, as `www-data`, under `nice -n 19`
+and `ionice -c 3` (idle disk priority), restarted after 10 s if it exits (it also exits by itself
+when the code in `_h6ai` changed). It does nothing while `search.enabled` is off; the development
+environment turns search on (`docker/options.local.json`). `H6AI_SEARCH_INDEXER=0` leaves the
+index to web requests instead (as on a drop-in). Its log lines start with `h6ai-index:` in
+`docker compose logs h6ai`. See [`docs/SEARCH.md`](../docs/SEARCH.md).
+
 php-fpm status and ping live at `http://127.0.0.1:8081/fpm-status` and `/fpm-ping`, reachable
 **only inside the container**. The healthcheck uses `/fpm-ping`, so it covers both nginx and php-fpm:
 
@@ -168,6 +178,8 @@ Use the production setup (`compose.yaml` alone) with `H6AI_FILES=/path/to/files`
 ```sh
 docker compose logs -f h6ai                                      # nginx + php-fpm logs
 docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'   # unlock logins
+docker compose exec h6ai h6ai-index status                       # the search index: ready? daemon?
+docker compose exec h6ai h6ai-index refresh                      # pick up changed files now
 docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json.php  # forget all users/rules
 docker compose down -v                                           # remove container AND user volume (./webroot stays)
 ```

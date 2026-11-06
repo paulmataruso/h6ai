@@ -102,6 +102,7 @@ h6ai 1.0.1 is ready.
   Files:    http://files.example.com/          (shared folder /srv/files)
   Admin:    http://files.example.com/_h6ai/public/
   Users:    h6ai-user list | add NAME [--admin] | passwd NAME
+  Search:   h6ai-index status | refresh | rebuild   (off until search.enabled, see docs/SEARCH.md)
   Config:   /etc/nginx/sites-available/h6ai.conf, /etc/php/8.3/fpm/pool.d/h6ai.conf
   Upgrade:  run install.sh from a newer release. Remove: install.sh --uninstall
 ```
@@ -118,8 +119,9 @@ sudo ./install.sh --native --yes --root /srv/files --admin-password-file /root/h
 
 ### What the installer changes
 
-* **Packages:** `nginx`, `php-fpm` with `gd`, `mbstring`, `opcache`, `exif` and `posix`, `zip`,
-  and ffmpeg, ImageMagick and Ghostscript, whichever the system offers.
+* **Packages:** `nginx`, `php-fpm` with `gd`, `mbstring`, `opcache`, `exif`, `posix` and
+  `pdo_sqlite` (the search index), `zip`, and ffmpeg, ImageMagick and Ghostscript, whichever the
+  system offers.
 * **User:** the system user `h6ai`. PHP-FPM runs h6ai as that user in its own pool, so other PHP
   sites on the host keep their settings. Sessions are kept in `/var/lib/h6ai/sessions`.
 * **Application:** installed into `<shared folder>/_h6ai`. PHP may only write
@@ -136,9 +138,13 @@ sudo ./install.sh --native --yes --root /srv/files --admin-password-file /root/h
 * **SELinux** (RHEL, Fedora): the shared folder is labelled for nginx, the writable folders for
   PHP, and the port allowed. PHP's JIT is turned off, because it needs executable memory, which
   SELinux denies.
-* **Services:** PHP-FPM and nginx are enabled at boot (systemd or OpenRC).
-* **Shell tools:** the `h6ai-user` command, and `/etc/h6ai/install.conf`, which records the setup
-  for upgrades.
+* **Services:** PHP-FPM and nginx are enabled at boot (systemd or OpenRC), and so is
+  `h6ai-index`, the search indexer: it runs as `h6ai` at the lowest CPU and disk priority
+  (systemd: `Nice=19`, `CPUSchedulingPolicy=idle`, `IOSchedulingClass=idle`, read-only file
+  system except `_h6ai/private/cache`). It does nothing until search is turned on
+  ([below](#the-search-index)).
+* **Shell tools:** the `h6ai-user` and `h6ai-index` commands, and `/etc/h6ai/install.conf`, which
+  records the setup for upgrades.
 
 ## 4. First login
 
@@ -168,7 +174,32 @@ sudo h6ai-user passwd admin
 | PHP-FPM pool, PHP settings | e.g. `/etc/php/8.3/fpm/pool.d/h6ai.conf`, `/etc/php/8.3/fpm/conf.d/90-h6ai.ini` |
 | PHP sessions | `/var/lib/h6ai/sessions` |
 | Install record | `/etc/h6ai/install.conf` |
-| Logs | `/var/log/nginx/h6ai.access.log`, `/var/log/nginx/h6ai.error.log`, the PHP-FPM log |
+| Search index | `<shared folder>/_h6ai/private/cache/search-*/`, about 180 bytes per file or folder (175 MiB for a million); rebuilt if deleted |
+| Search indexer | `/etc/systemd/system/h6ai-index.service` (OpenRC: `/etc/init.d/h6ai-index`) |
+| Logs | `/var/log/nginx/h6ai.access.log`, `/var/log/nginx/h6ai.error.log`, the PHP-FPM log, `journalctl -u h6ai-index` (OpenRC: `/var/log/h6ai-index.log`) |
+
+### The search index
+
+Search is off until you turn it on in `<shared folder>/_h6ai/private/conf/options.local.json`:
+
+```json
+{"search": {"enabled": true}}
+```
+
+The `h6ai-index` service notices within half a minute and builds a name index of the shared
+folder (a million files take about two minutes), then checks for changes every 5 minutes.
+A check over an unchanged tree costs one `stat` per folder (about a second for 28 000 folders). Until the
+first build is done, searches walk the folders instead (slower, time limited). Details and
+measurements: [SEARCH.md](../SEARCH.md).
+
+```sh
+sudo h6ai-index status                  # ready? entries, last check, daemon running?
+sudo h6ai-index refresh                 # check for changes now
+sudo h6ai-index rebuild                 # from scratch; searches use the old index meanwhile
+sudo h6ai-index search ubuntu iso       # what a visitor without an account would find
+```
+
+The same is on the admin page, **System → Search index**.
 
 ## 6. Installer options
 
@@ -203,6 +234,8 @@ sudo h6ai-user passwd admin
   (`php:8.3`). ffmpeg and ImageMagick need EPEL and RPM Fusion; without them h6ai shows icons
   for videos instead of thumbnails. PDF thumbnails work with the base system's Ghostscript.
 * **Alpine:** OpenRC services. The newest `phpNN` packages are used (8.4 on 3.22).
+* **Search** needs SQLite 3.34 or later with FTS5, which every system above has. On older ones
+  (RHEL 8 has 3.26) searches walk the folders; the System tab says why.
 * **SELinux:** see [section 3](#what-the-installer-changes). If you move the shared folder later,
   run the installer again so it labels the new one.
 
@@ -266,7 +299,7 @@ sudo ./install.sh --uninstall           # keeps _h6ai, so a re-install finds the
 sudo ./install.sh --uninstall --purge   # also deletes h6ai's data and the h6ai user
 ```
 
-Neither removes nginx, PHP or your files.
+Both stop and remove the `h6ai-index` service. Neither removes nginx, PHP or your files.
 
 ## 10. Troubleshooting
 
@@ -281,6 +314,9 @@ Neither removes nginx, PHP or your files.
 | Login says "cross-origin request rejected" | behind a proxy that rewrites the host: set the public address in **System → Public address and reverse proxy** |
 | Too many failed logins, locked out | wait 15 minutes, or `sudo rm /srv/files/_h6ai/private/cache/ratelimit-*` |
 | Lost the admin password | `sudo h6ai-user passwd admin` |
+| No search box | `search.enabled` is off: see [the search index](#the-search-index) |
+| New files missing from search | the indexer checks every 5 minutes: `sudo h6ai-index refresh` checks now; `systemctl status h6ai-index` shows whether it runs |
+| Search says "busy" or "too many searches" | the server limits concurrent searches (`search.concurrency`, 4) and searches per visitor (`search.rateLimit`, 60 per 10 s); the browser retries by itself |
 
 Logs: `/var/log/nginx/h6ai.error.log`, the PHP-FPM log (`/var/log/php8.3-fpm.log` on Debian and
 Ubuntu, `journalctl -u php-fpm` elsewhere), and the admin page's Activity tab for downloads and

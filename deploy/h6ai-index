@@ -1,0 +1,34 @@
+#!/bin/sh
+# h6ai-index: the search index from the shell (docs/SEARCH.md).
+#   h6ai-index status | refresh [--verify] | rebuild | search [--in /folder/] [--all] WORDS...
+# Runs _h6ai/private/bin/h6ai-index.php as the owner of h6ai's cache folder, at low priority.
+# Paths come from install.sh (/etc/h6ai/install.conf) or default to the Docker image's layout
+# (inside the container). After `install.sh --docker` it runs the same command in the container.
+set -eu
+
+H6AI_DIR=/srv/www/_h6ai
+PHP_BIN=php
+if [ -r /etc/h6ai/install.conf ]; then
+    # shellcheck disable=SC1091
+    . /etc/h6ai/install.conf
+    if [ "${H6AI_MODE:-native}" = docker ]; then
+        cd "$H6AI_DOCKER_DIR"
+        [ -t 0 ] && exec docker compose exec h6ai h6ai-index "$@"
+        exec docker compose exec -T h6ai h6ai-index "$@"
+    fi
+    H6AI_DIR=$H6AI_ROOT/_h6ai
+fi
+SCRIPT=$H6AI_DIR/private/bin/h6ai-index.php
+[ -f "$SCRIPT" ] || { echo "h6ai-index: $SCRIPT not found" >&2; exit 1; }
+
+# an index build is background work: never at the cost of downloads
+set -- "$PHP_BIN" -d memory_limit=512M "$SCRIPT" "$@"
+command -v ionice >/dev/null 2>&1 && set -- ionice -c 3 "$@"
+command -v nice >/dev/null 2>&1 && set -- nice -n 19 "$@"
+
+if [ "$(id -u)" = 0 ] && command -v runuser >/dev/null 2>&1; then
+    owner=$(stat -c %U "$H6AI_DIR/private/cache")
+    [ "$owner" = root ] || exec runuser -u "$owner" -- "$@"
+fi
+# not root, or no runuser (Alpine): the PHP script drops to the cache owner itself
+exec "$@"

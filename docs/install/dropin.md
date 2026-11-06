@@ -40,7 +40,8 @@ reaches h6ai first. That gives a drop-in the same feature set as the native and 
 ## 1. Requirements
 
 * nginx with PHP-FPM **8.2 or later**, with the `gd` and `mbstring` extensions. Optional: `exif`
-  (photo orientation), `zip`, ffmpeg (video thumbnails), Ghostscript (PDF thumbnails).
+  (photo orientation), `pdo_sqlite` (the search index, SQLite 3.34 or later), `zip`, ffmpeg
+  (video thumbnails), Ghostscript (PDF thumbnails).
 * A server block (site) for h6ai whose web root contains nothing but `_h6ai`. A subdomain such as
   `files.example.com` is ideal. The line from step 4 sends every "not found" of that server
   block to h6ai, so don't share the block with another site.
@@ -51,11 +52,13 @@ Check the PHP version and extensions:
 
 ```sh
 php -v
-php -m | grep -E '^(gd|mbstring|exif)$'
+php -m | grep -E '^(gd|mbstring|exif|pdo_sqlite)$'
 ```
 
-On Debian and Ubuntu, `sudo apt install php-fpm php-gd php-mbstring` installs everything needed;
-on Fedora and RHEL, `sudo dnf install php-fpm php-gd php-mbstring`.
+On Debian and Ubuntu, `sudo apt install php-fpm php-gd php-mbstring php-sqlite3` installs
+everything needed; on Fedora and RHEL, `sudo dnf install php-fpm php-gd php-mbstring php-pdo`; on
+Alpine, `apk add php84-fpm php84-gd php84-mbstring php84-pdo_sqlite`. Restart PHP-FPM after adding
+an extension.
 
 ## 2. Unzip h6ai into the web root
 
@@ -245,6 +248,65 @@ reports an h5ai install left in the files folder.
 * **h6ai's own assets** (CSS, JS, thumbnails) are requested through h6ai with versioned URLs. They
   get the headers h6ai's nginx snippet would set: cacheable for a year, gzipped, nosniff.
 
+### Search
+
+Search is off until you turn it on (in `options.local.php`, next to `filesFolder`):
+
+```
+<?php http_response_code(404); exit; ?>
+{"filesFolder": "/srv/files", "search": {"enabled": true}}
+```
+
+Searches use a name index (SQLite, needs `pdo_sqlite`) in `_h6ai/private/cache/search-<secret>/`.
+That folder name is derived from your installation's secret, like the file links, and the folder
+has an `index.php`, so nobody can list it or guess its files over the web. The index holds every
+name, also those in restricted folders. Each search result is checked against the visitor's
+permissions and hidden names before it's sent.
+
+**Who keeps the index current.** Without anything else, PHP-FPM does: after a response has been
+sent, one worker spends up to 2 seconds (`search.index.sliceTime`) on the index if work is due, at
+most every 15 seconds. That's enough for a few hundred thousand files. A big files folder is
+built faster, and kept current without the help of visitors, by the indexer daemon. Run it as
+PHP-FPM's user, at low priority, with systemd:
+
+```ini
+# /etc/systemd/system/h6ai-index.service
+[Unit]
+Description=h6ai search indexer
+
+[Service]
+User=www-data
+ExecStart=/usr/bin/php -d memory_limit=512M /var/www/html/_h6ai/private/bin/h6ai-index.php daemon
+Restart=always
+RestartSec=10
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`sudo systemctl enable --now h6ai-index`. Web requests stop doing index work as soon as the daemon
+reports in. Instead of a service, a cron line does the same (one pass every 5 minutes; a pass that
+is still running makes the next one skip):
+
+```
+*/5 * * * * www-data nice -n 19 ionice -c3 php /var/www/html/_h6ai/private/bin/h6ai-index.php refresh >/dev/null 2>&1
+```
+
+Status and maintenance, as PHP-FPM's user (also on the admin page, **System → Search index**):
+
+```sh
+sudo -u www-data php /var/www/html/_h6ai/private/bin/h6ai-index.php status
+sudo -u www-data php /var/www/html/_h6ai/private/bin/h6ai-index.php refresh   # check for changes now
+sudo -u www-data php /var/www/html/_h6ai/private/bin/h6ai-index.php rebuild   # from scratch
+```
+
+Without `pdo_sqlite` (or with SQLite older than 3.34), searches walk the folders, as h5ai did,
+but with a time limit (`search.timeLimit`, 3 s) and the same limits on concurrent searches.
+See [SEARCH.md](../SEARCH.md).
+
 ## 8. Moving from h5ai or a web root full of files
 
 The classic h5ai layout: your files in the web root, `_h5ai` next to them, and an `index` line in
@@ -362,6 +424,9 @@ folder is untouched.
 | `502 Bad Gateway` | PHP-FPM isn't running, or `fastcgi_pass` points to the wrong socket |
 | Locked out after failed logins | wait 15 minutes, or delete `_h6ai/private/cache/ratelimit-*` |
 | Lost the admin password | `sudo -u www-data php _h6ai/private/bin/h6ai-user.php passwd NAME` |
+| No search box | `search.enabled` is off: [Search](#search) |
+| System → Search index: SQLite "missing" | install `pdo_sqlite` (requirements) and restart PHP-FPM; until then searches walk the folders |
+| The index takes long to build, new files show up late in search | web requests build it in slices: set up the indexer daemon or the cron line ([Search](#search)) |
 
 ## 12. Differences from native and Docker
 
@@ -378,3 +443,5 @@ Features are the same. What differs is what belongs to your server:
   file.
 * **Large-file tuning** (sendfile, thread pools, open file cache) is your nginx's configuration.
   The native and Docker installs bring h6ai's (`deploy/nginx/large-files.conf`).
+* **The search indexer** runs in web requests unless you add the service or cron line from
+  [Search](#search). The native and Docker installs bring the daemon.

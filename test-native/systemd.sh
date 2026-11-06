@@ -58,6 +58,19 @@ login() {
 }
 login "$password" || fail "login with the generated password"
 
+echo "[systemd] search indexer"
+x 'systemctl is-enabled h6ai-index && systemctl is-active h6ai-index' || fail "h6ai-index not enabled and active"
+# turned on later, the way an admin would: the daemon (sandboxed, see install.sh) builds the index
+x 'mkdir -p /srv/files/deep/er && touch "/srv/files/deep/er/Findme Report.pdf" \
+    && echo "{\"search\": {\"enabled\": true}}" > /srv/files/_h6ai/private/conf/options.local.json'
+for _ in $(seq 60); do
+    docker exec "$c" h6ai-index status 2>/dev/null | grep -q '^index *ready' && break
+    sleep 1
+done
+x 'h6ai-index status' || fail "h6ai-index status"
+x 'h6ai-index status | grep -q "^index *ready" && h6ai-index status | grep -q "daemon *running"' || fail "the daemon didn't build the index"
+x 'h6ai-index search findme report | grep -q "Findme Report.pdf"' || fail "h6ai-index search"
+
 echo "[systemd] reboot"
 docker restart "$c" >/dev/null
 for _ in $(seq 30); do
@@ -67,10 +80,13 @@ for _ in $(seq 30); do
 done
 [ "$code" = 200 ] || fail "index after reboot: $code"
 login "$password" || fail "login after reboot"
+x 'systemctl is-active h6ai-index' || fail "h6ai-index after reboot"
 
 echo "[systemd] uninstall --purge"
 x '/opt/h6ai-bundle/install.sh --uninstall --purge' || fail "uninstall"
 x '! [ -e /srv/files/_h6ai ] && nginx -t && systemctl is-active nginx' || fail "state after uninstall"
+x '! [ -e /etc/systemd/system/h6ai-index.service ] && ! [ -e /usr/local/sbin/h6ai-index ] && ! systemctl is-active h6ai-index' \
+    || fail "h6ai-index left behind"
 body=$(curl -s "http://127.0.0.1:$PORT/" || true)
 case $body in *"Welcome to nginx"*) ;; *) fail "the distribution's default site is not back" ;; esac
 

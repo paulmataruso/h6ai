@@ -1,5 +1,5 @@
 {
-    "search": {"enabled": true},
+    "search": {"enabled": true, "rateLimit": {"max": 120, "window": 10}},
     "filter": {"enabled": true},
     "download": {"enabled": true, "type": "php-tar"},
     "thumbnails": {"enabled": true},

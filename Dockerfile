@@ -46,7 +46,7 @@ RUN php -r '$fixed = ["8.2" => "8.2.35", "8.3" => "8.3.36", "8.4" => "8.4.27", "
 
 RUN set -eux; \
     apk add --no-cache \
-        nginx curl coreutils tar zip unzip \
+        nginx curl coreutils tar zip unzip util-linux-misc \
         ffmpeg ghostscript \
         imagemagick imagemagick-jpeg imagemagick-webp imagemagick-pdf imagemagick-heic \
         libjpeg-turbo libpng libwebp libavif freetype; \
@@ -57,6 +57,7 @@ RUN set -eux; \
     docker-php-ext-enable opcache; \
     apk del --no-network .build-deps; \
     php -r 'exit(gd_info()["JPEG Support"] && gd_info()["WebP Support"] && gd_info()["AVIF Support"] ? 0 : 1);'; \
+    php -r '$d = new PDO("sqlite::memory:"); $d->exec("CREATE VIRTUAL TABLE t USING fts5(a, tokenize=trigram)");'; \
     rm -f /etc/nginx/http.d/default.conf; \
     mkdir -p /var/lib/php/sessions /etc/h6ai
 
@@ -83,6 +84,7 @@ FROM base AS runtime
 COPY --from=app /app/build/_h6ai /opt/h6ai/_h6ai
 COPY deploy/install-app.sh docker/init.sh docker/seed.sh docker/seed-media.php docker/bigfile.sh /usr/local/share/h6ai/
 COPY deploy/h6ai-user /usr/local/bin/h6ai-user
+COPY deploy/h6ai-index /usr/local/bin/h6ai-index
 COPY docker/entrypoint.sh /usr/local/bin/h6ai-entrypoint
 RUN mkdir -p /srv/www/_h6ai/private/data; \
     php -r 'foreach (["file_uploads" => "", "max_multipart_body_parts" => "1", "post_max_size" => "1M"] as $k => $v) { \

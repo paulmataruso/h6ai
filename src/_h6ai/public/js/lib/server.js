@@ -18,13 +18,15 @@ const fail = (msg, resp = {}) => {
 };
 
 // POSTs a JSON request to h6ai. Always resolves; failed requests resolve to an object with
-// `err` and `msg` (same shape as server side errors).
-const request = (data, {quiet = false} = {}) => {
+// `err` and `msg` (same shape as server side errors). quiet: no error listeners (the caller
+// shows errors itself). signal: an AbortSignal; aborted requests resolve to ERR_ABORTED.
+const request = (data, {quiet = false, signal} = {}) => {
     return global.window.fetch(API_URL, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {'Content-Type': 'application/json;charset=utf-8', 'Accept': 'application/json'},
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        signal
     })
         .then(resp => resp.json().catch(() => ({err: 'ERR_RESPONSE', msg: `unexpected response (HTTP ${resp.status})`})))
         .then(json => {
@@ -33,7 +35,12 @@ const request = (data, {quiet = false} = {}) => {
             }
             return json;
         })
-        .catch(err => quiet ? {err: 'ERR_NETWORK', msg: String(err)} : fail(`network error: ${err.message || err}`));
+        .catch(err => {
+            if (err && err.name === 'AbortError') {
+                return {err: 'ERR_ABORTED', msg: 'aborted'};
+            }
+            return quiet ? {err: 'ERR_NETWORK', msg: String(err)} : fail(`network error: ${err.message || err}`);
+        });
 };
 
 // Downloads go through a regular form POST so the browser streams the response to disk.

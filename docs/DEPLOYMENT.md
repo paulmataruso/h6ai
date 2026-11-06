@@ -19,8 +19,9 @@ sudo deploy/install-app.sh build/_h6ai /srv/www/_h6ai www-data
 as. Re-run it to upgrade: options, data and caches are kept.
 
 Requirements: PHP ≥ 8.2 (FPM) with `gd` (JPEG, optionally WebP/AVIF), `exif`, `mbstring` and
-`opcache`. Optional tools: `ffmpeg` (video thumbnails), Ghostscript or ImageMagick (PDF
-thumbnails), `zip`, GNU `tar`, `du`, `timeout`.
+`opcache`; `pdo_sqlite` (SQLite ≥ 3.34 with FTS5) for the search index. Optional tools: `ffmpeg`
+(video thumbnails), Ghostscript or ImageMagick (PDF thumbnails), `zip`, GNU `tar`, `du`,
+`timeout`; `deploy/h6ai-user` and `deploy/h6ai-index` as shell commands (`/usr/local/sbin`).
 
 ## 2. nginx
 
@@ -141,6 +142,14 @@ that's what the native installer does:
 
 The OPcache settings matter most: OPcache on, `realpath_cache_size=4096K` and
 `realpath_cache_ttl=600` (h6ai is filesystem heavy).
+
+**The search indexer** (once `search.enabled` is on) runs as the pool's user:
+`php -d memory_limit=512M /srv/www/_h6ai/private/bin/h6ai-index.php daemon`, at idle priority.
+The unit `install.sh` writes is a good template: `Nice=19`, `CPUSchedulingPolicy=idle`,
+`IOSchedulingClass=idle`, `ProtectSystem=strict` with `ReadWritePaths=` the `_h6ai/private/cache`
+folder. Without it, web requests do the work in slices (fine for a few hundred thousand files).
+See [SEARCH.md](SEARCH.md) and [the drop-in guide](install/dropin.md#search) for a unit and a
+cron line.
 
 ## 5. First login and permissions
 

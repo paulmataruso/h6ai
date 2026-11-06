@@ -62,7 +62,12 @@ const sortItems = (column, reverse) => {
     dom(toArray(dom('#items .item:not(.folder-parent)')).sort(fn)).appTo('#items');
 };
 
-const onContentChanged = () => {
+const onContentChanged = (added, removed, opts) => {
+    if (opts && opts.ranked) {
+        // best matches first: no column order until a header is clicked
+        dom('#items li.header button').rmCls('ascending').rmCls('descending').find('.sort-state').text('');
+        return;
+    }
     const order = store.get(storekey) || {};
     const column = order.column !== undefined ? Number(order.column) : settings.column;
     const reverse = order.reverse !== undefined ? !!order.reverse : settings.reverse;

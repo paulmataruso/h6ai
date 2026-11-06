@@ -164,8 +164,9 @@ let settings = null;
 let requestInfo = null; // how the server sees this admin's request (reverse proxy setup)
 let activity = null;
 let activityFilter = {user: '', kind: '', path: ''};
-const loading = {settings: false, activity: false};
+const loading = {settings: false, activity: false, search: false};
 let accessResult = null;
+let searchStatus = null; // the search index (SearchIndex::status)
 
 const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'admin', op, csrf: setup.CSRF}, data), {quiet: true})
     .then(resp => {
@@ -186,6 +187,8 @@ const adminRequest = (op, data = {}) => server.request(Object.assign({action: 'a
             activity = resp;
         } else if (resp.probe) {
             return resp; // the caller handles it (runFileTypeProbe)
+        } else if (resp.search) {
+            searchStatus = resp.search;
         } else {
             state = resp;
         }
@@ -1207,7 +1210,62 @@ const nginxPanel = () => setup.IS_DROPIN ? null : el('section', {cls: 'card'}, [
         '"location /". Remove it: h6ai already marks public and private files for caches. Details: docs/DEPLOYMENT.md.'})
 ]);
 
-const systemPanel = () => el('div', {cls: 'stack'}, [dropinPanel(), nginxPanel(), proxyPanel(), checksPanel()]);
+// The search index (docs/SEARCH.md): how current it is and who keeps it so.
+const loadSearchStatus = () => {
+    loading.search = true;
+    return adminRequest('search.status').then(() => {
+        loading.search = false;
+    });
+};
+
+const searchPanel = () => {
+    if (searchStatus === null) {
+        if (!loading.search) {
+            loadSearchStatus();
+        }
+        return el('section', {cls: 'card'}, [el('h2', {text: 'Search index'}), el('p', {cls: 'help', text: 'Loading…'})]);
+    }
+    const s = searchStatus;
+    const number = value => Number(value || 0).toLocaleString();
+    const pass = s.lastPass;
+    const rows = [
+        checkRow('Search', 'search.enabled and search.index.enabled in options.json', s.enabled ? true : 'advice', s.enabled ? 'on' : 'off'),
+        checkRow('SQLite', 'pdo_sqlite with FTS5, SQLite 3.34 or later', s.supported, s.supported ? s.sqlite : (s.reason || 'missing'))
+    ];
+    if (s.supported) {
+        rows.push(checkRow('Index', 'Searches use it; until it is ready they walk the folders (slower, time limited)',
+            s.usable ? (s.stale ? 'advice' : true) : s.enabled ? false : 'advice',
+            s.usable ? (s.stale ? 'ready, options changed: rebuilding' : 'ready') : (s.reason || 'not built')));
+        if (s.usable) {
+            rows.push(checkRow('Entries', `${number(s.folders)} folders, ${format.formatSize(s.bytes) || '0 B'} on disk`, true, number(s.entries)));
+            rows.push(checkRow('Built', s.buildSeconds !== null ? `in ${Number(s.buildSeconds).toFixed(1)} s` : '', true, formatTime(s.built)));
+        }
+        if (pass) {
+            rows.push(checkRow('Last check for changes', `${Number(pass.seconds).toFixed(1)} s: ${number(pass.folders)} folders checked, ` +
+                `${number(pass.rescanned)} re-listed, ${number(pass.changes)} changes`, true, formatTime(pass.at)));
+        }
+        if (s.building) {
+            rows.push(checkRow('Building', `a new index, ${number(s.building.entries)} entries so far`, null, ''));
+        }
+        rows.push(checkRow('Indexer', 'The h6ai-index daemon (Docker, install.sh) keeps it current; without it web requests do the work in slices',
+            s.daemon ? true : 'advice', s.daemon ? 'daemon running' : 'web requests'));
+    }
+    return el('section', {cls: 'card'}, [
+        el('div', {cls: 'card-head'}, [el('h2', {text: 'Search index'}), el('div', {cls: 'card-actions'}, [
+            button('Refresh', {cls: 'btn', title: 'Show the current state', onClick: loadSearchStatus}),
+            s.supported && s.enabled ? button('Rebuild', {cls: 'btn', title: 'Index every folder again (the old index answers until the new one is ready)', onClick: () => {
+                adminRequest('search.rebuild').then(resp => {
+                    toast(resp.error ? `Rebuild failed: ${resp.error}` : 'The index is rebuilt in the background. Searches keep working meanwhile.',
+                        resp.error ? 'error' : 'info');
+                });
+            }}) : null
+        ])]),
+        el('ul', {cls: 'checks'}, rows),
+        el('p', {cls: 'help', text: 'Shell: php _h6ai/private/bin/h6ai-index.php status | refresh | rebuild (as the PHP-FPM user). Details: docs/SEARCH.md.'})
+    ]);
+};
+
+const systemPanel = () => el('div', {cls: 'stack'}, [dropinPanel(), nginxPanel(), proxyPanel(), searchPanel(), checksPanel()]);
 
 // --- access ---------------------------------------------------------------------------------
 

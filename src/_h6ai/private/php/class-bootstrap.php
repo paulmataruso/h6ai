@@ -74,6 +74,9 @@ final class Bootstrap {
             }
         }
 
+        // search index work on installs without the CLI indexer, after the response is sent
+        register_shutdown_function([SearchIndexer::class, 'tick'], $context);
+
         if ($context->is_api_request()) {
             (new Api($context))->apply();
         }

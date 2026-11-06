@@ -191,7 +191,9 @@ const checkHint = () => {
     }
 };
 
-const setItems = items => {
+// opts.ranked: the items come in a meaningful order (search relevance) that sorting keeps
+// until a column header is clicked
+const setItems = (items, opts = {}) => {
     const removed = map($items.find('.item'), el => el._item);
 
     $items.find('.item, .band').rm();
@@ -204,7 +206,7 @@ const setItems = items => {
     base.$content[0].scrollTop = 0;
 
     checkHint();
-    event.pub('view.changed', items, removed);
+    event.pub('view.changed', items, removed, opts);
 };
 
 const changeItems = (add, remove) => {

@@ -41,6 +41,17 @@ jobs:
           coverage: none
       - run: find src -name '*.php' -print0 | xargs -0 -n1 php -l
 
+  search:
+    name: Search index tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      # randomised: a tree changed at random each round, the index compared with a real walk
+      - run: PHP_IMAGE=php:${{ matrix.php }}-cli ROUNDS=16 SEED=${{ github.run_number }} sh test-php/run.sh
+
   integration:
     name: Docker + integration tests
     runs-on: ubuntu-latest

@@ -122,11 +122,23 @@ no effect: use `h6ai-user` (below).
 | `H6AI_ADMIN_USER` | `admin` | first admin, created on the first start |
 | `H6AI_ADMIN_PASSWORD` | *(empty)* | its password; empty generates one |
 | `PHP_MEMORY_LIMIT` | `256M` | |
+| `H6AI_SEARCH_INDEXER` | `1` | the search indexer daemon in the container; `0` leaves the index to web requests |
 
 For Docker secrets, set `H6AI_ADMIN_PASSWORD_FILE` in `compose.yaml` instead of the password.
 
 Option overrides go into `<shared folder>/_h6ai/private/conf/options.local.json`. Everything else
 (users, permissions, theme, Google, the public address behind a proxy) is on the admin page.
+
+**Search** is off until you turn it on there:
+
+```json
+{"search": {"enabled": true}}
+```
+
+The image has everything it needs (SQLite with FTS5). The indexer daemon in the container builds
+a name index of the shared folder at low CPU and disk priority and checks it for changes every 5
+minutes. Until the first build is done, searches walk the folders (slower, time limited). See
+[section 7](#7-day-to-day) for its status and [SEARCH.md](../SEARCH.md) for the details.
 
 ## 6. Where everything is
 
@@ -135,6 +147,7 @@ Option overrides go into `<shared folder>/_h6ai/private/conf/options.local.json`
 | Your files | the host folder `H6AI_FILES`, at `/srv/www` in the container |
 | h6ai | copied into `<shared folder>/_h6ai` on every start (code only) |
 | Users, permissions, settings, activity log | volume `<project>_h6ai-data` (`h6ai_h6ai-data` with the installer) |
+| Search index | `<shared folder>/_h6ai/private/cache/search-*/`, about 180 bytes per file or folder (175 MiB for a million); rebuilt if deleted |
 | nginx config | `/etc/nginx/http.d/h6ai.conf` and `/etc/nginx/h6ai/` in the image |
 | PHP settings | `/usr/local/etc/php/conf.d/zz-h6ai.ini` in the image |
 | Logs | `docker compose logs h6ai` |
@@ -150,7 +163,22 @@ docker compose exec h6ai h6ai-user passwd admin
 docker compose exec h6ai sh                   # a shell in the container
 ```
 
-Add files by copying them into the shared folder on the host; they show up immediately.
+Add files by copying them into the shared folder on the host; they show up in listings
+immediately and in search after the indexer's next check (within `search.index.refreshInterval`,
+5 minutes).
+
+Search index (also on the admin page, **System → Search index**):
+
+```sh
+docker compose exec h6ai h6ai-index status        # or plain `h6ai-index status` after install.sh --docker
+docker compose exec h6ai h6ai-index refresh       # check for changes now
+docker compose exec h6ai h6ai-index rebuild       # from scratch
+docker compose exec h6ai h6ai-index search ubuntu iso
+```
+
+`status` says whether the index is ready, how many entries it holds, when it was built, how long
+the last check for changes took and whether the daemon runs. A rebuild runs in the background;
+searches keep using the old index until the new one is ready.
 
 ## 8. HTTPS and reverse proxies
 
@@ -236,6 +264,9 @@ Your files are never touched. `<shared folder>/_h6ai` can be deleted by hand aft
 | Login says "cross-origin request rejected" behind a proxy | set the public address and the proxy IP in **System → Public address and reverse proxy** |
 | Big downloads stall behind your own proxy | turn off proxy buffering and raise its read timeout (see the nginx example above) |
 | Locked out after failed logins | wait 15 minutes, or `docker compose exec h6ai sh -c 'rm -f /srv/www/_h6ai/private/cache/ratelimit-*'` |
+| No search box | `search.enabled` is off: see [section 5](#5-settings) |
+| New files missing from search | the indexer checks every 5 minutes; `h6ai-index refresh` checks now ([section 7](#7-day-to-day)) |
+| Search says "busy" or "too many searches" | the server limits concurrent searches (`search.concurrency`, 4) and searches per visitor (`search.rateLimit`, 60 per 10 s); the browser retries by itself |
 
 The development environment (sample files, the bootstrap login `admin` / `admin-test`, port 8687)
 is `compose.dev.yaml`, see [docker/README.md](../../docker/README.md).

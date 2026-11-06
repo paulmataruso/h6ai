@@ -36,7 +36,8 @@ are kept.
                          (default: ask, or generate one with --yes)
   --no-admin             native: don't create an admin; do it later with `h6ai-user add NAME --admin`
   -y, --yes              don't ask questions, use the defaults
-  --uninstall            native: remove the nginx site, the PHP-FPM pool and h6ai-user, keep
+  --uninstall            native: remove the nginx site, the PHP-FPM pool, the search indexer
+                         service and h6ai-user, keep
                          <root>/_h6ai (users, settings). Docker: remove the container, keep
                          the h6ai-data volume
   --purge                with --uninstall: also delete h6ai's data (<root>/_h6ai, /var/lib/h6ai
@@ -230,11 +231,11 @@ if [ "$UNINSTALL" = 1 ] && [ "$MODE" = docker ]; then
     step "Removing the h6ai container"
     if [ "$PURGE" = 1 ]; then
         (cd "$H6AI_DOCKER_DIR" && docker compose down -v --rmi all) || warn "docker compose down failed"
-        rm -rf "${H6AI_DOCKER_DIR:?}" "${H6AI_ROOT:?}/_h6ai" /etc/h6ai /usr/local/sbin/h6ai-user
+        rm -rf "${H6AI_DOCKER_DIR:?}" "${H6AI_ROOT:?}/_h6ai" /etc/h6ai /usr/local/sbin/h6ai-user /usr/local/sbin/h6ai-index
         info "removed the container, the h6ai-data volume, the image, $H6AI_DOCKER_DIR and $H6AI_ROOT/_h6ai"
     else
         (cd "$H6AI_DOCKER_DIR" && docker compose down) || warn "docker compose down failed"
-        rm -f "$STATE" /usr/local/sbin/h6ai-user
+        rm -f "$STATE" /usr/local/sbin/h6ai-user /usr/local/sbin/h6ai-index
         info "kept the h6ai-data volume (users, settings) and $H6AI_DOCKER_DIR. --uninstall --purge deletes them."
     fi
     info "Your files in $H6AI_ROOT are untouched."
@@ -242,7 +243,11 @@ if [ "$UNINSTALL" = 1 ] && [ "$MODE" = docker ]; then
 fi
 if [ "$UNINSTALL" = 1 ]; then
     step "Removing h6ai from nginx and PHP-FPM"
-    for f in "${NGINX_SITE:-}" "${NGINX_SITE:-}.h6ai-new" "${NGINX_SITE_LINK:-}" "${FPM_POOL:-}" "${PHP_INI:-}" /usr/local/sbin/h6ai-user; do
+    if [ -n "${INDEX_UNIT:-}" ] && [ -e "$INDEX_UNIT" ]; then
+        service_do disable h6ai-index >/dev/null 2>&1 || true
+        [ "$HAS_SYSTEMD" = 1 ] && { systemctl stop h6ai-index 2>/dev/null || true; }
+    fi
+    for f in "${NGINX_SITE:-}" "${NGINX_SITE:-}.h6ai-new" "${NGINX_SITE_LINK:-}" "${FPM_POOL:-}" "${PHP_INI:-}" "${INDEX_UNIT:-}" /usr/local/sbin/h6ai-user /usr/local/sbin/h6ai-index; do
         [ -n "$f" ] && { [ -e "$f" ] || [ -L "$f" ]; } && rm -f "$f" && info "removed $f"
     done
     # with --no-site (or by hand) a server block of the admin's includes h6ai's snippets
@@ -258,6 +263,7 @@ if [ "$UNINSTALL" = 1 ]; then
     elif [ -n "$DISABLED_SITE" ] && [ -n "${DISABLED_SITE_TARGET:-}" ] && [ ! -e "$DISABLED_SITE" ]; then
         ln -s "$DISABLED_SITE_TARGET" "$DISABLED_SITE" && info "re-enabled $DISABLED_SITE"
     fi
+    [ "$HAS_SYSTEMD" = 1 ] && [ -n "${INDEX_UNIT:-}" ] && systemctl daemon-reload 2>/dev/null
     service_do reload "${FPM_SERVICE:-}" 2>/dev/null || true
     if nginx -t >/dev/null 2>&1; then service_do reload nginx 2>/dev/null || true; fi
     if [ "$PURGE" = 1 ]; then
@@ -361,6 +367,7 @@ summary() {
         echo "            ${DIM}shown once: sign in and change it in the account menu${RESET}"
     fi
     echo "  Users:    h6ai-user list | add NAME [--admin] | passwd NAME"
+    echo "  Search:   h6ai-index status | refresh | rebuild   ${DIM}(off until search.enabled, see docs/SEARCH.md)${RESET}"
     if [ "$MODE" = docker ]; then
         echo "  Docker:   $DOCKER_DIR (cd there for docker compose logs, restart, ...)"
     else
@@ -447,6 +454,7 @@ if [ "$MODE" = docker ]; then
 
     mkdir -p /usr/local/sbin
     install -m 0755 "$HERE/deploy/h6ai-user" /usr/local/sbin/h6ai-user
+    install -m 0755 "$HERE/deploy/h6ai-index" /usr/local/sbin/h6ai-index
     H6AI_VERSION=$NEW_VERSION
     H6AI_DOCKER_DIR=$DOCKER_DIR
     write_state H6AI_MODE H6AI_VERSION H6AI_ROOT H6AI_PORT H6AI_LISTEN H6AI_DOCKER_DIR
@@ -499,7 +507,8 @@ install_debian() {
         PHP_V=$(apt-cache policy php-fpm 2>/dev/null | sed -n 's/.*Candidate: \([0-9]*:\)\{0,1\}\([0-9]*\.[0-9]*\).*/\2/p')
         if [ -z "$PHP_V" ] || ! version_ge "$PHP_V" 8.2; then die "no PHP >= 8.2 available"; fi
     fi
-    pkgs="nginx php$PHP_V-fpm php$PHP_V-cli php$PHP_V-gd php$PHP_V-mbstring"
+    # sqlite3: the search index (docs/SEARCH.md)
+    pkgs="nginx php$PHP_V-fpm php$PHP_V-cli php$PHP_V-gd php$PHP_V-mbstring php$PHP_V-sqlite3"
     apt-cache show "php$PHP_V-opcache" >/dev/null 2>&1 && pkgs="$pkgs php$PHP_V-opcache"
     info "nginx, PHP $PHP_V"
     # shellcheck disable=SC2086
@@ -537,7 +546,8 @@ install_rhel() {
     info "nginx, PHP $PHP_V"
     # EL images ship curl-minimal, which conflicts with the curl package
     curl=; command -v curl >/dev/null 2>&1 || curl=curl
-    dnf -y -q install nginx php-fpm php-cli php-gd php-mbstring php-opcache php-process $curl >/dev/null
+    # php-pdo: SQLite for the search index (docs/SEARCH.md)
+    dnf -y -q install nginx php-fpm php-cli php-gd php-mbstring php-opcache php-process php-pdo $curl >/dev/null
     install_optional "dnf -y -q install" zip
     if [ "$TOOLS" = 1 ]; then
         # ffmpeg: Fedora's ffmpeg-free, or RPM Fusion's ffmpeg if that repository is enabled
@@ -566,7 +576,7 @@ install_alpine() {
     info "nginx, PHP $PHP_V"
     p=php$PHP_N
     apk add -q nginx curl "$p" "$p-fpm" "$p-gd" "$p-mbstring" "$p-opcache" "$p-exif" "$p-session" \
-        "$p-posix" "$p-ctype" "$p-fileinfo" "$p-iconv" coreutils tar >/dev/null
+        "$p-posix" "$p-ctype" "$p-fileinfo" "$p-iconv" "$p-pdo" "$p-pdo_sqlite" coreutils tar >/dev/null
     install_optional "apk add -q" zip
     [ "$TOOLS" = 1 ] && install_optional "apk add -q" ffmpeg imagemagick ghostscript
     PHP_BIN=/usr/bin/php$PHP_N
@@ -650,6 +660,7 @@ step "Installing h6ai $NEW_VERSION into $H6AI_ROOT/_h6ai"
 "$HERE/deploy/install-app.sh" "$SRC" "$H6AI_ROOT/_h6ai" h6ai h6ai >/dev/null
 mkdir -p /usr/local/sbin
 install -m 0755 "$HERE/deploy/h6ai-user" /usr/local/sbin/h6ai-user
+install -m 0755 "$HERE/deploy/h6ai-index" /usr/local/sbin/h6ai-index
 
 # --- PHP-FPM -------------------------------------------------------------------------------------
 step "Configuring PHP-FPM (pool h6ai, $FPM_SOCK)"
@@ -863,10 +874,18 @@ if [ "$FIREWALL" = 1 ] && [ "$H6AI_NO_SITE" = 0 ]; then
     fi
 fi
 
+# the search indexer's service (written below): recorded in the state so --uninstall finds it
+INDEX_UNIT=
+if [ "$HAS_SYSTEMD" = 1 ]; then
+    INDEX_UNIT=/etc/systemd/system/h6ai-index.service
+elif [ "$HAS_OPENRC" = 1 ]; then
+    INDEX_UNIT=/etc/init.d/h6ai-index
+fi
+
 # --- state (also read by h6ai-user) --------------------------------------------------------------
 H6AI_VERSION=$NEW_VERSION
 write_state H6AI_MODE H6AI_VERSION H6AI_ROOT H6AI_PORT H6AI_LISTEN H6AI_SERVER_NAME H6AI_NO_SITE PHP_BIN FPM_BIN FPM_SERVICE \
-    FPM_POOL PHP_INI FPM_SOCK NGINX_SITE NGINX_SITE_LINK SITE_SUM DISABLED_SITE DISABLED_SITE_TARGET
+    FPM_POOL PHP_INI FPM_SOCK NGINX_SITE NGINX_SITE_LINK SITE_SUM DISABLED_SITE DISABLED_SITE_TARGET INDEX_UNIT
 
 # --- first admin ----------------------------------------------------------------------------------
 if [ "$NO_ADMIN" = 0 ] && ! h6ai-user has-admin; then
@@ -883,6 +902,62 @@ if [ "$NO_ADMIN" = 0 ] && ! h6ai-user has-admin; then
     fi
 fi
 
+# --- search indexer -------------------------------------------------------------------------------
+# Keeps the search index current (docs/SEARCH.md), as the PHP-FPM user, at the lowest CPU and disk
+# priority. Without a service manager, web requests do that work in slices instead.
+INDEX_CMD="$PHP_BIN -d memory_limit=512M $H6AI_ROOT/_h6ai/private/bin/h6ai-index.php daemon"
+if [ "$HAS_SYSTEMD" = 1 ]; then
+    cat > "$INDEX_UNIT" <<UNIT
+# h6ai search indexer, written by install.sh. Re-run the installer to change it.
+[Unit]
+Description=h6ai search indexer
+After=local-fs.target remote-fs.target
+
+[Service]
+Type=simple
+User=h6ai
+Group=h6ai
+ExecStart=$INDEX_CMD
+Restart=always
+RestartSec=10
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ReadWritePaths=$H6AI_ROOT/_h6ai/private/cache
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    chmod 0644 "$INDEX_UNIT"
+    systemctl daemon-reload
+elif [ "$HAS_OPENRC" = 1 ]; then
+    cat > "$INDEX_UNIT" <<UNIT
+#!/sbin/openrc-run
+# h6ai search indexer, written by install.sh. Re-run the installer to change it.
+description="h6ai search indexer"
+supervisor=supervise-daemon
+command="$PHP_BIN"
+command_args="-d memory_limit=512M $H6AI_ROOT/_h6ai/private/bin/h6ai-index.php daemon"
+command_user="h6ai:h6ai"
+nicelevel=19
+ionice=3
+respawn_delay=10
+respawn_max=0
+output_log=/var/log/h6ai-index.log
+error_log=/var/log/h6ai-index.log
+depend() { need localmount; after netmount; }
+UNIT
+    chmod 0755 "$INDEX_UNIT"
+    touch /var/log/h6ai-index.log && chown h6ai:h6ai /var/log/h6ai-index.log
+fi
+
 # --- services -------------------------------------------------------------------------------------
 step "Starting PHP-FPM and nginx"
 STARTED=1
@@ -890,6 +965,14 @@ if service_do enable "$FPM_SERVICE" >/dev/null 2>&1 && service_do enable nginx >
     # running already: load the new pool and site
     service_do restart "$FPM_SERVICE" >/dev/null
     service_do reload nginx >/dev/null
+    if [ -n "$INDEX_UNIT" ]; then
+        # restart: an upgrade brings new indexer code
+        if service_do enable h6ai-index >/dev/null 2>&1 && service_do restart h6ai-index >/dev/null 2>&1; then
+            info "search indexer: service h6ai-index"
+        else
+            warn "the h6ai-index service didn't start; web requests keep the search index current instead"
+        fi
+    fi
 else
     STARTED=0
     warn "no service manager found. Start the daemons yourself: $FPM_BIN && nginx"

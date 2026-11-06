@@ -24,6 +24,19 @@ else
     echo "[run] service '$SERVICE' not running via compose - rate limits not reset"
 fi
 
+if running; then
+    # the search index: current before the search tests (the daemon may hold it for a moment)
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+        if docker compose exec -T "$SERVICE" php $H6AI_DIR/private/bin/h6ai-index.php refresh >/dev/null 2>&1; then
+            export H6AI_SEARCH_INDEXED=1
+            echo "[run] search index refreshed"
+            break
+        fi
+        sleep 2
+    done
+    [ "${H6AI_SEARCH_INDEXED:-0}" = 1 ] || echo "[run] search index not refreshed - search tests run without it"
+fi
+
 echo "[run] testing $URL"
 status=0
 H6AI_URL=$URL node --test --test-concurrency=1 "$@" test-integration/*.test.mjs || status=$?

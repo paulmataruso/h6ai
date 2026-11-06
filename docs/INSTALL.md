@@ -9,6 +9,7 @@ Three ways to run h6ai. Pick one; each has a step-by-step guide.
 | Setup | `sudo ./install.sh --native` | `sudo ./install.sh --docker`, or `docker compose up -d` | unzip, add the line, finish in the browser |
 | Your files | any folder; nginx serves them after h6ai's check | a host folder mounted into the container | a folder outside the web root; h6ai checks, nginx sends big files |
 | Upgrade | run the new release's `install.sh` | run the new `install.sh`, or `git pull` and `up -d --build` | unzip the new release over it |
+| Search indexer | the `h6ai-index` service | a daemon in the container | web requests in slices, or a service or cron line you add |
 | Best for | a dedicated server or VM | any host with Docker, a clean host | an existing web server, shared hosting with nginx |
 
 All three have the same features: folder permissions that also cover direct links, download-only
@@ -61,7 +62,14 @@ removes it. `./install.sh --help` lists all options.
 * **Options** that aren't on the admin page go into `_h6ai/private/conf/options.local.json` (or
   `options.local.php` on a drop-in). Upgrades keep it; the README lists the common ones.
 * **The admin page's System tab** shows whether everything works: PHP, tools, writable folders,
-  the CVE fix, and on a drop-in the [drop-in checks](install/dropin.md#6-the-drop-in-checks).
+  the CVE fix, the search index, and on a drop-in the
+  [drop-in checks](install/dropin.md#6-the-drop-in-checks).
+* **Search** is off until `{"search": {"enabled": true}}` is in the option overrides. It then
+  uses a name index that a background indexer builds and keeps current, so a search costs
+  milliseconds instead of a walk through the folders, on a share of any size. The status, the
+  shell commands and what to do on a drop-in:
+  [native](install/native.md#the-search-index), [Docker](install/docker.md#5-settings),
+  [drop-in](install/dropin.md#search); the design and its measurements: [SEARCH.md](SEARCH.md).
 
 ## Your own nginx configuration
 

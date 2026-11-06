@@ -19,9 +19,11 @@ test-integration/run.sh
 It:
 
 1. clears the login rate limiter inside the container,
-2. runs all files **sequentially** (`--test-concurrency=1`, in file-name order),
-3. checks that no generated thumbnail is executable (S15),
-4. clears the rate limiter again.
+2. brings the search index up to date (`h6ai-index.php refresh` in the container) and sets
+   `H6AI_SEARCH_INDEXED=1`, so `40-search` also checks that searches use the index,
+3. runs all files **sequentially** (`--test-concurrency=1`, in file-name order),
+4. checks that no generated thumbnail is executable (S15),
+5. clears the rate limiter again.
 
 Extra arguments go to `node --test`, e.g. `test-integration/run.sh --test-reporter=dot`.
 
@@ -39,7 +41,7 @@ H6AI_URL=http://127.0.0.1:8687 node --test --test-concurrency=1 test-integration
 | `15-cve` | CVE-2026-109618 (PHP OOM RCE: fixed PHP, multipart 415, methods 405, body 413) and CVE-2026-10961 (sandbox CSP for user HTML/SVG) |
 | `20-thumbs` | traversal/hidden thumbnails (S1, S14), converter input (S2), dimension limits + decompression bomb (S3), video/PDF/WebP/AVIF thumbs |
 | `30-pages-headers` | fallback XSS (S4), no session on page views (S7), CSP & security headers (S12), no third-party fonts (S16), `/_h6ai/private` denial, fpm status not exposed, `.php` served as data |
-| `40-search` | ReDoS, delimiter injection, hidden/out-of-root results, symlink loops (S9) |
+| `40-search` | ReDoS, delimiter injection, hidden/out-of-root results, symlink loops (S9); the query language (words in any order, case and accents, `"phrases"`, `-exclusions`, globs, `re:`), ranking, scope, result caps, `searchInfo` (admin-only fields), hidden, unmanaged and `_h6ai` entries never found, 400 for bad input, the per-client rate limit (429 with `Retry-After`, last in the file: it waits the window out) |
 | `50-download` | PAX long names, hidden files, scope & traversal checks, header injection (S10) |
 | `60-custom` | header/footer lookup outside the root (S11) |
 | `65-files-caching` | 64 MiB file: Range (exact bytes), 416, ETag/304, no gzip on media, immutable assets |
@@ -72,5 +74,9 @@ file-gate overhead against the running container. Results and hardware notes are
   any user exists, the bootstrap admin (`H6AI_PASSHASH`) is disabled. Reset with
   `docker compose exec h6ai rm /srv/www/_h6ai/private/data/auth.json.php`.
 * Names of seeded files are mirrored in `lib.mjs`. Keep them in sync with `docker/seed.sh`.
+* **The search index itself** (build, incremental refresh, renames, permissions in SQL, ranking)
+  is tested without a server by `test-php/run.sh`: random trees and random changes, every query
+  compared against a reference walk. `SEED=n ROUNDS=n` repeat or lengthen a run;
+  `PHP_IMAGE=php:8.2-cli` picks another PHP.
 * `lib.mjs` sends paths byte-for-byte (no URL normalisation), so traversal probes such as
   `/%2e%2e/` really reach the server.
