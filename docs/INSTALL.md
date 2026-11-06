@@ -35,7 +35,7 @@ npm run release        # build/h6ai-<version>.{tar.gz,zip} and build/h6ai-<versi
 ## One installer for native and Docker
 
 ```sh
-tar xzf h6ai-1.0.0.tar.gz && cd h6ai-1.0.0
+tar xzf h6ai-1.1.0.tar.gz && cd h6ai-1.1.0
 sudo ./install.sh              # asks: 1) natively on this system  2) in Docker
 ```
 

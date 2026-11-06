@@ -1,6 +1,6 @@
 {
   "name": "h6ai",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "h6ai: a modern, secure file index for nginx + PHP-FPM with users, folder permissions and previews.",
   "keywords": [
     "file-index",

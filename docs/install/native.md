@@ -56,15 +56,15 @@ The bundle `h6ai-<version>.tar.gz` (or `.zip`) contains the built application, t
 the configuration it writes. Copy it to the server and unpack it:
 
 ```sh
-tar xzf h6ai-1.0.1.tar.gz
-cd h6ai-1.0.1
+tar xzf h6ai-1.1.0.tar.gz
+cd h6ai-1.1.0
 ```
 
 To make a bundle yourself from a git checkout (needs Node.js 20 or later):
 
 ```sh
 npm ci
-npm run release        # build/h6ai-1.0.1.tar.gz, .zip, and the drop-in zips
+npm run release        # build/h6ai-1.1.0.tar.gz, .zip, and the drop-in zips
 ```
 
 Running `install.sh` straight from a checkout also works after `npm ci && npm run build`.
@@ -78,7 +78,7 @@ sudo ./install.sh --native
 Without `--native` the installer first asks whether to install natively or with Docker. Then:
 
 ```
-==> Installing h6ai 1.0.1 natively on Ubuntu 24.04.5 LTS
+==> Installing h6ai 1.1.0 natively on Ubuntu 24.04.5 LTS
 Folder to share [/srv/h6ai]: /srv/files
 HTTP port [80]:
     shared folder: /srv/files
@@ -88,7 +88,7 @@ Continue? (y/n) [y]:
     nginx, PHP 8.3
     PHP 8.3.6: CVE-2026-109618 fixed (distribution backport)
 ==> Setting up the h6ai system user and folders
-==> Installing h6ai 1.0.1 into /srv/files/_h6ai
+==> Installing h6ai 1.1.0 into /srv/files/_h6ai
 ==> Configuring PHP-FPM (pool h6ai, /run/php/h6ai.sock)
 ==> Configuring nginx (/etc/nginx/sites-available/h6ai.conf)
 ==> Creating the admin user "admin"
@@ -98,7 +98,7 @@ Repeat password:
 ==> Starting PHP-FPM and nginx
     check: index 200, private files 403
 
-h6ai 1.0.1 is ready.
+h6ai 1.1.0 is ready.
   Files:    http://files.example.com/          (shared folder /srv/files)
   Admin:    http://files.example.com/_h6ai/public/
   Users:    h6ai-user list | add NAME [--admin] | passwd NAME

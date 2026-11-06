@@ -62,12 +62,12 @@ an extension.
 
 ## 2. Unzip h6ai into the web root
 
-Get `h6ai-1.0.1-dropin.zip` (a release download, or `npm run release` in a git checkout, which
+Get `h6ai-1.1.0-dropin.zip` (a release download, or `npm run release` in a git checkout, which
 writes it to `build/`). It contains one folder, `_h6ai`. Unzip it into the web root:
 
 ```sh
 cd /var/www/html
-sudo unzip ~/h6ai-1.0.1-dropin.zip
+sudo unzip ~/h6ai-1.1.0-dropin.zip
 sudo rm -f index.html index.nginx-debian.html   # a default welcome page would win over h6ai
 ```
 
@@ -318,7 +318,7 @@ folder in the first run (step 5):
 
 ```sh
 sudo mkdir -p /var/www/files-h6ai && cd /var/www/files-h6ai   # holds nothing but _h6ai
-sudo unzip ~/h6ai-1.0.1-dropin.zip
+sudo unzip ~/h6ai-1.1.0-dropin.zip
 # server block: root /var/www/files-h6ai;   first run: files folder /var/www/html
 ```
 

@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Unreleased
+## v1.1.0 (h6ai) - *2026-11-06*
 
 Search, rebuilt for file servers with millions of files ([docs/SEARCH.md](docs/SEARCH.md))
 
