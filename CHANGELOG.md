@@ -5,7 +5,9 @@
 
 * add: external sign-in: show visitors authenticated by the web server (nginx `auth_request` or
   `auth_basic`) in the account menu, with a working "Log out" for session-based sign-ins.
-  Controlled by the `auth.external` option; display only, grants no h6ai permissions
+  Controlled by the `auth.external` option; display only, grants no h6ai permissions.
+  `logoutUrl` must be a same-origin path with no backslashes, control characters or whitespace
+* fix: release packaging (`node build.mjs --release`) no longer needs GNU tar; works on Alpine
 
 
 ## v1.1.0 (h6ai) - *2026-11-06*

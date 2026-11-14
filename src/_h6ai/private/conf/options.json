@@ -33,8 +33,9 @@
     folders. An h6ai account session always takes precedence.
 
     - enabled: boolean, read the FastCGI parameters at all
-    - logoutUrl: string, same-origin path (starts with "/", no scheme or "//") for the POST logout
-        form. Empty string means no logout button is shown even for session auth.
+    - logoutUrl: string, same-origin path for the POST logout form. Must start with "/" followed
+        by something other than "/" or "\", contain no backslashes, no ASCII control characters or
+        whitespace, and be at most 1024 characters. Empty string = no logout button.
     - label: string, overrides the "Log out" button text (empty = default)
 
     The parameters (set by nginx, not by the client — never read from HTTP_* headers):

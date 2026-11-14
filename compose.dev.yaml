@@ -14,6 +14,7 @@ services:
     image: h6ai:dev
     ports: !override
       - "${H6AI_BIND:-172.16.1.67}:${H6AI_PORT:-8687}:80"
+      - "${H6AI_BIND:-172.16.1.67}:${H6AI_EXT_PORT:-8688}:8688"
     environment:
       # Bootstrap admin instead of a created one: user "admin", password_hash('admin-test'),
       # works while no admin user exists. "$" is escaped as "$$" for compose.
@@ -29,5 +30,7 @@ services:
       - ./webroot:/srv/www
       # options the tests rely on (search, tree, ...), deep-merged over options.json
       - ./docker/options.local.json:/srv/www/_h6ai/private/conf/options.local.json:ro
+      # external auth test server (port 8688): sets H6AI_EXTERNAL_USER from a test header
+      - ./docker/nginx/test-ext-auth.conf:/etc/nginx/http.d/test-ext-auth.conf:ro
     # php-fpm's slowlog (request_slowlog_timeout=10s) needs ptrace to dump stack traces.
     # cap_add: [SYS_PTRACE]

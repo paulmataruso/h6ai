@@ -44,8 +44,10 @@ $asset = fn ($path) => $h($page['asset_href'] . $path . '?v=' . rawurlencode($pa
 <?php
 // Per-visitor external user goes in the HTML page (GET), never in the POST API response,
 // because nginx may micro-cache the API response with a key that doesn't include the user.
-if ($page['external_user'] !== null) { ?>
-    <script nonce="<?= $h($page['nonce']) ?>">window.__h6ai_ext = <?= json_encode($page['external_user'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;</script>
+if ($page['external_user'] !== null) {
+    $ext_json = json_encode($page['external_user'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR);
+?>
+    <script nonce="<?= $h($page['nonce']) ?>">window.__h6ai_ext = <?= $ext_json ?>;</script>
 <?php } ?>
     <?= $page['x_head_tags'] ?>
 

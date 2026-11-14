@@ -217,7 +217,7 @@ fastcgi_param H6AI_EXTERNAL_USER $ext_user;
 fastcgi_param H6AI_EXTERNAL_AUTH $ext_auth;
 ```
 
-`logoutUrl` must be a same-origin path starting with `/` (no scheme, no `//`). h6ai renders a
+`logoutUrl` must be a same-origin path: starts with `/`, followed by something other than `/` or `\`, no backslashes, control characters or whitespace, max 1024 chars. h6ai renders a
 POST form to it, so prefetchers can't log people out. `label` optionally overrides the button
 text. `form-action 'self'` in h6ai's CSP already allows same-origin form targets.
 

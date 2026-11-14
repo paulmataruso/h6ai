@@ -209,7 +209,7 @@ fastcgi_param H6AI_EXTERNAL_AUTH $ext_auth;
 * `H6AI_EXTERNAL_USER`: the signed-in name; empty or missing means no external user.
 * `H6AI_EXTERNAL_AUTH`: `session` (logout possible) or `basic` (browser keeps the password,
   no logout button; h6ai shows a note to close the browser instead).
-* `logoutUrl` must be a same-origin path starting with `/`. Anything else is rejected.
+* `logoutUrl` must be a same-origin path: starts with `/`, followed by something other than `/` or `\`, no backslashes, no control characters or whitespace, max 1024 characters. Anything else is rejected.
 * **Caching rule:** don't put per-user data into responses a shared cache may store. The
   external user goes into the HTML page (a GET), never into the POST API response, because
   nginx may micro-cache POST responses with a key that doesn't include the user.

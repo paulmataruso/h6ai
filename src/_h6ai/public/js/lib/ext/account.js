@@ -211,7 +211,7 @@ const initExternalUser = () => {
         $item.appTo($form);
         $form.appTo($menu);
     } else if (extUser.auth === 'basic') {
-        const $note = dom('<div class="menu-note" role="menuitem"></div>');
+        const $note = dom('<div class="menu-note" role="note"></div>');
         dom(`<span>${resource.ui('info')}</span>`).appTo($note);
         dom('<span class="l10n-extBasicNote"></span>').text('Signed in by your browser. Close the browser to sign out.').appTo($note);
         $note.appTo($menu);
@@ -238,7 +238,7 @@ const initExternalUser = () => {
         if ($menu[0].hidden) {
             $menu.rmAttr('hidden');
             $button.attr('aria-expanded', 'true');
-            const first = $menu.find('.menu-item')[0] || $menu.find('.menu-note')[0];
+            const first = $menu.find('.menu-item')[0];
             if (first) {
                 first.focus();
             }

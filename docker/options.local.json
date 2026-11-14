@@ -6,5 +6,6 @@
     "foldersize": {"enabled": true, "type": "php"},
     "custom": {"enabled": true},
     "info": {"enabled": true},
-    "tree": {"enabled": true}
+    "tree": {"enabled": true},
+    "auth": {"external": {"enabled": true, "logoutUrl": "/.logout", "label": ""}}
 }

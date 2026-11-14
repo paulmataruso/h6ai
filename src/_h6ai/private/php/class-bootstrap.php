@@ -107,18 +107,27 @@ final class Bootstrap {
     }
 
     // External user from FastCGI params (set by the web server, never from HTTP_* headers).
-    // Returns null or ['name' => string, 'auth' => 'session'|'basic', 'logoutUrl' => string, 'label' => string].
     private static function get_external_user(Context $context): ?array {
-        if ($context->query_option('auth.external.enabled', false) !== true) {
+        $opts = [
+            'enabled' => $context->query_option('auth.external.enabled', false),
+            'logoutUrl' => $context->query_option('auth.external.logoutUrl', ''),
+            'label' => $context->query_option('auth.external.label', ''),
+        ];
+        return Bootstrap::resolve_external_user($opts);
+    }
+
+    // Returns null or ['name' => string, 'auth' => 'session'|'basic', 'logoutUrl' => string, 'label' => string].
+    // Reads H6AI_EXTERNAL_USER / H6AI_EXTERNAL_AUTH from $_SERVER (FastCGI params, never HTTP_*).
+    public static function resolve_external_user(array $opts): ?array {
+        if (($opts['enabled'] ?? false) !== true) {
             return null;
         }
-        // H6AI_EXTERNAL_USER comes from a fastcgi_param, which PHP exposes as $_SERVER['H6AI_EXTERNAL_USER'].
-        // HTTP_H6AI_EXTERNAL_USER would be the client-supplied header — never read that.
         $raw = $_SERVER['H6AI_EXTERNAL_USER'] ?? '';
         if (!is_string($raw)) {
             return null;
         }
-        $name = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/', '', $raw)), 0, 100);
+        $clean = preg_replace('/[\x00-\x1f\x7f]/', '', $raw);
+        $name = mb_substr(trim(mb_convert_encoding($clean, 'UTF-8', 'UTF-8')), 0, 100);
         if ($name === '') {
             return null;
         }
@@ -126,17 +135,22 @@ final class Bootstrap {
         $auth_raw = $_SERVER['H6AI_EXTERNAL_AUTH'] ?? '';
         $auth = is_string($auth_raw) && strtolower(trim($auth_raw)) === 'basic' ? 'basic' : 'session';
 
-        $logout_url = (string) $context->query_option('auth.external.logoutUrl', '');
-        if (!is_string($logout_url) || !str_starts_with($logout_url, '/') || str_starts_with($logout_url, '//')) {
-            $logout_url = '';
-            if ((string) $context->query_option('auth.external.logoutUrl', '') !== '') {
-                Logger::log('auth.external.logoutUrl rejected: must be a same-origin path starting with /');
-            }
-        }
-
-        $label = (string) $context->query_option('auth.external.label', '');
+        $logout_url = Bootstrap::validate_logout_url($opts['logoutUrl'] ?? '');
+        $label = (string) ($opts['label'] ?? '');
 
         return ['name' => $name, 'auth' => $auth, 'logoutUrl' => $logout_url, 'label' => $label];
+    }
+
+    // Same-origin path: /path (not //, /\, backslash anywhere, control chars, whitespace, >1024).
+    public static function validate_logout_url(mixed $raw): string {
+        if (!is_string($raw) || $raw === '') {
+            return '';
+        }
+        if (strlen($raw) > 1024 || !preg_match('#^/(?![/\\\\])[^\\\\\x00-\x20\x7f]*$#', $raw)) {
+            Logger::log('auth.external.logoutUrl rejected: must be a same-origin path starting with /, no backslashes or control characters');
+            return '';
+        }
+        return $raw;
     }
 
     private static function render(string $template, array $page): void {

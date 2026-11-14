@@ -9,10 +9,11 @@
 
 import {execFileSync} from 'node:child_process';
 import {cp, lstat, mkdir, readdir, readFile, rm, writeFile} from 'node:fs/promises';
-import {watch} from 'node:fs';
+import {createWriteStream, watch} from 'node:fs';
 import {dirname, join, relative, sep} from 'node:path';
+import {pipeline} from 'node:stream/promises';
 import {fileURLToPath} from 'node:url';
-import {deflateRawSync} from 'node:zlib';
+import {createGzip, deflateRawSync} from 'node:zlib';
 import * as esbuild from 'esbuild';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -219,8 +220,48 @@ const writeZip = async (dir, prefix, file) => {
     await writeFile(file, Buffer.concat([...locals, ...centrals, end]));
 };
 
-const tarGz = (cwd, name, file) =>
-    execFileSync('tar', ['-czf', file, '--owner=0', '--group=0', name], {cwd, stdio: 'inherit'});
+// Pure-Node tar.gz writer (no GNU tar dependency). Reproducible: uid/gid 0, fixed mtime,
+// sorted entries, ustar format.
+const MTIME = Math.floor(Date.now() / 1000);
+const tarHeader = (name, size, mode, type) => {
+    const buf = Buffer.alloc(512);
+    const write = (s, off, len) => buf.write(s.length > len ? s.slice(0, len) : s, off, len, 'utf8');
+    write(name, 0, 100);
+    write((mode & 0o7777).toString(8).padStart(7, '0'), 100, 8);
+    write('0000000', 108, 8); // uid
+    write('0000000', 116, 8); // gid
+    write(size.toString(8).padStart(11, '0'), 124, 12);
+    write(MTIME.toString(8).padStart(11, '0'), 136, 12);
+    buf.write('        ', 148, 8, 'ascii'); // placeholder checksum
+    buf[156] = type.charCodeAt(0); // '0' file, '5' dir
+    buf.write('ustar\x00', 257, 6, 'ascii');
+    buf.write('00', 263, 2, 'ascii');
+    write('root', 265, 32); // uname
+    write('root', 297, 32); // gname
+    let cksum = 0;
+    for (let i = 0; i < 512; i++) cksum += buf[i];
+    write(cksum.toString(8).padStart(6, '0') + '\0 ', 148, 8);
+    return buf;
+};
+const tarGz = async (cwd, name, file) => {
+    const entries = await listTree(join(cwd, name), name);
+    entries.unshift({name: name + '/', mode: 0o40755, data: null});
+    const gz = createGzip({level: 9});
+    const out = createWriteStream(join(cwd, file));
+    const done = pipeline(gz, out);
+    for (const entry of entries) {
+        const isDir = entry.data === null;
+        gz.write(tarHeader(entry.name, isDir ? 0 : entry.data.length, entry.mode, isDir ? '5' : '0'));
+        if (!isDir) {
+            gz.write(entry.data);
+            const pad = (512 - (entry.data.length % 512)) % 512;
+            if (pad) gz.write(Buffer.alloc(pad));
+        }
+    }
+    gz.write(Buffer.alloc(1024)); // end-of-archive
+    gz.end();
+    await done;
+};
 
 // Release bundle h6ai-<version>/: the built _h6ai folder, the installer (native or Docker) and
 // the nginx/PHP configuration both share.
@@ -240,12 +281,12 @@ const release = async pkg => {
     for (const suffix of ['.tar.gz', '.zip', '-dropin.tar.gz', '-dropin.zip']) {
         await rm(join(BUILD, base + suffix), {force: true});
     }
-    tarGz(BUILD, base, `${base}.tar.gz`);
+    await tarGz(BUILD, base, `${base}.tar.gz`);
     await writeZip(stage, base, join(BUILD, `${base}.zip`));
     await rm(stage, {recursive: true, force: true});
 
     // drop-in: just _h6ai, extracted straight into a web root (like h5ai's zip)
-    tarGz(BUILD, '_h6ai', `${base}-dropin.tar.gz`);
+    await tarGz(BUILD, '_h6ai', `${base}-dropin.tar.gz`);
     await writeZip(DEST, '_h6ai', join(BUILD, `${base}-dropin.zip`));
     console.log(`release packages written to ${relative(ROOT, BUILD)}/${base}{,-dropin}.{tar.gz,zip}`);
 };
