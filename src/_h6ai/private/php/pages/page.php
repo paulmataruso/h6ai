@@ -2,7 +2,7 @@
 /**
  * Page template for the index and the info page.
  * @var array $page module, title, site_name, head_meta, version, public_href, asset_href, index_href, nonce, skin, skins,
- *                  x_head_tags, fallback_mode, fallback_html
+ *                  x_head_tags, fallback_mode, fallback_html, external_user
  */
 // requested directly (drop-in installs run every .php file): nothing to render
 if (!isset($page) || !is_array($page)) {
@@ -40,6 +40,12 @@ $asset = fn ($path) => $h($page['asset_href'] . $path . '?v=' . rawurlencode($pa
     <link rel="stylesheet" href="<?= $asset('css/styles.css') ?>">
 <?php if (!$page['fallback_mode']) { ?>
     <script type="module" nonce="<?= $h($page['nonce']) ?>" src="<?= $asset('js/scripts.js') ?>" data-module="<?= $h($page['module']) ?>" data-api="<?= $h($page['index_href']) ?>"></script>
+<?php } ?>
+<?php
+// Per-visitor external user goes in the HTML page (GET), never in the POST API response,
+// because nginx may micro-cache the API response with a key that doesn't include the user.
+if ($page['external_user'] !== null) { ?>
+    <script nonce="<?= $h($page['nonce']) ?>">window.__h6ai_ext = <?= json_encode($page['external_user'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;</script>
 <?php } ?>
     <?= $page['x_head_tags'] ?>
 

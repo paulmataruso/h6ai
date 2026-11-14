@@ -10,6 +10,7 @@ const win = global.window;
 const setup = config.setup || {};
 const user = setup.USER || null;
 const auth = setup.AUTH || {};
+const extUser = !user && win.__h6ai_ext ? win.__h6ai_ext : null;
 
 const loginTpl =
         `<dialog id="login-dialog" class="dialog" aria-labelledby="login-title">
@@ -189,6 +190,77 @@ const initUserMenu = () => {
     });
 };
 
+const initExternalUser = () => {
+    const $button = dom(buttonTpl)
+        .addCls('avatar')
+        .attr('title', extUser.name).attr('aria-label', 'Account: ' + extUser.name)
+        .appTo(base.$tools.account);
+    dom('<span class="avatar-letter"></span>').text(extUser.name.slice(0, 1).toUpperCase()).appTo($button);
+
+    const $menu = dom('<div id="account-menu" class="menu" role="menu" hidden></div>').appTo(base.$topbar);
+    const $header = dom('<div class="menu-header"></div>').appTo($menu);
+    dom('<span class="menu-user"></span>').text(extUser.name).appTo($header);
+    dom('<span class="menu-roles l10n-extSignedIn"></span>').text('signed in by the web server').appTo($header);
+
+    if (extUser.auth === 'session' && extUser.logoutUrl) {
+        const label = extUser.label || 'Log out';
+        const $form = dom('<form class="ext-logout-form" method="POST"></form>');
+        $form.attr('action', extUser.logoutUrl);
+        const $item = dom(`<button class="menu-item ext-logout" type="submit" role="menuitem">${resource.ui('log-out')}<span></span></button>`);
+        $item.find('span').text(label);
+        $item.appTo($form);
+        $form.appTo($menu);
+    } else if (extUser.auth === 'basic') {
+        const $note = dom('<div class="menu-note" role="menuitem"></div>');
+        dom(`<span>${resource.ui('info')}</span>`).appTo($note);
+        dom('<span class="l10n-extBasicNote"></span>').text('Signed in by your browser. Close the browser to sign out.').appTo($note);
+        $note.appTo($menu);
+    }
+
+    const close = () => {
+        $menu.attr('hidden', '');
+        $button.attr('aria-expanded', 'false');
+    };
+
+    if (auth.loginAvailable && !auth.anonymous) {
+        const $loginItem = dom(`<button class="menu-item ext-h6ai-login" type="button" role="menuitem">${resource.ui('log-in')}<span></span></button>`);
+        $loginItem.find('span').addCls('l10n-extH6aiLogin').text('Log in with an h6ai account');
+        $loginItem.appTo($menu);
+        initLogin();
+        $loginItem.on('click', () => {
+            close();
+            openLogin();
+        });
+    }
+
+    const toggle = ev => {
+        ev.stopPropagation();
+        if ($menu[0].hidden) {
+            $menu.rmAttr('hidden');
+            $button.attr('aria-expanded', 'true');
+            const first = $menu.find('.menu-item')[0] || $menu.find('.menu-note')[0];
+            if (first) {
+                first.focus();
+            }
+        } else {
+            close();
+        }
+    };
+
+    $button.on('click', toggle);
+    dom(win.document).on('click', ev => {
+        if (!$menu[0].hidden && !$menu[0].contains(ev.target)) {
+            close();
+        }
+    });
+    $menu.on('keydown', ev => {
+        if (ev.key === 'Escape') {
+            close();
+            $button[0].focus();
+        }
+    });
+};
+
 // Shown in place of the listing when the server denied access to the current folder.
 const onHint = (key, $hint) => {
     if (key !== 'denied') {
@@ -227,6 +299,8 @@ const init = () => {
 
     if (user) {
         initUserMenu();
+    } else if (extUser) {
+        initExternalUser();
     } else if (auth.loginAvailable && !auth.anonymous) {
         initLogin();
     }

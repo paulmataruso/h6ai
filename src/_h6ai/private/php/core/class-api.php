@@ -109,6 +109,9 @@ final class Api {
         exit;
     }
 
+    // The external user (auth.external) is NOT in this response. It goes in the HTML page
+    // (Bootstrap::get_external_user → page.php) because nginx may micro-cache POST responses
+    // with a key that doesn't include the user, sharing one cached answer across visitors.
     private function on_get(): never {
         $response = [];
 

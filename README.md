@@ -159,6 +159,64 @@ Every file request passes h6ai first, so a denied file returns 401 or 403 even w
 the direct URL. Native and Docker installs use nginx's `auth_request`; a drop-in serves its files
 folder through h6ai. Protected folders never appear in the sitemap.
 
+### Sign-in done by nginx (external sign-in)
+
+When the web server authenticates visitors before h6ai sees the request (e.g. with
+`auth_request` and a session cookie, or `auth_basic`), it can tell h6ai the visitor's name by
+setting FastCGI parameters. h6ai then shows "Signed in as *name*" in the account menu and, for
+session-based sign-ins, a "Log out" button that POSTs to the configured logout path.
+
+The external user is display only: it grants no h6ai permissions and no access to restricted
+folders. An h6ai account session always takes precedence.
+
+Enable it in `options.local.json`:
+
+```json
+{
+    "auth": {
+        "external": {
+            "enabled": true,
+            "logoutUrl": "/.logout",
+            "label": ""
+        }
+    }
+}
+```
+
+And pass the parameters from nginx (in the PHP `location`, after `include fastcgi_params`):
+
+```nginx
+# Basic auth: $remote_user is the authenticated name
+fastcgi_param H6AI_EXTERNAL_USER $remote_user;
+fastcgi_param H6AI_EXTERNAL_AUTH basic;
+```
+
+```nginx
+# auth_request with a session cookie (e.g. a portal):
+auth_request        /auth;
+auth_request_set    $ext_user $upstream_http_x_user;
+
+# "session" when auth_request returned a user, "basic" when falling back to auth_basic
+map $ext_user $ext_auth {
+    default  session;
+    ""       basic;
+}
+
+fastcgi_param H6AI_EXTERNAL_USER $ext_user;
+fastcgi_param H6AI_EXTERNAL_AUTH $ext_auth;
+```
+
+* `H6AI_EXTERNAL_USER`: the signed-in name; empty or missing means no external user.
+* `H6AI_EXTERNAL_AUTH`: `session` (logout possible) or `basic` (browser keeps the password,
+  no logout button; h6ai shows a note to close the browser instead).
+* `logoutUrl` must be a same-origin path starting with `/`. Anything else is rejected.
+* **Caching rule:** don't put per-user data into responses a shared cache may store. The
+  external user goes into the HTML page (a GET), never into the POST API response, because
+  nginx may micro-cache POST responses with a key that doesn't include the user.
+* Basic auth limitation: browsers remember the password for the session and resend it on every
+  request. There is no standard way to make a browser forget it; h6ai shows a note instead
+  of a logout button.
+
 ### Behind a reverse proxy
 
 Admin → System → *Public address and reverse proxy*:
@@ -189,6 +247,7 @@ upgrades. Every option is documented inline.
 
 | Option | Default | |
 |--------|---------|-|
+| `auth.external.enabled` / `logoutUrl` / `label` | `false` / `""` / `""` | show visitors signed in by the web server; same-origin logout path; button text override |
 | `security.csp` | `true` | auto-derived Content-Security-Policy, `false`, or a custom policy string |
 | `security.loginMaxAttempts` / `loginWindow` | `5` / `900` | login rate limit per client IP |
 | `security.sessionMaxAge` | `43200` | seconds |

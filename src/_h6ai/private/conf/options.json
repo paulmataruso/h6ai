@@ -24,6 +24,38 @@
 
 
     /*
+    Sign-in done by the web server (external sign-in).
+
+    When a reverse proxy or the web server itself authenticates visitors (e.g. with auth_request
+    and a session cookie, or with auth_basic), it can tell h6ai who is signed in by setting
+    FastCGI parameters. h6ai shows the name and, for session-based sign-ins, a "Log out" button.
+    The external user is display only: it grants no h6ai permissions and no access to restricted
+    folders. An h6ai account session always takes precedence.
+
+    - enabled: boolean, read the FastCGI parameters at all
+    - logoutUrl: string, same-origin path (starts with "/", no scheme or "//") for the POST logout
+        form. Empty string means no logout button is shown even for session auth.
+    - label: string, overrides the "Log out" button text (empty = default)
+
+    The parameters (set by nginx, not by the client — never read from HTTP_* headers):
+        H6AI_EXTERNAL_USER   the signed-in name (empty or missing = none)
+        H6AI_EXTERNAL_AUTH   "session" (cookie/SSO, logout possible) or "basic" (Basic auth)
+
+    Don't put per-user data into responses a shared cache may store. The external user goes into
+    the HTML page (a GET, not cached), not into the POST API response that nginx may micro-cache
+    with a key that doesn't include the user.
+    */
+    "auth": {
+        "external": {
+            "enabled": false,
+            "logoutUrl": "",
+            "label": ""
+        }
+    },
+
+
+
+    /*
     Security settings.
 
     - csp: true for an automatically derived Content-Security-Policy, false to send none,

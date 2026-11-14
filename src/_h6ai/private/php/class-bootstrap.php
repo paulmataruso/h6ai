@@ -98,11 +98,45 @@ final class Bootstrap {
             'skins' => Settings::THEMES,
             'x_head_tags' => $context->get_x_head_html($nonce),
             'fallback_mode' => !$is_info && $context->is_fallback_mode(),
-            'fallback_html' => $is_info ? '' : (new Fallback($context))->get_html()
+            'fallback_html' => $is_info ? '' : (new Fallback($context))->get_html(),
+            'external_user' => Bootstrap::get_external_user($context)
         ];
 
         $context->send_page_headers($nonce);
         Bootstrap::render(__DIR__ . '/pages/page.php', $page);
+    }
+
+    // External user from FastCGI params (set by the web server, never from HTTP_* headers).
+    // Returns null or ['name' => string, 'auth' => 'session'|'basic', 'logoutUrl' => string, 'label' => string].
+    private static function get_external_user(Context $context): ?array {
+        if ($context->query_option('auth.external.enabled', false) !== true) {
+            return null;
+        }
+        // H6AI_EXTERNAL_USER comes from a fastcgi_param, which PHP exposes as $_SERVER['H6AI_EXTERNAL_USER'].
+        // HTTP_H6AI_EXTERNAL_USER would be the client-supplied header — never read that.
+        $raw = $_SERVER['H6AI_EXTERNAL_USER'] ?? '';
+        if (!is_string($raw)) {
+            return null;
+        }
+        $name = mb_substr(trim(preg_replace('/[\x00-\x1f\x7f]/', '', $raw)), 0, 100);
+        if ($name === '') {
+            return null;
+        }
+
+        $auth_raw = $_SERVER['H6AI_EXTERNAL_AUTH'] ?? '';
+        $auth = is_string($auth_raw) && strtolower(trim($auth_raw)) === 'basic' ? 'basic' : 'session';
+
+        $logout_url = (string) $context->query_option('auth.external.logoutUrl', '');
+        if (!is_string($logout_url) || !str_starts_with($logout_url, '/') || str_starts_with($logout_url, '//')) {
+            $logout_url = '';
+            if ((string) $context->query_option('auth.external.logoutUrl', '') !== '') {
+                Logger::log('auth.external.logoutUrl rejected: must be a same-origin path starting with /');
+            }
+        }
+
+        $label = (string) $context->query_option('auth.external.label', '');
+
+        return ['name' => $name, 'auth' => $auth, 'logoutUrl' => $logout_url, 'label' => $label];
     }
 
     private static function render(string $template, array $page): void {

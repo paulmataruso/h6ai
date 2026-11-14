@@ -44,7 +44,10 @@ const defaultTranslations = {
     changePassword: 'Change password',
     theme: 'Theme',
     info: 'Info',
-    admin: 'Admin'
+    admin: 'Admin',
+    extSignedIn: 'signed in by the web server',
+    extBasicNote: 'Signed in by your browser. Close the browser to sign out.',
+    extH6aiLogin: 'Log in with an h6ai account'
 };
 const blockTpl =
         `<div class="block">

@@ -175,3 +175,64 @@ in `settings.json`, the activity log in `logs/`. Back up that directory.
 * Account type **anon** = download-only account: it ignores "everyone" and role grants, so it
   sees nothing but its own folder groups (plus the parent folders needed to navigate there), gets
   no previews (clicking a file downloads it) and can't change its password.
+
+## 6. Sign-in done by nginx (external sign-in)
+
+When the web server authenticates visitors before h6ai sees the request, h6ai can show who is
+signed in and offer a logout button, without its own accounts. This is display only: the
+external user grants no h6ai permissions and no access to restricted folders. An h6ai account
+session always takes precedence.
+
+Enable it in `options.local.json`:
+
+```json
+{"auth": {"external": {"enabled": true, "logoutUrl": "/.logout"}}}
+```
+
+### Basic auth
+
+```nginx
+# in the PHP location, after include fastcgi_params
+fastcgi_param H6AI_EXTERNAL_USER $remote_user;
+fastcgi_param H6AI_EXTERNAL_AUTH basic;
+```
+
+Browsers remember the password for the session and resend it on every request. There is no
+standard way to make a browser forget it, so h6ai shows a note instead of a logout button.
+
+### auth_request (session cookie / SSO)
+
+```nginx
+auth_request        /auth;
+auth_request_set    $ext_user $upstream_http_x_user;
+
+# when auth_request returned a user → session; fallback to auth_basic → basic
+map $ext_user $ext_auth {
+    default  session;
+    ""       basic;
+}
+
+# in the PHP location, after include fastcgi_params
+fastcgi_param H6AI_EXTERNAL_USER $ext_user;
+fastcgi_param H6AI_EXTERNAL_AUTH $ext_auth;
+```
+
+`logoutUrl` must be a same-origin path starting with `/` (no scheme, no `//`). h6ai renders a
+POST form to it, so prefetchers can't log people out. `label` optionally overrides the button
+text. `form-action 'self'` in h6ai's CSP already allows same-origin form targets.
+
+### Caching rule
+
+Don't put per-user data into responses a shared cache may store. h6ai puts the external user
+into the HTML page (a GET, `Cache-Control: no-cache`), never into the POST API response that
+nginx may micro-cache with a key that doesn't include the user.
+
+### Parameters
+
+| FastCGI param | Values | |
+|---|---|---|
+| `H6AI_EXTERNAL_USER` | a name, or empty/absent | trimmed, max 100 chars, control characters stripped |
+| `H6AI_EXTERNAL_AUTH` | `session`, `basic` | missing or unknown defaults to `session` |
+
+These are read from `$_SERVER` as FastCGI params. HTTP request headers arrive as `HTTP_*`
+variables; h6ai never reads `HTTP_H6AI_EXTERNAL_USER`, so a client cannot fake them.
